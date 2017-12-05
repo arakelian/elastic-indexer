@@ -1,0 +1,403 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.arakelian.elastic.api;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.immutables.value.Value;
+
+import com.arakelian.elastic.feature.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+@Value.Immutable(copy = false)
+@JsonSerialize(as = ImmutableField.class)
+@JsonDeserialize(builder = ImmutableField.Builder.class)
+@JsonPropertyOrder({ "name", "type", "format", "enabled", "store", "index", "index_options", "doc_values",
+        "fielddata", "ignore_above", "ignore_malformed", "include_in_all", "copy_to", "analyzer",
+        "search_analyzer" })
+public interface Field {
+    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
+    public enum IndexOptions {
+        DOCS, //
+        FREQS, //
+        POSITIONS, //
+        OFFSETS;
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return this.name().toLowerCase();
+        }
+    }
+
+    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
+    public enum TermVector {
+        NO, //
+        YES, //
+        WITH_POSITIONS, //
+        WITH_OFFSETS, //
+        WITH_POSITIONS_OFFSETS;
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return this.name().toLowerCase();
+        }
+    }
+
+    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html
+    public enum Type {
+        TEXT(true, true, false), //
+        KEYWORD(false, true, false), //
+        BYTE(false, true, false), //
+        SHORT(false, true, false), //
+        INTEGER(false, true, false), //
+        LONG(false, true, false), //
+        FLOAT(false, true, false), //
+        DOUBLE(false, true, false), //
+        DATE(false, true, false), //
+        BOOLEAN(false, true, false), //
+        BINARY(false, false, true);
+
+        /**
+         * True if field can be analyzed. The only field which supports this is {@link #TEXT}.
+         **/
+        private final boolean analyzed;
+
+        /**
+         * True if field should be indexed by default.
+         */
+        private final Boolean indexDefault;
+
+        /**
+         * True if field should be indexed by default.
+         */
+        private final Boolean storeDefault;
+
+        private Type(final boolean analyzed, final Boolean indexDefault, final Boolean storeDefault) {
+            this.analyzed = analyzed;
+            this.indexDefault = indexDefault;
+            this.storeDefault = storeDefault;
+        }
+
+        public final Boolean getIndexDefault() {
+            return indexDefault;
+        }
+
+        public final Boolean getStoreDefault() {
+            return storeDefault;
+        }
+
+        public final boolean isAnalyzed() {
+            return analyzed;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return this.name().toLowerCase();
+        }
+    }
+
+    /**
+     * Elastic meta fields, see
+     * https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html
+     */
+    public static final Set<String> META_FIELDS = Sets.newHashSet( //
+            "_all", //
+            "_field_names", //
+            "_id", //
+            "_index", //
+            "_meta", //
+            "_parent", //
+            "_routing", //
+            "_source", // The original JSON representing the body of the document.
+            "_type", //
+            "_uid");
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("analyzer")
+    public String getAnalyzer();
+
+    /**
+     * Returns a list of fields that this field value should be copied to.
+     *
+     * The {@link #getCopyTo()} allows you to create custom _all fields. The values of multiple fields
+     * can be copied into a group field, which can then be queried as a single field.
+     *
+     * @return list of fields that this field value should be copied to.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("copy_to")
+    public List<String> getCopyTo();
+
+    @Value.Derived
+    @Value.Auxiliary
+    @JsonProperty("fields")
+    public default Map<String, Field> getFieldsByName() {
+        final Map<String, Field> names = Maps.newLinkedHashMap();
+        for (final Field field : getSubfields()) {
+            names.put(field.getName(), field);
+        }
+        return names;
+    }
+
+    /**
+     * Returns the date format used by Elastic to parse date values.
+     *
+     * Note that Elastic internally stores dates as a long value representing
+     * milliseconds-since-the-epoch in UTC.
+     *
+     * @return date format used by Elastic to parse date values.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("format")
+    public String getFormat();
+
+    /**
+     * Returns the maximum length of strings that can be indexed or stored. Strings longer than the
+     * ignore_above setting will be ignored.
+     *
+     * @return maximum length of strings that can be indexed or stored
+     */
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("ignore_above")
+    public default Integer getIgnoreAbove() {
+        if (isMetaField() || getType() != Type.KEYWORD) {
+            return null;
+        }
+        // see: https://en.wikipedia.org/wiki/Longest_word_in_English
+        return Integer.valueOf(45);
+    }
+
+    /**
+     * Returns setting that determines what information is added to the inverted index.
+     *
+     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other fields
+     * use {@link IndexOptions#DOCS} as the default.
+     *
+     * @return setting that determines what information is added to the inverted index.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("index_options")
+    public IndexOptions getIndexOptions();
+
+    /**
+     * Returns the name of the Elastic index field that should be created.
+     *
+     * @return name of the Elastic index field that should be created.
+     */
+    @JsonIgnore
+    public String getName();
+
+    /**
+     * Returns a value that will replace null values during indexed. Normally, null values cannot be
+     * indexed or searched. This parameter allows you to replace explicit null values with another value
+     * that can be indexed and searched instead.
+     *
+     * @return value that will replace null values during indexed
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("null_value")
+    public String getNullValue();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("search_analyzer")
+    public String getSearchAnalyzer();
+
+    /**
+     * Returns a list of subfields, if any. A field that has subfields is called a "multi-field" in
+     * Elastic parlance.
+     *
+     * Note: It is often useful to index the same field in different ways for different purposes. This
+     * is the purpose of multi-fields. For instance, a string field could be mapped as a text field for
+     * full-text search, and as a keyword field for sorting or aggregations
+     *
+     * @return list of subfields if any
+     */
+    @Value.Auxiliary
+    @JsonIgnore
+    public List<Field> getSubfields();
+
+    /**
+     * Returns setting that determines what information is added to the inverted index.
+     *
+     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other fields
+     * use {@link IndexOptions#DOCS} as the default.
+     *
+     * @return setting that determines what information is added to the inverted index.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("term_vector")
+    public TermVector getTermVector();
+
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("type")
+    public default Type getType() {
+        return isMetaField() ? null : Type.TEXT;
+    }
+
+    /**
+     * Returns true if doc_values is enabled. Note that all fields which support doc values have them
+     * enabled by default.
+     *
+     * @return true if this field has doc_values enabled.
+     */
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("doc_values")
+    public default Boolean isDocValues() {
+        if (isMetaField() || getType() == null) {
+            return null;
+        }
+        return Boolean.TRUE.equals(isIndex()) && !getType().isAnalyzed();
+    }
+
+    /**
+     * Returns true if this field is enabled.
+     *
+     * The enabled setting can be applied only to the mapping type and to object fields, causes
+     * Elasticsearch to skip parsing of the contents of the field entirely. The JSON can still be
+     * retrieved from the _source field, but it is not searchable or stored in any other way.
+     *
+     * @return true if this field is enabled.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("enabled")
+    public Boolean isEnabled();
+
+    /**
+     * Returns true if field data is enabled for field.
+     *
+     * Fielddata can consume a lot of heap space, especially when loading high cardinality text fields.
+     * Once fielddata has been loaded into the heap, it remains there for the lifetime of the segment.
+     * Also, loading fielddata is an expensive process which can cause users to experience latency hits.
+     * This is why fielddata is disabled by default.
+     *
+     * @return true if field data is enabled for field.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("fielddata")
+    public Boolean isFielddata();
+
+    /**
+     * Returns true if this field should ignore illegal values detected when building Elastic document.
+     *
+     * @return true if this field should ignore illegal values detected when building Elastic document.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("ignore_malformed")
+    public Boolean isIgnoreMalformed();
+
+    /**
+     * Returns true if this field should not be included in _all.
+     *
+     * @return true if this field should not be included in _all.
+     *
+     * @see <a
+     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html</a>
+     */
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("include_in_all")
+    public default Boolean isIncludeInAll() {
+        if (isMetaField() || getType() == null) {
+            return null;
+        }
+
+        // Elastic docs: "It defaults to true, unless index is set to no."
+        return !Boolean.FALSE.equals(isIndex());
+    }
+
+    /**
+     * Returns flag that indicates if field is indexed and therefore searchable.
+     *
+     * Note that prior to ES 5, "analyzed" and "not_analyzed" were acceptable values for this field.
+     * Both values implied that index was "true", with "not_analyzed" also implying a field type of
+     * "keyword".
+     *
+     * A non-technical discussion of this on Elastic blog can be found here:
+     * https://www.elastic.co/blog/strings-are-dead-long-live-strings
+     *
+     * @return flag that indicates if field is indexed.
+     *
+     * @see <a
+     *      href="https://github.com/elastic/elasticsearch/issues/21134">https://github.com/elastic/elasticsearch/issues/21134</a>
+     */
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("index")
+    public default Boolean isIndex() {
+        if (isMetaField() || getType() == null) {
+            return null;
+        }
+        return getType().getIndexDefault();
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonIgnore
+    public default boolean isMetaField() {
+        return META_FIELDS.contains(getName());
+    }
+
+    /**
+     * Returns true if the field value is stored.
+     *
+     * By default, field values are indexed to make them searchable, but they are not stored. This means
+     * that the field can be queried, but the original field value cannot be retrieved.
+     *
+     * @return true if this field value is stored.
+     */
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("store")
+    public default Boolean isStore() {
+        if (isMetaField() || getType() == null) {
+            return null;
+        }
+        return getType().getStoreDefault();
+    }
+}
