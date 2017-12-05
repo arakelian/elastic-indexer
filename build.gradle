@@ -1,0 +1,69 @@
+// elastic-indexer
+
+buildscript {
+    repositories {
+      jcenter()
+    }
+}
+
+plugins {
+    id 'java'
+    id 'maven'
+    id 'signing'
+    id 'eclipse'
+    id 'idea'
+
+    // keep dependencies up-to-date!
+    id 'com.github.ben-manes.versions' version '0.17.0'
+
+    // useful for creating immutable java beans
+    id 'org.inferred.processors' version '1.2.15'
+
+    // to ensure clean code
+    id "net.ltgt.errorprone" version "0.0.13"
+
+    // for deployment to Maven Central
+    id "io.codearte.nexus-staging" version "0.11.0"
+}
+
+group   = 'com.arakelian'
+
+// common gradle code shared between projects
+apply from: "gradle/core.gradle"
+
+dependencies {
+    processor 'org.immutables:value:2.5.6'
+
+    compile 'com.arakelian:more-commons:[1.5,2.0['
+    compile 'com.arakelian:jackson-utils:[1.5,2.0['
+    compile 'com.arakelian:json-filter:[1.5,2.0['
+    compile 'com.arakelian:key-value-store:[1.5,2.0['
+
+    // common stuff
+    compile 'com.google.guava:guava:23.4-jre'
+
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+    compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
+    compile 'com.squareup.retrofit2:converter-jackson:2.3.0'
+    compile 'com.squareup.retrofit2:adapter-java8:2.3.0'
+    compile 'com.squareup.retrofit2:adapter-guava:2.3.0'
+    compile 'com.squareup.okhttp3:okhttp:3.9.1'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
+    compile 'com.github.rholder:guava-retrying:2.0.0'
+    compile 'com.lmax:disruptor:3.3.7'
+    compile 'org.apache.commons:commons-lang3:3.7'
+
+    // logging
+    testCompile 'org.apache.logging.log4j:log4j-api:2.9.1'
+    testCompile 'org.apache.logging.log4j:log4j-core:2.9.1'
+    testCompile 'org.apache.logging.log4j:log4j-slf4j-impl:2.9.1'
+    testCompile 'org.slf4j:jcl-over-slf4j:1.7.25'
+    testCompile 'org.slf4j:jul-to-slf4j:1.7.25'
+    compile     'org.slf4j:slf4j-api:1.7.25'
+
+    // for unit testing
+    testCompile 'junit:junit:4.12'
+    testCompile 'com.arakelian:docker-junit-rule:[1.5,2.0['
+    testCompile 'com.arakelian:faker:[1.5,2.0['
+    testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
+}
