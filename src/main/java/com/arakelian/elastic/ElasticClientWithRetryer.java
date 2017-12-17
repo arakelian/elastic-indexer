@@ -37,8 +37,8 @@ import com.arakelian.elastic.api.Refresh;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
+import com.google.common.base.Preconditions;
 
-import jersey.repackaged.com.google.common.base.Preconditions;
 import retrofit2.Response;
 
 public class ElasticClientWithRetryer {
