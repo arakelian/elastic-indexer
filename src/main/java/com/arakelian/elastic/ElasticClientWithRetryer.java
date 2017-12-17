@@ -18,10 +18,8 @@
 package com.arakelian.elastic;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.arakelian.elastic.api.About;
 import com.arakelian.elastic.api.BulkResponse;
@@ -39,42 +37,21 @@ import com.arakelian.elastic.api.Refresh;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
-import com.google.common.base.Predicate;
 
+import jersey.repackaged.com.google.common.base.Preconditions;
 import retrofit2.Response;
 
-public class ElasticClientRetryer {
+public class ElasticClientWithRetryer {
     private final ElasticClient delegate;
     private final Retryer<Response<?>> retryer;
 
-    /**
-     * Determines if an {@link IOException} is suitable for retry. Adapted from Apache Commons IO's
-     * DefaultHttpMethodRetryHandler.
-     */
-    public static class RetryIoException implements Predicate<Throwable> {
-        @Override
-        public boolean apply(Throwable exception) {
-            if (exception instanceof SocketTimeoutException) {
-                // Retry if the server dropped connection on us
-                return true;
-            }
-            // otherwise do not retry
-            return false;
-        }
+    public ElasticClientWithRetryer(final ElasticClient delegate) {
+        this(delegate, ElasticClientUtils.createElasticRetryer2());
     }
 
-    public ElasticClientRetryer(final ElasticClient delegate) {
-        this.delegate = delegate;
-
-        retryer = RetryerBuilder.<Response<?>> newBuilder() //
-                .retryIfException(new RetryIoException()) //
-                .retryIfResult(result -> ElasticClientUtils.retryIfResponse(result)) //
-                .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
-                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
-                .build();
+    public ElasticClientWithRetryer(ElasticClient delegate, Retryer<Response<?>> retryer) {
+        this.delegate = Preconditions.checkNotNull(delegate);
+        this.retryer = Preconditions.checkNotNull(retryer);
     }
 
     public Response<About> about() throws IOException {
@@ -116,7 +93,9 @@ public class ElasticClientRetryer {
         });
     }
 
-    public Response<ClusterHealth> clusterHealthForIndex(final String names, final Status waitForStatus,
+    public Response<ClusterHealth> clusterHealthForIndex(
+            final String names,
+            final Status waitForStatus,
             final String timeout) throws IOException {
         return call(() -> {
             return delegate.clusterHealthForIndex(names, waitForStatus, timeout).execute();
@@ -142,7 +121,10 @@ public class ElasticClientRetryer {
         });
     }
 
-    public Response<DeletedDocument> deleteDocument(final String name, final String type, final String id,
+    public Response<DeletedDocument> deleteDocument(
+            final String name,
+            final String type,
+            final String id,
             final long epochMillisUtc) throws IOException {
         return call(() -> {
             return delegate.deleteDocument(name, type, id, epochMillisUtc).execute();
@@ -155,7 +137,10 @@ public class ElasticClientRetryer {
         });
     }
 
-    public Response<Document> getDocument(final String name, final String type, final String id,
+    public Response<Document> getDocument(
+            final String name,
+            final String type,
+            final String id,
             final String sourceFields) throws IOException {
         return call(() -> {
             return delegate.getDocument(name, type, id, sourceFields).execute();
@@ -168,15 +153,22 @@ public class ElasticClientRetryer {
         });
     }
 
-    public Response<IndexedDocument> indexDocument(final String name, final String type, final String id,
+    public Response<IndexedDocument> indexDocument(
+            final String name,
+            final String type,
+            final String id,
             final String document) throws IOException {
         return call(() -> {
             return delegate.indexDocument(name, type, id, document).execute();
         });
     }
 
-    public Response<IndexedDocument> indexDocument(final String name, final String type, final String id,
-            final String document, final long epochMillisUtc) throws IOException {
+    public Response<IndexedDocument> indexDocument(
+            final String name,
+            final String type,
+            final String id,
+            final String document,
+            final long epochMillisUtc) throws IOException {
         return call(() -> {
             return delegate.indexDocument(name, type, id, document, epochMillisUtc).execute();
         });

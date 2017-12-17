@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.fake.model.Person;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Preconditions;
 
 import retrofit2.Response;
@@ -68,14 +69,14 @@ public class ElasticTestUtils {
     public static final String DEFAULT_TYPE = "test";
 
     private final ElasticClient elasticClient;
-    private final ElasticClientRetryer elasticClientRetryer;
+    private final ElasticClientWithRetryer elasticClientRetryer;
 
     private RefreshLimiter refreshLimiter;
 
     public ElasticTestUtils(final ElasticClient elasticClient) {
         Preconditions.checkArgument(elasticClient != null, "elasticClient must be non-null");
         this.elasticClient = elasticClient;
-        this.elasticClientRetryer = new ElasticClientRetryer(elasticClient);
+        this.elasticClientRetryer = new ElasticClientWithRetryer(elasticClient);
     }
 
     public void assertCreateIndex(final Index index) throws IOException {
@@ -83,7 +84,8 @@ public class ElasticTestUtils {
         assertIndexNotExists(index);
 
         // create index
-        final IndexCreated response = assertSuccessful(IndexCreated.class, //
+        final IndexCreated response = assertSuccessful(
+                IndexCreated.class, //
                 elasticClientRetryer.createIndex(index.getName(), index));
         LOGGER.info("Create index response: {}", response);
         assertEquals(Boolean.TRUE, response.getAcknowledged());
@@ -129,7 +131,8 @@ public class ElasticTestUtils {
     }
 
     public void assertRefreshIndex(final Index index) throws IOException {
-        final Refresh response = assertSuccessful(Refresh.class, //
+        final Refresh response = assertSuccessful(
+                Refresh.class, //
                 elasticClientRetryer.refreshIndex(index.getName()));
         LOGGER.info("Refresh response: {}", response);
     }
@@ -155,7 +158,7 @@ public class ElasticTestUtils {
         try {
             error = StringUtils.isEmpty(body) ? null
                     : JacksonUtils.getJsonProcessors().readValue(body, ElasticError.class);
-        } catch (final UnrecognizedPropertyException e) {
+        } catch (final JsonMappingException e) {
             LOGGER.error("Expecting error response: {}", JsonFilter.prettyify(body));
             throw new IllegalStateException("Unable to deserialize non-successful response (status code: "
                     + response.code() + ") as an Error", e);
@@ -179,6 +182,8 @@ public class ElasticTestUtils {
                 .maximumThreads(1) //
                 .bulkOperationFactory(new DefaultBulkOperationFactory<>(index, ElasticTestUtils.DEFAULT_TYPE)) //
                 .listener(listener) //
+                .shutdownTimeout(1) //
+                .shutdownTimeoutUnit(TimeUnit.DAYS) //
                 .build();
         return new BulkIndexer<>(config, refreshLimiter);
     }
@@ -186,34 +191,41 @@ public class ElasticTestUtils {
     public Mapping createPersonMapping() {
         final Mapping mapping = ImmutableMapping.builder() //
                 .dynamic(STRICT) //
-                .addFields(ImmutableField.builder() //
-                        .name("id") //
-                        .type(Type.KEYWORD) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("firstName") //
-                        .type(Type.TEXT) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("lastName") //
-                        .type(Type.TEXT) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("gender") //
-                        .type(Type.KEYWORD) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("comments") //
-                        .type(Type.TEXT) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("created") //
-                        .type(Type.DATE) //
-                        .build())
-                .addFields(ImmutableField.builder() //
-                        .name("updated") //
-                        .type(Type.DATE) //
-                        .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("id") //
+                                .type(Type.KEYWORD) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("firstName") //
+                                .type(Type.TEXT) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("lastName") //
+                                .type(Type.TEXT) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("gender") //
+                                .type(Type.KEYWORD) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("comments") //
+                                .type(Type.TEXT) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("created") //
+                                .type(Type.DATE) //
+                                .build())
+                .addFields(
+                        ImmutableField.builder() //
+                                .name("updated") //
+                                .type(Type.DATE) //
+                                .build())
                 .build();
         return mapping;
     }
@@ -240,7 +252,8 @@ public class ElasticTestUtils {
 
     public void waitForIndexReady(final Index index) throws IOException {
         // wait for it to be available
-        final ClusterHealth response = assertSuccessful(ClusterHealth.class, //
+        final ClusterHealth response = assertSuccessful(
+                ClusterHealth.class, //
                 elasticClientRetryer.clusterHealthForIndex( //
                         index.getName(), //
                         Status.YELLOW, //

@@ -36,6 +36,7 @@ import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.HEAD;
+import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -49,24 +50,28 @@ public interface ElasticClient {
     Call<About> about();
 
     @POST("/_bulk")
+    @Headers("Content-Type: application/x-ndjson")
     Call<BulkResponse> bulk(@Body String operations, @Query("pretty") Boolean pretty);
 
     @GET("/_cluster/health")
     Call<ClusterHealth> clusterHealth();
 
     @GET("/_cluster/health")
-    Call<ClusterHealth> clusterHealth(@Query("wait_for_status") ClusterHealth.Status waitForStatus,
+    Call<ClusterHealth> clusterHealth(
+            @Query("wait_for_status") ClusterHealth.Status waitForStatus,
             @Query("timeout") String timeout);
 
     @GET("/_cluster/health/{names}")
-    Call<ClusterHealth> clusterHealthForIndex(@Path("names") String names,
-            @Query("wait_for_status") ClusterHealth.Status waitForStatus, @Query("timeout") String timeout);
+    Call<ClusterHealth> clusterHealthForIndex(
+            @Path("names") String names,
+            @Query("wait_for_status") ClusterHealth.Status waitForStatus,
+            @Query("timeout") String timeout);
 
     /**
      * Create an index in Elastic.
      *
-     * Elastic will return a response acknowledging the request, however it make take a little time for
-     * the index to actually be deleted.
+     * Elastic will return a response acknowledging the request, however it make take a little time
+     * for the index to actually be deleted.
      *
      * @param name
      *            index name
@@ -80,8 +85,8 @@ public interface ElasticClient {
     /**
      * Delete all indexes from Elastic.
      *
-     * Elastic will return a response acknowledging the request, however it make take a little time for
-     * the indexes to actually be deleted.
+     * Elastic will return a response acknowledging the request, however it make take a little time
+     * for the indexes to actually be deleted.
      *
      * @return response from Elastic acknowledging the request
      */
@@ -89,18 +94,23 @@ public interface ElasticClient {
     Call<IndexDeleted> deleteAllIndexes();
 
     @DELETE("/{name}/{type}/{id}")
-    Call<DeletedDocument> deleteDocument(@Path("name") String name, @Path("type") String type,
+    Call<DeletedDocument> deleteDocument(
+            @Path("name") String name,
+            @Path("type") String type,
             @Path("id") String id);
 
     @DELETE("/{name}/{type}/{id}?version_type=external")
-    Call<DeletedDocument> deleteDocument(@Path("name") String name, @Path("type") String type,
-            @Path("id") String id, @Query("version") long epochMillisUtc);
+    Call<DeletedDocument> deleteDocument(
+            @Path("name") String name,
+            @Path("type") String type,
+            @Path("id") String id,
+            @Query("version") long epochMillisUtc);
 
     /**
      * Deletes a comma separated list of index names from Elastic.
      *
-     * Elastic will return a response acknowledging the request, however it make take a little time for
-     * the indexes to actually be deleted.
+     * Elastic will return a response acknowledging the request, however it make take a little time
+     * for the indexes to actually be deleted.
      *
      * @param names
      *            comma separated list of index names
@@ -110,15 +120,18 @@ public interface ElasticClient {
     Call<IndexDeleted> deleteIndex(@Path("names") String names);
 
     @GET("/{name}/{type}/{id}")
-    Call<Document> getDocument(@Path("name") String name, @Path("type") String type, @Path("id") String id,
+    Call<Document> getDocument(
+            @Path("name") String name,
+            @Path("type") String type,
+            @Path("id") String id,
             @Query("_source") String sourceFields);
 
     @POST("/_mget")
     Call<Documents> getDocuments(@Body Mget mget);
 
     /**
-     * Indexes a document using default versioning scheme, which simply increments the document version
-     * number.
+     * Indexes a document using default versioning scheme, which simply increments the document
+     * version number.
      *
      * @param name
      *            index name
@@ -134,21 +147,25 @@ public interface ElasticClient {
      *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      */
     @PUT("/{name}/{type}/{id}")
-    Call<IndexedDocument> indexDocument(@Path("name") String name, @Path("type") String type,
-            @Path("id") String id, @Body String document);
+    @Headers("Content-Type: application/json; charset=UTF-8")
+    Call<IndexedDocument> indexDocument(
+            @Path("name") String name,
+            @Path("type") String type,
+            @Path("id") String id,
+            @Body String document);
 
     /**
-     * Indexes a document using an external versioning scheme, based upon milliseconds since epoch (UTC
-     * timezone).
+     * Indexes a document using an external versioning scheme, based upon milliseconds since epoch
+     * (UTC timezone).
      *
-     * With version_type set to external, Elasticsearch will store the version number as given and will
-     * not increment it. Also, instead of checking for an exact match, Elasticsearch will only return a
-     * version collision error if the version currently stored is greater or equal to the one in the
-     * indexing command.
+     * With version_type set to external, Elasticsearch will store the version number as given and
+     * will not increment it. Also, instead of checking for an exact match, Elasticsearch will only
+     * return a version collision error if the version currently stored is greater or equal to the
+     * one in the indexing command.
      *
-     * IMPORTANT: When using external versioning, make sure you always add the current version to any
-     * index, update or delete calls. If you forget, Elasticsearch will use it's internal system to
-     * process that request, which will cause the version to be incremented erroneously.
+     * IMPORTANT: When using external versioning, make sure you always add the current version to
+     * any index, update or delete calls. If you forget, Elasticsearch will use it's internal system
+     * to process that request, which will cause the version to be incremented erroneously.
      *
      * @param name
      *            index name
@@ -166,14 +183,19 @@ public interface ElasticClient {
      *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      */
     @PUT("/{name}/{type}/{id}?version_type=external")
-    Call<IndexedDocument> indexDocument(@Path("name") String name, @Path("type") String type,
-            @Path("id") String id, @Body String document, @Query("version") long epochMillisUtc);
+    @Headers("Content-Type: application/json; charset=UTF-8")
+    Call<IndexedDocument> indexDocument(
+            @Path("name") String name,
+            @Path("type") String type,
+            @Path("id") String id,
+            @Body String document,
+            @Query("version") long epochMillisUtc);
 
     /**
      * Checks to see if specified index exists
      *
-     * Elastic will return a success code (HTTP 200) if the index exists, otherwise it returns an HTTP
-     * 404 (not found).
+     * Elastic will return a success code (HTTP 200) if the index exists, otherwise it returns an
+     * HTTP 404 (not found).
      *
      * @param name
      *            index name

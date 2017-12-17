@@ -56,6 +56,7 @@ import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -114,8 +115,10 @@ public class BulkIndexer<T> implements Closeable {
         @Override
         public Response<BulkResponse> call() throws IOException, InterruptedException {
             if (delayMillis != 0) {
-                LOGGER.info("Waiting {} before sending {}",
-                        MoreStringUtils.toString(delayMillis, TimeUnit.MILLISECONDS), this);
+                LOGGER.info(
+                        "Waiting {} before sending {}",
+                        MoreStringUtils.toString(delayMillis, TimeUnit.MILLISECONDS),
+                        this);
                 Thread.sleep(delayMillis);
             }
 
@@ -124,7 +127,8 @@ public class BulkIndexer<T> implements Closeable {
 
             try {
                 // we assume Retryer verifies that result.isSuccessful() is true
-                return config.getRetryer().call(() -> {
+                Retryer<Response<BulkResponse>> retryer = config.getRetryer();
+                return retryer.call(() -> {
                     return elasticClient.bulk(ops, false).execute();
                 });
             } catch (final ExecutionException e) {
@@ -161,7 +165,7 @@ public class BulkIndexer<T> implements Closeable {
                 try {
                     refreshLimiter.enqueueRefresh(name);
                 } catch (final RejectedExecutionException e) {
-                    LOGGER.warn("Unable to queue refresh of index \"{}\"", name);
+                    LOGGER.warn("Unable to queue refresh of index \"{}\"", name, e);
                 }
             }
         }
@@ -178,9 +182,9 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
-     * Callback that handles response from a single {@link Batch}. This listener must iterate the batch
-     * and ensure that all operaions are marked as successful or failed. It may also elect to retry an
-     * individual operation if it's possible.
+     * Callback that handles response from a single {@link Batch}. This listener must iterate the
+     * batch and ensure that all operaions are marked as successful or failed. It may also elect to
+     * retry an individual operation if it's possible.
      */
     private final class BatchListener implements Runnable {
         private final Stopwatch queued;
@@ -195,7 +199,7 @@ public class BulkIndexer<T> implements Closeable {
         }
 
         public void onFailure(final Throwable t) {
-            LOGGER.warn("{} failed after {}: {}", batch, queued, t);
+            LOGGER.warn("{} failed after {}", batch, queued, t);
             batch.failed(t);
         }
 
@@ -214,8 +218,10 @@ public class BulkIndexer<T> implements Closeable {
             final BulkResponse bulk = result.body();
             final List<Item> items = bulk.getItems();
             final int size = items.size();
-            Preconditions.checkState(size == batch.operations.size(),
-                    "Number of responses (%s) does not match number of batch operations (%s)", size,
+            Preconditions.checkState(
+                    size == batch.operations.size(),
+                    "Number of responses (%s) does not match number of batch operations (%s)",
+                    size,
                     batch.operations.size());
 
             List<BulkOperation> retryable = null;
@@ -248,10 +254,16 @@ public class BulkIndexer<T> implements Closeable {
 
                 // sanity check before re-attempting operation; note that we don't compare index
                 // values because they may be different due to aliasing
-                Preconditions.checkState(StringUtils.equals(op.getId(), response.getId()),
-                        "Response id %s did not match request type %s", response.getId(), op.getId());
-                Preconditions.checkState(StringUtils.equals(op.getType(), response.getType()),
-                        "Response type %s did not match request type %s", response.getType(), op.getType());
+                Preconditions.checkState(
+                        StringUtils.equals(op.getId(), response.getId()),
+                        "Response id %s did not match request type %s",
+                        response.getId(),
+                        op.getId());
+                Preconditions.checkState(
+                        StringUtils.equals(op.getType(), response.getType()),
+                        "Response type %s did not match request type %s",
+                        response.getType(),
+                        op.getType());
 
                 // collect operations that we can retry
                 if (retryable == null) {
@@ -386,7 +398,7 @@ public class BulkIndexer<T> implements Closeable {
                 1, config.getMaximumThreads(), //
                 0L, TimeUnit.MILLISECONDS, //
                 new LinkedBlockingQueue<>(config.getQueueSize()), //
-                ExecutorUtils.newThreadFactory(getClass(), "-batch", true), // daemon
+                ExecutorUtils.newThreadFactory(getClass(), "-batch", false), // daemon
                 rejectedExecutionHandler);
         this.batchExecutor = MoreExecutors.listeningDecorator(bulkExecutor);
 
@@ -405,8 +417,10 @@ public class BulkIndexer<T> implements Closeable {
             flushExecutor = MoreExecutors.getExitingScheduledExecutorService( //
                     new ScheduledThreadPoolExecutor(1,
                             ExecutorUtils.newThreadFactory(getClass(), "-flush", false)), //
-                    1, TimeUnit.MINUTES);
-            flushExecutor.scheduleWithFixedDelay(new PeriodicFlush(), //
+                    1,
+                    TimeUnit.MINUTES);
+            flushExecutor.scheduleWithFixedDelay(
+                    new PeriodicFlush(), //
                     automaticFlushMillis, //
                     automaticFlushMillis, //
                     TimeUnit.MILLISECONDS);
@@ -453,7 +467,8 @@ public class BulkIndexer<T> implements Closeable {
 
             // add to queue
             final String operation = bulkOperation.getOperation();
-            Preconditions.checkState(operation.charAt(operation.length() - 1) == '\n',
+            Preconditions.checkState(
+                    operation.charAt(operation.length() - 1) == '\n',
                     "Bulk operations must end with newline");
             totalPendingBytes += operation.length();
             pendingOperations.add(bulkOperation);
@@ -520,51 +535,59 @@ public class BulkIndexer<T> implements Closeable {
      */
     @Override
     public void close() throws BulkIndexerFailed {
+        final boolean shutdown;
+
+        // we only hold the lock long enough to signal to other threads that we're shutting down and
+        // will not take any more business
         batchLock.lock();
         try {
-            // once we are closed, there is no more flushing of data allowed
+            // once we are closed, we will not flush any more data; everything has to be
+            // in queue for processing
             LOGGER.info("Closing {}", this);
             flushQuietly();
 
-            if (closed.compareAndSet(false, true)) {
-                // no more flushes allowed
-                final int timeout = config.getShutdownTimeout();
-                final TimeUnit unit = config.getShutdownTimeoutUnit();
-                if (flushExecutor != null) {
-                    ExecutorUtils.shutdown(flushExecutor, timeout, unit, true);
-                }
-
-                // shutdown batch executor first; we want to ensure that bulk executor queue is
-                // emptied before we shutdown the response executor
-                ExecutorUtils.shutdown(batchExecutor, timeout, unit, true);
-
-                // make sure we process any responses
-                ExecutorUtils.shutdown(bulkResponseExecutor, timeout, unit, true);
-
-                // shutdown hook is last thing to go
-                ExecutorUtils.removeShutdownHook(shutdownHook);
-
-                // compute final statistics and do notification
-                final BulkIndexerStats stats = getStats();
-                final IndexerListener listener = config.getListener();
-                listener.closed(stats);
-
-                // throw exception if indexer failed
-                final int expected = stats.getSubmitted() + stats.getRetries();
-                if (stats.getSuccessful() != expected) {
-                    throw new BulkIndexerFailed(stats);
-                }
-            }
+            // we only shutdown once
+            shutdown = closed.compareAndSet(false, true);
         } finally {
             batchLock.unlock();
+        }
+
+        if (shutdown) {
+            // no more flushes allowed
+            final int timeout = config.getShutdownTimeout();
+            final TimeUnit unit = config.getShutdownTimeoutUnit();
+            if (flushExecutor != null) {
+                ExecutorUtils.shutdown(flushExecutor, timeout, unit, true);
+            }
+
+            // shutdown batch executor first; we want to ensure that bulk executor queue is
+            // emptied before we shutdown the response executor
+            ExecutorUtils.shutdown(batchExecutor, timeout, unit, true);
+
+            // make sure we process any responses
+            ExecutorUtils.shutdown(bulkResponseExecutor, timeout, unit, true);
+
+            // shutdown hook is last thing to go
+            ExecutorUtils.removeShutdownHook(shutdownHook);
+
+            // compute final statistics and do notification
+            final BulkIndexerStats stats = getStats();
+            final IndexerListener listener = config.getListener();
+            listener.closed(stats);
+
+            // throw exception if indexer failed
+            final int expected = stats.getSubmitted() + stats.getRetries();
+            if (stats.getSuccessful() != expected) {
+                throw new BulkIndexerFailed(stats);
+            }
         }
     }
 
     /**
      * Return a new {@link Batch} from the list of queued bulk operations.
      *
-     * If there are no pending operations that need to be flushed, or the batch size thresholds have not
-     * been met (and force is false), this method will return null.
+     * If there are no pending operations that need to be flushed, or the batch size thresholds have
+     * not been met (and force is false), this method will return null.
      *
      * @param force
      *            true to force a Batch to be created
@@ -659,8 +682,8 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
-     * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any exceptions
-     * that may occur.
+     * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any
+     * exceptions that may occur.
      */
     private void flushQuietly() {
         try {
@@ -685,7 +708,8 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
-     * Adds a list of documents to the Elastic index without immediate index refresh and optional flush.
+     * Adds a list of documents to the Elastic index without immediate index refresh and optional
+     * flush.
      *
      * @param documents
      *            list of documents to index

@@ -17,7 +17,6 @@
 
 package com.arakelian.elastic.bulk;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.immutables.value.Value;
@@ -27,9 +26,6 @@ import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Preconditions;
 
 import retrofit2.Response;
@@ -41,14 +37,14 @@ public abstract class BulkIndexerConfig<T> {
     @Value.Check
     protected void checkSettings() {
         Preconditions.checkState(getMaximumThreads() > 0, "numberOfThreads must be greater than 0");
-        Preconditions.checkState(getMaxBulkOperationBytes() > 0,
-                "maxBulkOperationBytes must be greater than 0");
+        Preconditions
+                .checkState(getMaxBulkOperationBytes() > 0, "maxBulkOperationBytes must be greater than 0");
         Preconditions.checkState(getQueueSize() > 0, "queueSize must be greater than 0");
     }
 
     /**
-     * Returns the number of milliseconds to wait before automatically flushing the bulk queue. If this
-     * is zero or negative, the bulk queue is never automatically flushed.
+     * Returns the number of milliseconds to wait before automatically flushing the bulk queue. If
+     * this is zero or negative, the bulk queue is never automatically flushed.
      *
      * @return number of milliseconds to wait before automatically flushing the bulk queue.
      */
@@ -106,12 +102,7 @@ public abstract class BulkIndexerConfig<T> {
     @Value.Default
     @Value.Auxiliary
     public Retryer<Response<BulkResponse>> getRetryer() {
-        return RetryerBuilder.<Response<BulkResponse>> newBuilder() //
-                .retryIfExceptionOfType(IOException.class) //
-                .retryIfResult(result -> ElasticClientUtils.retryIfResponse(result)) //
-                .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
-                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
-                .build();
+        return ElasticClientUtils.createElasticRetryer();
     }
 
     @Value.Default

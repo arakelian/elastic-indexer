@@ -23,11 +23,13 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.api.Elastic.Version5;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Maps;
@@ -340,6 +342,7 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("include_in_all")
+    @JsonView(Version5.class)
     public default Boolean isIncludeInAll() {
         if (isMetaField() || getType() == null) {
             return null;

@@ -27,16 +27,20 @@ public class AbstractElasticTest {
     /** End of life 2019-03-11 **/
     public static final String ELASTICSEARCH__5_6_4 = "elasticsearch:5.6.4";
 
+    public static final String ELASTICSEARCH__6_1_0 = "docker.elastic.co/elasticsearch/elasticsearch:6.1.0";
+
     @ClassRule
     public static final ElasticDockerRule elastic = new ElasticDockerRule("elastic-test",
-            ELASTICSEARCH__5_6_4, 9200);
+            ELASTICSEARCH__6_1_0, 9200);
 
     protected ElasticClient elasticClient;
     protected ElasticTestUtils elasticTestUtils;
+    protected int majorVersion;
 
     @Before
     public void setupContext() {
         this.elasticClient = elastic.getElasticClient();
         this.elasticTestUtils = new ElasticTestUtils(elasticClient);
+        this.majorVersion = elastic.getAbout().getVersion().getMajor();
     }
 }

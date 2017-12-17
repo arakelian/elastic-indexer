@@ -22,12 +22,14 @@ import java.util.Map;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.api.Elastic.Version5;
 import com.arakelian.elastic.doc.DocumentBuilderPlugin;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +61,7 @@ public interface Mapping {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("_all")
+    @JsonView(Version5.class)
     public default Field getAll() {
         return ImmutableField.builder() //
                 .name("_all") //

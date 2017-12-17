@@ -31,6 +31,7 @@ import com.arakelian.elastic.api.About;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.spotify.docker.client.messages.ContainerConfig.Builder;
 import com.spotify.docker.client.messages.HostConfig.Ulimit;
@@ -38,10 +39,6 @@ import com.spotify.docker.client.messages.HostConfig.Ulimit;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
-import retrofit2.Retrofit;
-import retrofit2.adapter.guava.GuavaCallAdapterFactory;
-import retrofit2.converter.jackson.JacksonConverterFactory;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class ElasticDockerRule extends DockerRule {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticDockerRule.class);
@@ -69,11 +66,13 @@ public class ElasticDockerRule extends DockerRule {
 
     @Override
     protected void configureHost(final com.spotify.docker.client.messages.HostConfig.Builder builder) {
-        builder.ulimits(Lists.newArrayList(Ulimit.builder() //
-                .name("nofile") //
-                .soft(65536L) //
-                .hard(65536L) //
-                .build()));
+        builder.ulimits(
+                Lists.newArrayList(
+                        Ulimit.builder() //
+                                .name("nofile") //
+                                .soft(65536L) //
+                                .hard(65536L) //
+                                .build()));
     }
 
     public final About getAbout() {
@@ -112,18 +111,18 @@ public class ElasticDockerRule extends DockerRule {
                 .build();
 
         // configure Retrofit
-        final Retrofit retrofit = new Retrofit.Builder() //
-                .client(client) //
-                .baseUrl(elasticUrl) //
-                .addConverterFactory(ScalarsConverterFactory.create()) //
-                .addConverterFactory(JacksonConverterFactory.create(JacksonUtils.getObjectMapper())) //
-                .addCallAdapterFactory(GuavaCallAdapterFactory.create()) //
-                .build();
+        ObjectMapper objectMapper = JacksonUtils.getObjectMapper();
+        ElasticClient elasticClient = ElasticClientUtils
+                .createElasticClient(client, elasticUrl, objectMapper, null);
 
         // wait for connection to Elastic
-        elasticClient = retrofit.create(ElasticClient.class);
         about = ElasticClientUtils.waitForElasticReady(elasticClient, 1, TimeUnit.MINUTES);
         Assert.assertNotNull("Could not connect to Elasticsearch", about);
-        Assert.assertTrue("Requires Elastic 5.x", about.getVersion().getNumber().startsWith("5"));
+        Assert.assertTrue(
+                "Requires Elastic 5.x+ but was " + about.getVersion().getNumber(),
+                about.getVersion().getMajor() >= 5);
+
+        // create API-specific elastic client
+        this.elasticClient = ElasticClientUtils.createElasticClient(client, elasticUrl, objectMapper, about);
     }
 }

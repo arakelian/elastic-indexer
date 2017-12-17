@@ -19,9 +19,11 @@ package com.arakelian.elastic.api;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.api.Elastic.Version6;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -40,5 +42,21 @@ public interface IndexedDocument extends VersionedDocumentId {
 
     @Nullable
     @JsonProperty("created")
-    public Boolean isCreated();
+    @Value.Default
+    public default Boolean isCreated() {
+        // Elastic 6.x doesn't return this flag so we simulate it
+        String result = getResult();
+        if (result == null) {
+            return null;
+        }
+        return "created".equals(result);
+    }
+
+    @JsonProperty("_seq_no")
+    @JsonView(Version6.class)
+    public Integer getSeqNo();
+
+    @JsonProperty("_primary_term")
+    @JsonView(Version6.class)
+    public Integer getPrimaryTerm();
 }
