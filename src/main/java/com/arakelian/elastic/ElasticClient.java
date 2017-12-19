@@ -3,11 +3,11 @@
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
+ * (the "License") throws ElasticException ; you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,55 +17,35 @@
 
 package com.arakelian.elastic;
 
-import com.arakelian.elastic.api.About;
-import com.arakelian.elastic.api.BulkResponse;
-import com.arakelian.elastic.api.ClusterHealth;
-import com.arakelian.elastic.api.DeletedDocument;
-import com.arakelian.elastic.api.Document;
-import com.arakelian.elastic.api.Documents;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.IndexCreated;
-import com.arakelian.elastic.api.IndexDeleted;
-import com.arakelian.elastic.api.IndexedDocument;
-import com.arakelian.elastic.api.Mget;
-import com.arakelian.elastic.api.Refresh;
+import com.arakelian.elastic.model.About;
+import com.arakelian.elastic.model.BulkResponse;
+import com.arakelian.elastic.model.ClusterHealth;
+import com.arakelian.elastic.model.DeletedDocument;
+import com.arakelian.elastic.model.Document;
+import com.arakelian.elastic.model.Documents;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.IndexCreated;
+import com.arakelian.elastic.model.IndexDeleted;
+import com.arakelian.elastic.model.IndexedDocument;
+import com.arakelian.elastic.model.Mget;
+import com.arakelian.elastic.model.Refresh;
 
-import okhttp3.MediaType;
-import retrofit2.Call;
-import retrofit2.http.Body;
-import retrofit2.http.DELETE;
-import retrofit2.http.GET;
-import retrofit2.http.HEAD;
-import retrofit2.http.Headers;
-import retrofit2.http.POST;
-import retrofit2.http.PUT;
-import retrofit2.http.Path;
-import retrofit2.http.Query;
+import retrofit2.Response;
 
 public interface ElasticClient {
-    /** JSON media type **/
-    public static final MediaType JSON = MediaType.parse("application/json; charset=UTF-8");
+    Response<About> about() throws ElasticException;
 
-    @GET("/")
-    Call<About> about();
+    Response<BulkResponse> bulk(String operations, Boolean pretty) throws ElasticException;
 
-    @POST("/_bulk")
-    @Headers("Content-Type: application/x-ndjson")
-    Call<BulkResponse> bulk(@Body String operations, @Query("pretty") Boolean pretty);
+    Response<ClusterHealth> clusterHealth() throws ElasticException;
 
-    @GET("/_cluster/health")
-    Call<ClusterHealth> clusterHealth();
+    Response<ClusterHealth> clusterHealth(ClusterHealth.Status waitForStatus, String timeout)
+            throws ElasticException;
 
-    @GET("/_cluster/health")
-    Call<ClusterHealth> clusterHealth(
-            @Query("wait_for_status") ClusterHealth.Status waitForStatus,
-            @Query("timeout") String timeout);
-
-    @GET("/_cluster/health/{names}")
-    Call<ClusterHealth> clusterHealthForIndex(
-            @Path("names") String names,
-            @Query("wait_for_status") ClusterHealth.Status waitForStatus,
-            @Query("timeout") String timeout);
+    Response<ClusterHealth> clusterHealthForIndex(
+            String names,
+            ClusterHealth.Status waitForStatus,
+            String timeout) throws ElasticException;
 
     /**
      * Create an index in Elastic.
@@ -78,9 +58,10 @@ public interface ElasticClient {
      * @param index
      *            index configuration
      * @return an OkHttp3 call
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @PUT("/{name}")
-    Call<IndexCreated> createIndex(@Path("name") String name, @Body Index index);
+    Response<IndexCreated> createIndex(String name, Index index) throws ElasticException;
 
     /**
      * Delete all indexes from Elastic.
@@ -89,22 +70,15 @@ public interface ElasticClient {
      * for the indexes to actually be deleted.
      *
      * @return response from Elastic acknowledging the request
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @DELETE("/*")
-    Call<IndexDeleted> deleteAllIndexes();
+    Response<IndexDeleted> deleteAllIndexes() throws ElasticException;
 
-    @DELETE("/{name}/{type}/{id}")
-    Call<DeletedDocument> deleteDocument(
-            @Path("name") String name,
-            @Path("type") String type,
-            @Path("id") String id);
+    Response<DeletedDocument> deleteDocument(String name, String type, String id) throws ElasticException;
 
-    @DELETE("/{name}/{type}/{id}?version_type=external")
-    Call<DeletedDocument> deleteDocument(
-            @Path("name") String name,
-            @Path("type") String type,
-            @Path("id") String id,
-            @Query("version") long epochMillisUtc);
+    Response<DeletedDocument> deleteDocument(String name, String type, String id, long epochMillisUtc)
+            throws ElasticException;
 
     /**
      * Deletes a comma separated list of index names from Elastic.
@@ -115,19 +89,15 @@ public interface ElasticClient {
      * @param names
      *            comma separated list of index names
      * @return response from Elastic acknowledging the request
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @DELETE("/{names}")
-    Call<IndexDeleted> deleteIndex(@Path("names") String names);
+    Response<IndexDeleted> deleteIndex(String names) throws ElasticException;
 
-    @GET("/{name}/{type}/{id}")
-    Call<Document> getDocument(
-            @Path("name") String name,
-            @Path("type") String type,
-            @Path("id") String id,
-            @Query("_source") String sourceFields);
+    Response<Document> getDocument(String name, String type, String id, String sourceFields)
+            throws ElasticException;
 
-    @POST("/_mget")
-    Call<Documents> getDocuments(@Body Mget mget);
+    Response<Documents> getDocuments(Mget mget) throws ElasticException;
 
     /**
      * Indexes a document using default versioning scheme, which simply increments the document
@@ -145,14 +115,11 @@ public interface ElasticClient {
      *
      * @see <a
      *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @PUT("/{name}/{type}/{id}")
-    @Headers("Content-Type: application/json; charset=UTF-8")
-    Call<IndexedDocument> indexDocument(
-            @Path("name") String name,
-            @Path("type") String type,
-            @Path("id") String id,
-            @Body String document);
+    Response<IndexedDocument> indexDocument(String name, String type, String id, String document)
+            throws ElasticException;
 
     /**
      * Indexes a document using an external versioning scheme, based upon milliseconds since epoch
@@ -181,15 +148,15 @@ public interface ElasticClient {
      *
      * @see <a
      *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @PUT("/{name}/{type}/{id}?version_type=external")
-    @Headers("Content-Type: application/json; charset=UTF-8")
-    Call<IndexedDocument> indexDocument(
-            @Path("name") String name,
-            @Path("type") String type,
-            @Path("id") String id,
-            @Body String document,
-            @Query("version") long epochMillisUtc);
+    Response<IndexedDocument> indexDocument(
+            String name,
+            String type,
+            String id,
+            String document,
+            long epochMillisUtc) throws ElasticException;
 
     /**
      * Checks to see if specified index exists
@@ -200,13 +167,12 @@ public interface ElasticClient {
      * @param name
      *            index name
      * @return HTTP 200 if index exists
+     * @throws ElasticException
+     *             if there an exception making HTTP request
      */
-    @HEAD("/{name}")
-    Call<Void> indexExists(@Path("name") String name);
+    Response<Void> indexExists(String name) throws ElasticException;
 
-    @POST("/_refresh")
-    Call<Refresh> refreshAllIndexes();
+    Response<Refresh> refreshAllIndexes() throws ElasticException;
 
-    @POST("/{names}/_refresh")
-    Call<Refresh> refreshIndex(@Path("names") String names);
+    Response<Refresh> refreshIndex(String names) throws ElasticException;
 }

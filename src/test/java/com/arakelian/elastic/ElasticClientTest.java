@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic;
 
-import static com.arakelian.elastic.api.Mapping.Dynamic.STRICT;
+import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -33,26 +33,29 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
-import com.arakelian.elastic.api.ClusterHealth;
-import com.arakelian.elastic.api.ClusterHealth.Status;
-import com.arakelian.elastic.api.DeletedDocument;
-import com.arakelian.elastic.api.Documents;
-import com.arakelian.elastic.api.Field.Type;
-import com.arakelian.elastic.api.ImmutableField;
-import com.arakelian.elastic.api.ImmutableMapping;
-import com.arakelian.elastic.api.ImmutableMget;
-import com.arakelian.elastic.api.ImmutableMget.Builder;
-import com.arakelian.elastic.api.ImmutableMgetDocument;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.IndexDeleted;
-import com.arakelian.elastic.api.IndexedDocument;
-import com.arakelian.elastic.api.Refresh;
+import com.arakelian.elastic.model.ClusterHealth;
+import com.arakelian.elastic.model.ClusterHealth.Status;
+import com.arakelian.elastic.model.DeletedDocument;
+import com.arakelian.elastic.model.Documents;
+import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.ImmutableField;
+import com.arakelian.elastic.model.ImmutableMapping;
+import com.arakelian.elastic.model.ImmutableMget;
+import com.arakelian.elastic.model.ImmutableMgetDocument;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.IndexDeleted;
+import com.arakelian.elastic.model.IndexedDocument;
+import com.arakelian.elastic.model.Refresh;
 import com.arakelian.fake.model.Person;
 import com.arakelian.fake.model.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 public class ElasticClientTest extends AbstractElasticTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientTest.class);
+
+    public ElasticClientTest(final String version) throws Exception {
+        super(version);
+    }
 
     private long assertDeleteWithExternalVersion(final Index index, final String id) throws IOException {
         // delete document with external version
@@ -63,8 +66,7 @@ public class ElasticClientTest extends AbstractElasticTest {
                         index.getName(), //
                         ElasticTestUtils.DEFAULT_TYPE, //
                         id, //
-                        deleteMillis) //
-                        .execute());
+                        deleteMillis));
         assertEquals(index.getName(), deleted.getIndex());
         assertEquals(ElasticTestUtils.DEFAULT_TYPE, deleted.getType());
         assertEquals(id, deleted.getId());
@@ -86,8 +88,7 @@ public class ElasticClientTest extends AbstractElasticTest {
                         ElasticTestUtils.DEFAULT_TYPE, //
                         person.getId(), //
                         JacksonUtils.toString(person, false), //
-                        updateMillis) //
-                        .execute());
+                        updateMillis));
 
         // verify response
         assertEquals(index.getName(), response.getIndex());
@@ -110,8 +111,7 @@ public class ElasticClientTest extends AbstractElasticTest {
                         index.getName(), //
                         ElasticTestUtils.DEFAULT_TYPE, //
                         person.getId(), //
-                        JacksonUtils.toString(person, false)) //
-                        .execute());
+                        JacksonUtils.toString(person, false)));
 
         assertEquals(index.getName(), response.getIndex());
         assertEquals(ElasticTestUtils.DEFAULT_TYPE, response.getType());
@@ -125,15 +125,10 @@ public class ElasticClientTest extends AbstractElasticTest {
     public void testClusterHealth() throws IOException {
         final ClusterHealth health = elasticTestUtils.assertSuccessful(
                 ClusterHealth.class, //
-                elasticClient.clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT).execute());
+                elasticClient.clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT));
         LOGGER.info("{}", health);
 
-        if (majorVersion > 5) {
-            assertEquals("docker-cluster", health.getClusterName());
-        } else {
-            assertEquals("elasticsearch", health.getClusterName());
-        }
-
+        assertEquals("docker-cluster", health.getClusterName());
         assertNotEquals("red", health.getStatus());
         assertEquals(Boolean.FALSE, health.getTimedOut());
         assertEquals(Integer.valueOf(1), health.getNumberOfNodes());
@@ -145,7 +140,7 @@ public class ElasticClientTest extends AbstractElasticTest {
     public void testDeleteAll() throws IOException {
         final IndexDeleted response = elasticTestUtils.assertSuccessful(
                 IndexDeleted.class, //
-                elasticClient.deleteAllIndexes().execute());
+                elasticClient.deleteAllIndexes());
         LOGGER.info("deleteAllIndexes: {}", response);
     }
 
@@ -158,7 +153,7 @@ public class ElasticClientTest extends AbstractElasticTest {
                     elasticClient.deleteDocument(
                             index.getName(),
                             ElasticTestUtils.DEFAULT_TYPE,
-                            MoreStringUtils.shortUuid()).execute().code());
+                            MoreStringUtils.shortUuid()).code());
         });
     }
 
@@ -226,7 +221,7 @@ public class ElasticClientTest extends AbstractElasticTest {
             }
 
             // request ids that we just indexed
-            final Builder builder = ImmutableMget.builder();
+            final ImmutableMget.Builder builder = ImmutableMget.builder();
             for (final Person person : people) {
                 builder.addDocs(
                         ImmutableMgetDocument.builder() //
@@ -250,7 +245,7 @@ public class ElasticClientTest extends AbstractElasticTest {
             final ImmutableMget mget = builder.build();
             final Documents documents = elasticTestUtils.assertSuccessful(
                     Documents.class, //
-                    elasticClient.getDocuments(mget).execute());
+                    elasticClient.getDocuments(mget));
             assertNotNull(documents);
             assertEquals(mget.getDocs().size(), documents.getDocs().size());
         });
@@ -260,7 +255,7 @@ public class ElasticClientTest extends AbstractElasticTest {
     public void testRefreshAll() throws IOException {
         final Refresh response = elasticTestUtils.assertSuccessful(
                 Refresh.class, //
-                elasticClient.refreshAllIndexes().execute());
+                elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
     }
 }

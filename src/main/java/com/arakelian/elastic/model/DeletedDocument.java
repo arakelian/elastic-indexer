@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,33 +15,50 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.Elastic.Version6;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Value.Immutable(copy = false)
-@JsonSerialize(as = ImmutableIndexCreated.class)
-@JsonDeserialize(builder = ImmutableIndexCreated.Builder.class)
-public interface IndexCreated {
+@JsonSerialize(as = ImmutableDeletedDocument.class)
+@JsonDeserialize(builder = ImmutableDeletedDocument.Builder.class)
+@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "found", "result", "_shards" })
+public interface DeletedDocument extends VersionedDocumentId {
     @Nullable
-    @JsonProperty("acknowledged")
-    public Boolean getAcknowledged();
+    @JsonProperty("_primary_term")
+    @JsonView(Version6.class)
+    public Integer getPrimaryTerm();
 
     @Nullable
-    @JsonProperty("shards_acknowledged")
-    public Boolean getShardsAcknowledged();
+    @JsonProperty("result")
+    public String getResult();
 
-    /**
-     * Returns the name of the index
-     * 
-     * @return name of the index
-     */
     @Nullable
-    @JsonProperty("index")
-    public String getIndex();
+    @JsonProperty("_seq_no")
+    @JsonView(Version6.class)
+    public Integer getSeqNo();
+
+    @Nullable
+    @JsonProperty("_shards")
+    public Shards getShards();
+
+    @Nullable
+    @JsonProperty("found")
+    @Value.Default
+    public default Boolean isFound() {
+        // Elastic 6.x doesn't return this flag so we simulate it
+        final String result = getResult();
+        if (result == null) {
+            return null;
+        }
+        return "deleted".equals(result);
+    }
 }

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,9 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.Field;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.Mapping;
+import com.arakelian.elastic.model.Field;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.Mapping;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
@@ -66,14 +66,15 @@ public abstract class DocumentMapping {
 
         // use _default_ mapping if type does not have custom mapping
         final Mapping mapping = mappings.get(Mapping._DEFAULT_);
-        Preconditions.checkState(mapping != null,
+        Preconditions.checkState(
+                mapping != null,
                 "Index \"" + index + "\" does not contain mapping \"" + type + "\" or _default_ mapping");
         return mapping;
     }
 
     /**
      * Returns a list of source paths and the {@link Field}s to which it is indexed.
-     * 
+     *
      * @return list of source paths and the {@link Field}s to which it is indexed.
      */
     @Value.Derived

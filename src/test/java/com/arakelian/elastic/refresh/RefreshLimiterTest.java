@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.arakelian.elastic.ElasticClient;
-import com.arakelian.elastic.MockElasticClient;
-import com.arakelian.elastic.api.ImmutableRefresh;
-import com.arakelian.elastic.api.ImmutableShards;
-import com.arakelian.elastic.api.Refresh;
+import com.arakelian.elastic.MockOkHttpElasticApi;
+import com.arakelian.elastic.OkHttpElasticApi;
+import com.arakelian.elastic.OkHttpElasticClient;
+import com.arakelian.elastic.model.ImmutableRefresh;
+import com.arakelian.elastic.model.ImmutableShards;
+import com.arakelian.elastic.model.Refresh;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 import retrofit2.Call;
@@ -48,7 +49,7 @@ public class RefreshLimiterTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefreshLimiterTest.class);
     private NetworkBehavior networkBehavior;
 
-    private BehaviorDelegate<ElasticClient> delegate;
+    private BehaviorDelegate<OkHttpElasticApi> delegate;
 
     @Before
     public void initializeRetrofit() {
@@ -65,20 +66,21 @@ public class RefreshLimiterTest {
         final MockRetrofit mockRetrofit = new MockRetrofit.Builder(retrofit) //
                 .networkBehavior(networkBehavior) //
                 .build();
-        delegate = mockRetrofit.create(ElasticClient.class);
+        delegate = mockRetrofit.create(OkHttpElasticApi.class);
     }
 
-    private MockElasticClient mockRefreshSuccessful() {
-        final MockElasticClient elasticClient = new MockElasticClient(delegate) {
+    private MockOkHttpElasticApi mockApi() {
+        final MockOkHttpElasticApi elasticClient = new MockOkHttpElasticApi(delegate) {
             @Override
             public Call<Refresh> refreshIndex(final String names) {
                 refreshCount.incrementAndGet();
                 final Refresh response = ImmutableRefresh.builder() //
-                        .shards(ImmutableShards.builder() //
-                                .successful(1) //
-                                .failed(0) //
-                                .total(1) //
-                                .build()) //
+                        .shards(
+                                ImmutableShards.builder() //
+                                        .successful(1) //
+                                        .failed(0) //
+                                        .total(1) //
+                                        .build()) //
                         .build();
                 return delegate.returning(Calls.response(response)).refreshIndex(names);
             }
@@ -111,7 +113,9 @@ public class RefreshLimiterTest {
         verifyTryAcquire(3000, 10.0d);
     }
 
-    private void verifyEnqueue(final int durationMillis, final double permitsPerSecond,
+    private void verifyEnqueue(
+            final int durationMillis,
+            final double permitsPerSecond,
             final boolean networkFailures) {
         LOGGER.info("Starting rate limiter test for {}ms at {}/second", durationMillis, permitsPerSecond);
 
@@ -121,7 +125,8 @@ public class RefreshLimiterTest {
                 .defaultPermitsPerSecond(permitsPerSecond) //
                 .build();
 
-        final MockElasticClient elasticClient = mockRefreshSuccessful();
+        final MockOkHttpElasticApi mockApi = mockApi();
+        final OkHttpElasticClient elasticClient = new OkHttpElasticClient(mockApi, null);
         networkBehavior.setFailurePercent(networkFailures ? 100 : 0);
 
         final String index = "test";
@@ -136,11 +141,13 @@ public class RefreshLimiterTest {
             final RefreshStats stats = refreshLimiter.getStats(index);
             final AtomicLong successful = stats.getSuccessful();
             final AtomicLong refreshes = stats.getAttempts();
-            final AtomicInteger refreshCount = elasticClient.refreshCount;
+            final AtomicInteger refreshCount = mockApi.refreshCount;
             LOGGER.info("Testing completed: {}", stats);
 
             final double actualPermitsPerSecond = (double) successful.get() / (double) duration * 1000.0;
-            LOGGER.info("Expected {}/second and was {}/second", permitsPerSecond,
+            LOGGER.info(
+                    "Expected {}/second and was {}/second",
+                    permitsPerSecond,
                     Math.round(actualPermitsPerSecond * 100.0) / 100.0);
             final int expected = (int) (permitsPerSecond * duration / 1000.0);
             if (networkFailures) {
@@ -152,11 +159,14 @@ public class RefreshLimiterTest {
                         "Expected more than " + refreshCount.get() + " refreshes due to network failures",
                         expected < refreshCount.get());
             } else {
-                Assert.assertTrue("Expected " + expected + " but was " + refreshes.get(),
+                Assert.assertTrue(
+                        "Expected " + expected + " but was " + refreshes.get(),
                         Math.abs(expected - refreshes.get()) <= 1);
-                Assert.assertTrue("Expected " + expected + " but was " + successful.get(),
+                Assert.assertTrue(
+                        "Expected " + expected + " but was " + successful.get(),
                         Math.abs(expected - successful.get()) <= 1);
-                Assert.assertTrue("Expected " + expected + " but was " + refreshCount.get(),
+                Assert.assertTrue(
+                        "Expected " + expected + " but was " + refreshCount.get(),
                         Math.abs(expected - refreshCount.get()) <= 1);
             }
         }
@@ -171,7 +181,8 @@ public class RefreshLimiterTest {
                 .defaultPermitsPerSecond(permitsPerSecond) //
                 .build();
 
-        final MockElasticClient elasticClient = mockRefreshSuccessful();
+        final MockOkHttpElasticApi mockApi = mockApi();
+        final OkHttpElasticClient elasticClient = new OkHttpElasticClient(mockApi, null);
         networkBehavior.setFailurePercent(0);
 
         final String index = "test";
@@ -193,9 +204,10 @@ public class RefreshLimiterTest {
             Assert.assertEquals(successful, stats.getAttempts().get());
             Assert.assertEquals(successful, stats.getSuccessful().get());
             Assert.assertEquals(attempts, stats.getAcquires().get());
-            Assert.assertEquals(successful, elasticClient.refreshCount.get());
-            Assert.assertTrue("Expected " + expected + " but was " + elasticClient.refreshCount.get(),
-                    Math.abs(expected - elasticClient.refreshCount.get()) <= 1);
+            Assert.assertEquals(successful, mockApi.refreshCount.get());
+            Assert.assertTrue(
+                    "Expected " + expected + " but was " + mockApi.refreshCount.get(),
+                    Math.abs(expected - mockApi.refreshCount.get()) <= 1);
         }
     }
 }

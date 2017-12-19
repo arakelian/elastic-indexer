@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.arakelian.core.utils.DateUtils;
-import com.arakelian.elastic.api.Field.Type;
-import com.arakelian.elastic.api.ImmutableField;
-import com.arakelian.elastic.api.ImmutableIndex;
-import com.arakelian.elastic.api.ImmutableMapping;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.Mapping;
+import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.ImmutableField;
+import com.arakelian.elastic.model.ImmutableIndex;
+import com.arakelian.elastic.model.ImmutableMapping;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.Mapping;
 
 public class DocumentBuilderTest {
     /** Plain builder does not do entity extraction **/
@@ -112,14 +112,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testBooleansFalse() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("booleans") //
-                        .ignoreMalformed(false) //
-                        .type(Type.BOOLEAN) //
-                        .build())
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("booleans") //
+                                        .ignoreMalformed(false) //
+                                        .type(Type.BOOLEAN) //
+                                        .build())
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -132,14 +134,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testBooleansTrue() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("booleans") //
-                        .ignoreMalformed(false) //
-                        .type(Type.BOOLEAN) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("booleans") //
+                                        .ignoreMalformed(false) //
+                                        .type(Type.BOOLEAN) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -152,14 +156,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidBinary() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("base64") //
-                        .ignoreMalformed(true) //
-                        .type(Type.BINARY) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("base64") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.BINARY) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -172,14 +178,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidBytes() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.BYTE) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.BYTE) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -192,14 +200,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidDates() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("dates") //
-                        .ignoreMalformed(true) //
-                        .type(Type.DATE) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("dates") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.DATE) //
+                                        .build()) //
+                        .build());
         final String date1 = DateUtils.toStringIsoFormat("2016-02-01");
         final String date2 = DateUtils.toStringIsoFormat("2016-09-04");
 
@@ -214,14 +224,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidDoubles() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.DOUBLE) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.DOUBLE) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -234,14 +246,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidFloats() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.FLOAT) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.FLOAT) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -254,14 +268,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidIntegers() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.INTEGER) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.INTEGER) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -274,14 +290,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidLongs() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.LONG) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.LONG) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -294,14 +312,16 @@ public class DocumentBuilderTest {
 
     @Test
     public void testIgnoreInvalidShorts() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder() //
-                        .name("numbers") //
-                        .ignoreMalformed(true) //
-                        .type(Type.SHORT) //
-                        .build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(
+                                ImmutableField.builder() //
+                                        .name("numbers") //
+                                        .ignoreMalformed(true) //
+                                        .type(Type.SHORT) //
+                                        .build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -314,25 +334,28 @@ public class DocumentBuilderTest {
 
     @Test
     public void testSourcePathIsArray() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder().name("friends").build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(ImmutableField.builder().name("friends").build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
                 .putFieldToSourcePaths("friends", "friends") //
                 .build();
         Assert.assertEquals( //
-                "{\"friends\":[\"Moe\",\"Larry\",\"Curly\"]}", docBuilder.build(documentMapping, sampleJson));
+                "{\"friends\":[\"Moe\",\"Larry\",\"Curly\"]}",
+                docBuilder.build(documentMapping, sampleJson));
     }
 
     @Test
     public void testSourcePathIsNested() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder().name("name").build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(ImmutableField.builder().name("name").build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -345,10 +368,11 @@ public class DocumentBuilderTest {
 
     @Test
     public void testSourcePathIsObject() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder().name("address").build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(ImmutableField.builder().name("address").build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //
@@ -361,12 +385,13 @@ public class DocumentBuilderTest {
 
     @Test
     public void testSourcePathIsString() {
-        final Index index = newIndex(ImmutableMapping.builder() //
-                .all(null) //
-                .addFields(ImmutableField.builder().name("name").build()) //
-                .addFields(ImmutableField.builder().name("email").build()) //
-                .addFields(ImmutableField.builder().name("phone").build()) //
-                .build());
+        final Index index = newIndex(
+                ImmutableMapping.builder() //
+                        .all(null) //
+                        .addFields(ImmutableField.builder().name("name").build()) //
+                        .addFields(ImmutableField.builder().name("email").build()) //
+                        .addFields(ImmutableField.builder().name("phone").build()) //
+                        .build());
 
         final DocumentMapping documentMapping = ImmutableDocumentMapping.builder() //
                 .index(index) //

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,48 +15,33 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
+
+import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.Elastic.Version6;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Value.Immutable(copy = false)
-@JsonSerialize(as = ImmutableIndexedDocument.class)
-@JsonDeserialize(builder = ImmutableIndexedDocument.Builder.class)
-@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "result", "_shards", "created" })
-public interface IndexedDocument extends VersionedDocumentId {
-    @Nullable
-    @JsonProperty("result")
-    public String getResult();
-
-    @Nullable
-    @JsonProperty("_shards")
-    public Shards getShards();
-
-    @Nullable
-    @JsonProperty("created")
-    @Value.Default
-    public default Boolean isCreated() {
-        // Elastic 6.x doesn't return this flag so we simulate it
-        String result = getResult();
-        if (result == null) {
-            return null;
-        }
-        return "created".equals(result);
+@JsonSerialize(as = ImmutableMget.class)
+@JsonDeserialize(builder = ImmutableMget.Builder.class)
+public interface Mget {
+    @Value.Immutable(copy = false)
+    @JsonSerialize(as = ImmutableMgetDocument.class)
+    @JsonDeserialize(builder = ImmutableMgetDocument.Builder.class)
+    @JsonPropertyOrder({ "_index", "_type", "_id", "_source" })
+    public static interface MgetDocument extends DocumentId {
+        @Nullable
+        @JsonProperty("_source")
+        public String getSourceFields();
     }
 
-    @JsonProperty("_seq_no")
-    @JsonView(Version6.class)
-    public Integer getSeqNo();
-
-    @JsonProperty("_primary_term")
-    @JsonView(Version6.class)
-    public Integer getPrimaryTerm();
+    @Nullable
+    @JsonProperty("docs")
+    public List<MgetDocument> getDocs();
 }

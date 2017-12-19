@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,33 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
+
+import org.immutables.value.Value;
 
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@JsonPropertyOrder({ "_index", "_type", "_id", "_version" })
-public interface VersionedDocumentId extends DocumentId {
+@Value.Immutable(copy = false)
+@JsonSerialize(as = ImmutableIndexCreated.class)
+@JsonDeserialize(builder = ImmutableIndexCreated.Builder.class)
+public interface IndexCreated {
     @Nullable
-    @JsonProperty("_version")
-    public Long getVersion();
+    @JsonProperty("acknowledged")
+    public Boolean getAcknowledged();
+
+    /**
+     * Returns the name of the index
+     *
+     * @return name of the index
+     */
+    @Nullable
+    @JsonProperty("index")
+    public String getIndex();
+
+    @Nullable
+    @JsonProperty("shards_acknowledged")
+    public Boolean getShardsAcknowledged();
 }

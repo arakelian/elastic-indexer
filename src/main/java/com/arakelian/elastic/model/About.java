@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.Elastic.Version6;
+import com.arakelian.elastic.Elastic.Version6;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

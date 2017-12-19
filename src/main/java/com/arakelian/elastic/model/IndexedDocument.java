@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,39 +15,50 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
-
-import java.util.Map;
+package com.arakelian.elastic.model;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.Elastic.Version6;
 import com.arakelian.elastic.feature.Nullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Value.Immutable(copy = false)
-@JsonSerialize(as = ImmutableIndex.class)
-@JsonDeserialize(builder = ImmutableIndex.Builder.class)
-public interface Index {
+@JsonSerialize(as = ImmutableIndexedDocument.class)
+@JsonDeserialize(builder = ImmutableIndexedDocument.Builder.class)
+@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "result", "_shards", "created" })
+public interface IndexedDocument extends VersionedDocumentId {
     @Nullable
-    @Value.Auxiliary
-    @JsonProperty("mappings")
-    public Map<String, Mapping> getMappings();
+    @JsonProperty("_primary_term")
+    @JsonView(Version6.class)
+    public Integer getPrimaryTerm();
 
-    /**
-     * Returns the index name
-     *
-     * @return name of index
-     */
-    @JsonIgnore
-    public String getName();
+    @Nullable
+    @JsonProperty("result")
+    public String getResult();
 
+    @Nullable
+    @JsonProperty("_seq_no")
+    @JsonView(Version6.class)
+    public Integer getSeqNo();
+
+    @Nullable
+    @JsonProperty("_shards")
+    public Shards getShards();
+
+    @Nullable
+    @JsonProperty("created")
     @Value.Default
-    @Value.Auxiliary
-    @JsonProperty("settings")
-    public default IndexSettings getSettings() {
-        return ImmutableIndexSettings.builder().build();
+    public default Boolean isCreated() {
+        // Elastic 6.x doesn't return this flag so we simulate it
+        final String result = getResult();
+        if (result == null) {
+            return null;
+        }
+        return "created".equals(result);
     }
 }

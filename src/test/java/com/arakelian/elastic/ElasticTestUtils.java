@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic;
 
-import static com.arakelian.elastic.api.Mapping.Dynamic.STRICT;
+import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,25 +34,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.MoreStringUtils;
-import com.arakelian.elastic.api.ClusterHealth;
-import com.arakelian.elastic.api.ClusterHealth.Status;
-import com.arakelian.elastic.api.Document;
-import com.arakelian.elastic.api.ElasticError;
-import com.arakelian.elastic.api.Field.Type;
-import com.arakelian.elastic.api.ImmutableField;
-import com.arakelian.elastic.api.ImmutableIndex;
-import com.arakelian.elastic.api.ImmutableMapping;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.IndexCreated;
-import com.arakelian.elastic.api.IndexDeleted;
-import com.arakelian.elastic.api.Mapping;
-import com.arakelian.elastic.api.Refresh;
 import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkIndexerConfig;
 import com.arakelian.elastic.bulk.DefaultBulkOperationFactory;
 import com.arakelian.elastic.bulk.ImmutableBulkIndexerConfig;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.LoggingIndexerListener;
+import com.arakelian.elastic.model.ClusterHealth;
+import com.arakelian.elastic.model.ClusterHealth.Status;
+import com.arakelian.elastic.model.Document;
+import com.arakelian.elastic.model.ElasticError;
+import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.ImmutableField;
+import com.arakelian.elastic.model.ImmutableIndex;
+import com.arakelian.elastic.model.ImmutableMapping;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.IndexCreated;
+import com.arakelian.elastic.model.IndexDeleted;
+import com.arakelian.elastic.model.Mapping;
+import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
 import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.fake.model.Person;
@@ -120,13 +120,13 @@ public class ElasticTestUtils {
         assertTrue(document.isFound());
     }
 
-    public void assertIndexExists(final Index index) throws IOException {
-        Response<Void> response = elasticClientRetryer.indexExists(index.getName());
+    public void assertIndexExists(final Index index) throws ElasticException {
+        final Response<Void> response = elasticClientRetryer.indexExists(index.getName());
         assertTrue(response.isSuccessful());
     }
 
-    public void assertIndexNotExists(final Index index) throws IOException {
-        Response<Void> response = elasticClientRetryer.indexExists(index.getName());
+    public void assertIndexNotExists(final Index index) throws ElasticException {
+        final Response<Void> response = elasticClientRetryer.indexExists(index.getName());
         assertFalse(response.isSuccessful());
     }
 

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.BulkResponse;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
+import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Preconditions;
@@ -64,7 +64,7 @@ public abstract class BulkIndexerConfig<T> {
 
     /**
      * Returns the maximum size of a bulk operation (in bytes)
-     * 
+     *
      * @return maximum size of a bulk operation
      */
     @Value.Default
@@ -74,7 +74,7 @@ public abstract class BulkIndexerConfig<T> {
 
     /**
      * Returns the maximum size of a bulk operation (in documents)
-     * 
+     *
      * @return maximum size of a batch operation (in documents)
      */
     @Value.Default

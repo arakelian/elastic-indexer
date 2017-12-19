@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,12 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.arakelian.elastic.Elastic.Version5;
+import com.arakelian.elastic.Elastic.Version6;
 import com.arakelian.elastic.ElasticClient;
-import com.arakelian.elastic.api.About;
-import com.arakelian.elastic.api.Elastic.Version5;
-import com.arakelian.elastic.api.Elastic.Version6;
+import com.arakelian.elastic.OkHttpElasticApi;
+import com.arakelian.elastic.OkHttpElasticClient;
+import com.arakelian.elastic.model.About;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rholder.retry.RetryException;
@@ -52,7 +54,7 @@ public class ElasticClientUtils {
      */
     public static class RetryIoException implements Predicate<Throwable> {
         @Override
-        public boolean apply(Throwable exception) {
+        public boolean apply(final Throwable exception) {
             if (exception instanceof SocketTimeoutException) {
                 // Retry if the server dropped connection on us
                 return true;
@@ -66,41 +68,13 @@ public class ElasticClientUtils {
 
     public static final String DEFAULT_TIMEOUT = "30s";
 
-    public static About waitForElasticReady(
-            final ElasticClient elasticClient,
-            final long timeout,
-            final TimeUnit unit) {
-        final Retryer<About> retryer = RetryerBuilder.<About> newBuilder() //
-                .retryIfException() //
-                .withStopStrategy(StopStrategies.stopAfterDelay(timeout, unit)) //
-                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
-                .build();
-
-        // wait for elastic
-        try {
-            final About info = retryer.call(() -> {
-                return elasticClient.about().execute().body();
-            });
-            return info;
-        } catch (final ExecutionException e) {
-            LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
-            return null;
-        } catch (final RetryException e) {
-            LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
-            return null;
-        }
-    }
-
-    private ElasticClientUtils() {
-        // utility class
-    }
-
     public static ElasticClient createElasticClient(
             final OkHttpClient client,
-            String elasticUrl,
-            ObjectMapper objectMapper,
-            About about) {
+            final String elasticUrl,
+            final ObjectMapper objectMapper,
+            final About about) {
 
+        // we will not know the version of Elastic when we first boot
         if (about != null) {
             objectMapper.enable(MapperFeature.DEFAULT_VIEW_INCLUSION);
             final Class<?> version;
@@ -126,19 +100,24 @@ public class ElasticClientUtils {
                 .addConverterFactory(JacksonConverterFactory.create(objectMapper)) //
                 .addCallAdapterFactory(GuavaCallAdapterFactory.create()) //
                 .build();
-        ElasticClient elasticClient = retrofit.create(ElasticClient.class);
+        final OkHttpElasticApi api = retrofit.create(OkHttpElasticApi.class);
+        final ElasticClient elasticClient = new OkHttpElasticClient(api, about);
         return elasticClient;
     }
 
-    /**
-     * Returns true if call to Elastic should be retried.
-     *
-     * @param response
-     *            response from last call to Elastic
-     * @return true if call to Elastic should be retried.
-     */
-    public static boolean retryIfResponse(final Response<?> response) {
-        return response != null ? ElasticClientUtils.retryIfResponse(response.code()) : false;
+    public static <T> Retryer<Response<T>> createElasticRetryer() {
+        return RetryerBuilder.<Response<T>> newBuilder() //
+                .retryIfException(new RetryIoException()) //
+                .retryIfResult(result -> retryIfResponse(result)) //
+                .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
+                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
+                .build();
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    public static Retryer<Response<?>> createElasticRetryer2() {
+        final Retryer result = createElasticRetryer();
+        return result;
     }
 
     /**
@@ -161,18 +140,43 @@ public class ElasticClientUtils {
         return status == 429 || status >= 500;
     }
 
-    public static <T> Retryer<Response<T>> createElasticRetryer() {
-        return RetryerBuilder.<Response<T>> newBuilder() //
-                .retryIfException(new RetryIoException()) //
-                .retryIfResult(result -> retryIfResponse(result)) //
-                .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
-                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
-                .build();
+    /**
+     * Returns true if call to Elastic should be retried.
+     *
+     * @param response
+     *            response from last call to Elastic
+     * @return true if call to Elastic should be retried.
+     */
+    public static boolean retryIfResponse(final Response<?> response) {
+        return response != null ? ElasticClientUtils.retryIfResponse(response.code()) : false;
     }
 
-    @SuppressWarnings({ "cast", "unchecked" })
-    public static Retryer<Response<?>> createElasticRetryer2() {
-        Retryer result = createElasticRetryer();
-        return (Retryer<Response<?>>) result;
+    public static About waitForElasticReady(
+            final ElasticClient elasticClient,
+            final long timeout,
+            final TimeUnit unit) {
+        final Retryer<About> retryer = RetryerBuilder.<About> newBuilder() //
+                .retryIfException() //
+                .withStopStrategy(StopStrategies.stopAfterDelay(timeout, unit)) //
+                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
+                .build();
+
+        // wait for elastic
+        try {
+            final About info = retryer.call(() -> {
+                return elasticClient.about().body();
+            });
+            return info;
+        } catch (final ExecutionException e) {
+            LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
+            return null;
+        } catch (final RetryException e) {
+            LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
+            return null;
+        }
+    }
+
+    private ElasticClientUtils() {
+        // utility class
     }
 }

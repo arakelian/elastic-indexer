@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,29 +19,29 @@ package com.arakelian.elastic;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.arakelian.elastic.api.About;
-import com.arakelian.elastic.api.BulkResponse;
-import com.arakelian.elastic.api.ClusterHealth;
-import com.arakelian.elastic.api.ClusterHealth.Status;
-import com.arakelian.elastic.api.DeletedDocument;
-import com.arakelian.elastic.api.Document;
-import com.arakelian.elastic.api.Documents;
-import com.arakelian.elastic.api.Index;
-import com.arakelian.elastic.api.IndexCreated;
-import com.arakelian.elastic.api.IndexDeleted;
-import com.arakelian.elastic.api.IndexedDocument;
-import com.arakelian.elastic.api.Mget;
-import com.arakelian.elastic.api.Refresh;
+import com.arakelian.elastic.model.About;
+import com.arakelian.elastic.model.BulkResponse;
+import com.arakelian.elastic.model.ClusterHealth;
+import com.arakelian.elastic.model.ClusterHealth.Status;
+import com.arakelian.elastic.model.DeletedDocument;
+import com.arakelian.elastic.model.Document;
+import com.arakelian.elastic.model.Documents;
+import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.IndexCreated;
+import com.arakelian.elastic.model.IndexDeleted;
+import com.arakelian.elastic.model.IndexedDocument;
+import com.arakelian.elastic.model.Mget;
+import com.arakelian.elastic.model.Refresh;
 
 import retrofit2.Call;
 import retrofit2.mock.BehaviorDelegate;
 
-public class MockElasticClient implements ElasticClient {
-    protected final BehaviorDelegate<ElasticClient> delegate;
+public class MockOkHttpElasticApi implements OkHttpElasticApi {
+    protected final BehaviorDelegate<OkHttpElasticApi> delegate;
 
     public final AtomicInteger refreshCount = new AtomicInteger();
 
-    public MockElasticClient(final BehaviorDelegate<ElasticClient> delegate) {
+    public MockOkHttpElasticApi(final BehaviorDelegate<OkHttpElasticApi> delegate) {
         this.delegate = delegate;
     }
 
@@ -66,7 +66,9 @@ public class MockElasticClient implements ElasticClient {
     }
 
     @Override
-    public Call<ClusterHealth> clusterHealthForIndex(final String names, final Status waitForStatus,
+    public Call<ClusterHealth> clusterHealthForIndex(
+            final String names,
+            final Status waitForStatus,
             final String timeout) {
         throw new UnsupportedOperationException();
     }
@@ -87,7 +89,10 @@ public class MockElasticClient implements ElasticClient {
     }
 
     @Override
-    public Call<DeletedDocument> deleteDocument(final String name, final String type, final String id,
+    public Call<DeletedDocument> deleteDocument(
+            final String name,
+            final String type,
+            final String id,
             final long epochMillisUtc) {
         throw new UnsupportedOperationException();
     }
@@ -98,7 +103,10 @@ public class MockElasticClient implements ElasticClient {
     }
 
     @Override
-    public Call<Document> getDocument(final String name, final String type, final String id,
+    public Call<Document> getDocument(
+            final String name,
+            final String type,
+            final String id,
             final String sourceFields) {
         throw new UnsupportedOperationException();
     }
@@ -109,14 +117,21 @@ public class MockElasticClient implements ElasticClient {
     }
 
     @Override
-    public Call<IndexedDocument> indexDocument(final String name, final String type, final String id,
+    public Call<IndexedDocument> indexDocument(
+            final String name,
+            final String type,
+            final String id,
             final String document) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Call<IndexedDocument> indexDocument(final String name, final String type, final String id,
-            final String document, final long epochMillisUtc) {
+    public Call<IndexedDocument> indexDocument(
+            final String name,
+            final String type,
+            final String id,
+            final String document,
+            final long epochMillisUtc) {
         throw new UnsupportedOperationException();
     }
 
@@ -134,5 +149,4 @@ public class MockElasticClient implements ElasticClient {
     public Call<Refresh> refreshIndex(final String names) {
         throw new UnsupportedOperationException();
     }
-
 }

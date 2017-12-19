@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,9 +34,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
-import com.arakelian.elastic.api.Field;
-import com.arakelian.elastic.api.Field.Type;
-import com.arakelian.elastic.api.Mapping;
+import com.arakelian.elastic.model.Field;
+import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Mapping;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonWriter;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -303,9 +303,9 @@ public class DocumentBuilder {
     }
 
     /**
-     * Collects all of the values from the given source node and pushes them into the Elastic document
-     * field. If the source node is an array or object, all of the descendant values are pushes into the
-     * target field.
+     * Collects all of the values from the given source node and pushes them into the Elastic
+     * document field. If the source node is an array or object, all of the descendant values are
+     * pushes into the target field.
      *
      * @param targetField
      *            target field in Elastic document
@@ -337,8 +337,8 @@ public class DocumentBuilder {
     }
 
     /**
-     * Recursively descend a source tree until we reach the source path, at which point we push all of
-     * the values into the target fields.
+     * Recursively descend a source tree until we reach the source path, at which point we push all
+     * of the values into the target fields.
      *
      * @param node
      *            our current location in the JSON document
@@ -350,7 +350,10 @@ public class DocumentBuilder {
      *            index at we are putting data into
      * @throws IOException
      */
-    private void descendSourcePath(final JsonNode node, final String sourcePath, final int startPos,
+    private void descendSourcePath(
+            final JsonNode node,
+            final String sourcePath,
+            final int startPos,
             final DocumentMapping documentMapping) {
         if (node == null || node.isNull()) {
             return;
@@ -390,8 +393,8 @@ public class DocumentBuilder {
      * Adds a field/value pair to an Elasticsearch document.
      *
      * If the specified value is an empty string, the field is not added to the Elastic document.
-     * Similarly, if the specified value has already been added to the field, it is not added a second
-     * time.
+     * Similarly, if the specified value has already been added to the field, it is not added a
+     * second time.
      *
      * Note that in an Elasticsearch document a field may have more than value, so this method will
      * automatically build a list if needed.

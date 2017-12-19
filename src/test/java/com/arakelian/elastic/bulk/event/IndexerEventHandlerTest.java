@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,6 +60,10 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
         }
     }
 
+    public IndexerEventHandlerTest(final String version) throws Exception {
+        super(version);
+    }
+
     @Test
     public void testPublish() throws IOException {
         final CaptureIndexerEventHandler handler = new CaptureIndexerEventHandler();
@@ -88,7 +92,8 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
                     assertNotNull(event.getVersion());
                     assertEquals(INDEX, event.getAction());
                     assertEquals(index, event.getIndex());
-                    assertEquals(DateUtils.toEpochMillisUtc(person.getUpdated()),
+                    assertEquals(
+                            DateUtils.toEpochMillisUtc(person.getUpdated()),
                             event.getVersion().longValue());
                     assertEquals(VersionType.EXTERNAL, event.getVersionType());
                     assertEquals(SUCCEEDED, event.getStatus());

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.Elastic.Version6;
+import com.arakelian.elastic.Elastic.Version6;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -57,8 +57,18 @@ public interface BulkResponse {
         public Boolean getFound();
 
         @Nullable
+        @JsonProperty("_primary_term")
+        @JsonView(Version6.class)
+        public Integer getPrimaryTerm();
+
+        @Nullable
         @JsonProperty("result")
         public String getResult();
+
+        @Nullable
+        @JsonProperty("_seq_no")
+        @JsonView(Version6.class)
+        public Integer getSeqNo();
 
         @Nullable
         @Value.Auxiliary
@@ -67,14 +77,6 @@ public interface BulkResponse {
 
         @JsonProperty("status")
         public int getStatus();
-
-        @JsonProperty("_seq_no")
-        @JsonView(Version6.class)
-        public Integer getSeqNo();
-
-        @JsonProperty("_primary_term")
-        @JsonView(Version6.class)
-        public Integer getPrimaryTerm();
     }
 
     @Value.Immutable(copy = false)

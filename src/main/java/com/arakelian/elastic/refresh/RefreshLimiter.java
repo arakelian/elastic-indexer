@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.ElasticClient;
-import com.arakelian.elastic.api.Refresh;
+import com.arakelian.elastic.model.Refresh;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -119,12 +119,13 @@ public class RefreshLimiter implements Closeable {
         this.config = config;
         this.elasticClient = elasticClient;
 
-        refreshExecutor = MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService( //
-                new ThreadPoolExecutor( //
-                        config.getCoreThreads(), //
-                        config.getMaximumThreads(), //
-                        10L, TimeUnit.SECONDS, //
-                        new LinkedBlockingQueue<>())));
+        refreshExecutor = MoreExecutors.listeningDecorator(
+                MoreExecutors.getExitingExecutorService( //
+                        new ThreadPoolExecutor( //
+                                config.getCoreThreads(), //
+                                config.getMaximumThreads(), //
+                                10L, TimeUnit.SECONDS, //
+                                new LinkedBlockingQueue<>())));
     }
 
     /**
@@ -182,8 +183,13 @@ public class RefreshLimiter implements Closeable {
                 @Override
                 public void onSuccess(final Response<Refresh> result) {
                     // refresh may have failed
-                    LOGGER.debug("Refresh {} of index \"{}\" completed with status code {} after {}: {}", id,
-                            index.name, result.code(), timer, result);
+                    LOGGER.debug(
+                            "Refresh {} of index \"{}\" completed with status code {} after {}: {}",
+                            id,
+                            index.name,
+                            result.code(),
+                            timer,
+                            result);
                     completeQuietly(index);
                 }
             }, MoreExecutors.directExecutor());
@@ -208,7 +214,7 @@ public class RefreshLimiter implements Closeable {
     private Response<Refresh> doRefresh(final Index index) throws IOException {
         LOGGER.debug("Refreshing index \"{}\"", index.name);
         index.getAttempts().incrementAndGet();
-        final Response<Refresh> response = elasticClient.refreshIndex(index.name).execute();
+        final Response<Refresh> response = elasticClient.refreshIndex(index.name);
         if (response.isSuccessful()) {
             index.getSuccessful().incrementAndGet();
         }
@@ -216,9 +222,9 @@ public class RefreshLimiter implements Closeable {
     }
 
     /**
-     * Refreshes the given Elastic index by calling Elastic client API, and returns true if the call was
-     * successful. If the refresh fails for whatever reason, the error is logged and this method returns
-     * false.
+     * Refreshes the given Elastic index by calling Elastic client API, and returns true if the call
+     * was successful. If the refresh fails for whatever reason, the error is logged and this method
+     * returns false.
      *
      * IMPORTANT: This method assumes that the rate limiter has been acquired.
      *
@@ -243,8 +249,10 @@ public class RefreshLimiter implements Closeable {
                 index.getAcquires().incrementAndGet();
                 final double secondsWaited = index.rateLimiter.acquire();
                 final long nanosWaited = (long) (secondsWaited * 1000000000);
-                LOGGER.debug("Waited {} to acquire rate limiter for index \"{}\"",
-                        MoreStringUtils.toString(nanosWaited, TimeUnit.NANOSECONDS), index.name);
+                LOGGER.debug(
+                        "Waited {} to acquire rate limiter for index \"{}\"",
+                        MoreStringUtils.toString(nanosWaited, TimeUnit.NANOSECONDS),
+                        index.name);
 
                 return config.getRetryer().wrap(() -> {
                     // we are about to perform refresh, so we can clear the requeue flag
@@ -365,8 +373,10 @@ public class RefreshLimiter implements Closeable {
             }
 
             // wait specified timeout
-            LOGGER.info("Waiting up to {} for refresh of index \"{}\" to complete",
-                    MoreStringUtils.toString(timeout, unit), name);
+            LOGGER.info(
+                    "Waiting up to {} for refresh of index \"{}\" to complete",
+                    MoreStringUtils.toString(timeout, unit),
+                    name);
             final Stopwatch stopWatch = Stopwatch.createStarted();
 
             // we use a loop to verify condition due to spurious wakeups

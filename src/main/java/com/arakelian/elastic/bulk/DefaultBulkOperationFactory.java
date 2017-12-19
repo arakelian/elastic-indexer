@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import java.util.List;
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.dao.feature.HasId;
 import com.arakelian.dao.feature.HasTimestamp;
-import com.arakelian.elastic.api.Index;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
+import com.arakelian.elastic.model.Index;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
@@ -42,7 +42,10 @@ public class DefaultBulkOperationFactory<T extends HasId> implements BulkOperati
     }
 
     @Override
-    public BulkOperation createBulkOperation(final Action action, final String id, final String source,
+    public BulkOperation createBulkOperation(
+            final Action action,
+            final String id,
+            final String source,
             final Long version) {
         return ImmutableBulkOperation.builder() //
                 .action(action) //
@@ -68,15 +71,15 @@ public class DefaultBulkOperationFactory<T extends HasId> implements BulkOperati
     /**
      * Returns the date that we should use as the basis of a version passed to Elastic.
      *
-     * For {@link Action#CREATE}, {@link Action#INDEX} and {@link Action#UPDATE} requests, we check if
-     * the value extends {@link HasTimestamp}, and use either the update date or create date if
+     * For {@link Action#CREATE}, {@link Action#INDEX} and {@link Action#UPDATE} requests, we check
+     * if the value extends {@link HasTimestamp}, and use either the update date or create date if
      * provided; in all other cases, we'll fall back to use the current date.
      *
-     * For {@link Action#DELETE} requests we cannot use the update or create date (as it it would fail
-     * with "version conflict, current version [XXX] is higher or *equal* to the one provided [XXX]".
-     * The version number we pass on a DELETE is version to be assigned to the DELETED document. It is
-     * equivalent to saying, "delete any version that is OLDER than this timestamp, and then use that
-     * timestamp as the new version number for the deleted document."
+     * For {@link Action#DELETE} requests we cannot use the update or create date (as it it would
+     * fail with "version conflict, current version [XXX] is higher or *equal* to the one provided
+     * [XXX]". The version number we pass on a DELETE is version to be assigned to the DELETED
+     * document. It is equivalent to saying, "delete any version that is OLDER than this timestamp,
+     * and then use that timestamp as the new version number for the deleted document."
      *
      * @param action
      *            action to perform
@@ -91,8 +94,8 @@ public class DefaultBulkOperationFactory<T extends HasId> implements BulkOperati
         case UPDATE:
             if (value instanceof HasTimestamp) {
                 final HasTimestamp hasTimestamp = (HasTimestamp) value;
-                final ZonedDateTime date = MoreObjects.firstNonNull(hasTimestamp.getUpdated(),
-                        hasTimestamp.getCreated());
+                final ZonedDateTime date = MoreObjects
+                        .firstNonNull(hasTimestamp.getUpdated(), hasTimestamp.getCreated());
                 if (date != null) {
                     // make sure we are in UTC format
                     return DateUtils.toUtc(date);

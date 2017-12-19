@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
 
 import java.util.List;
 
@@ -80,8 +80,8 @@ public interface Cause {
      * exception is thrown if the _version provided does not match version in the index; when using
      * external versioning, this exception indicates that there is a newer version in index
      * already.</li>
-     * <li>strict_dynamic_mapping_exception (status:400). Indicates that the source document contained
-     * fields which are not part of the _index/_type mapping.</li>
+     * <li>strict_dynamic_mapping_exception (status:400). Indicates that the source document
+     * contained fields which are not part of the _index/_type mapping.</li>
      * </ul>
      *
      * @return the type of exception thrown by Elastic.

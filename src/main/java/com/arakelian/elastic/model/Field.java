@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.api;
+package com.arakelian.elastic.model;
 
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.api.Elastic.Version5;
+import com.arakelian.elastic.Elastic.Version5;
 import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -149,8 +149,8 @@ public interface Field {
     /**
      * Returns a list of fields that this field value should be copied to.
      *
-     * The {@link #getCopyTo()} allows you to create custom _all fields. The values of multiple fields
-     * can be copied into a group field, which can then be queried as a single field.
+     * The {@link #getCopyTo()} allows you to create custom _all fields. The values of multiple
+     * fields can be copied into a group field, which can then be queried as a single field.
      *
      * @return list of fields that this field value should be copied to.
      */
@@ -204,8 +204,8 @@ public interface Field {
     /**
      * Returns setting that determines what information is added to the inverted index.
      *
-     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other fields
-     * use {@link IndexOptions#DOCS} as the default.
+     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other
+     * fields use {@link IndexOptions#DOCS} as the default.
      *
      * @return setting that determines what information is added to the inverted index.
      */
@@ -224,8 +224,8 @@ public interface Field {
 
     /**
      * Returns a value that will replace null values during indexed. Normally, null values cannot be
-     * indexed or searched. This parameter allows you to replace explicit null values with another value
-     * that can be indexed and searched instead.
+     * indexed or searched. This parameter allows you to replace explicit null values with another
+     * value that can be indexed and searched instead.
      *
      * @return value that will replace null values during indexed
      */
@@ -243,9 +243,9 @@ public interface Field {
      * Returns a list of subfields, if any. A field that has subfields is called a "multi-field" in
      * Elastic parlance.
      *
-     * Note: It is often useful to index the same field in different ways for different purposes. This
-     * is the purpose of multi-fields. For instance, a string field could be mapped as a text field for
-     * full-text search, and as a keyword field for sorting or aggregations
+     * Note: It is often useful to index the same field in different ways for different purposes.
+     * This is the purpose of multi-fields. For instance, a string field could be mapped as a text
+     * field for full-text search, and as a keyword field for sorting or aggregations
      *
      * @return list of subfields if any
      */
@@ -256,8 +256,8 @@ public interface Field {
     /**
      * Returns setting that determines what information is added to the inverted index.
      *
-     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other fields
-     * use {@link IndexOptions#DOCS} as the default.
+     * Analyzed string fields use {@link IndexOptions#POSITIONS} as the default, and all other
+     * fields use {@link IndexOptions#DOCS} as the default.
      *
      * @return setting that determines what information is added to the inverted index.
      */
@@ -275,8 +275,8 @@ public interface Field {
     }
 
     /**
-     * Returns true if doc_values is enabled. Note that all fields which support doc values have them
-     * enabled by default.
+     * Returns true if doc_values is enabled. Note that all fields which support doc values have
+     * them enabled by default.
      *
      * @return true if this field has doc_values enabled.
      */
@@ -308,10 +308,10 @@ public interface Field {
     /**
      * Returns true if field data is enabled for field.
      *
-     * Fielddata can consume a lot of heap space, especially when loading high cardinality text fields.
-     * Once fielddata has been loaded into the heap, it remains there for the lifetime of the segment.
-     * Also, loading fielddata is an expensive process which can cause users to experience latency hits.
-     * This is why fielddata is disabled by default.
+     * Fielddata can consume a lot of heap space, especially when loading high cardinality text
+     * fields. Once fielddata has been loaded into the heap, it remains there for the lifetime of
+     * the segment. Also, loading fielddata is an expensive process which can cause users to
+     * experience latency hits. This is why fielddata is disabled by default.
      *
      * @return true if field data is enabled for field.
      */
@@ -321,9 +321,11 @@ public interface Field {
     public Boolean isFielddata();
 
     /**
-     * Returns true if this field should ignore illegal values detected when building Elastic document.
+     * Returns true if this field should ignore illegal values detected when building Elastic
+     * document.
      *
-     * @return true if this field should ignore illegal values detected when building Elastic document.
+     * @return true if this field should ignore illegal values detected when building Elastic
+     *         document.
      */
     @Nullable
     @Value.Auxiliary
@@ -388,8 +390,8 @@ public interface Field {
     /**
      * Returns true if the field value is stored.
      *
-     * By default, field values are indexed to make them searchable, but they are not stored. This means
-     * that the field can be queried, but the original field value cannot be retrieved.
+     * By default, field values are indexed to make them searchable, but they are not stored. This
+     * means that the field can be queried, but the original field value cannot be retrieved.
      *
      * @return true if this field value is stored.
      */

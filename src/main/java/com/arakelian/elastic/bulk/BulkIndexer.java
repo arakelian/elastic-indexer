@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,11 +48,11 @@ import org.slf4j.LoggerFactory;
 import com.arakelian.core.utils.ExecutorUtils;
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.ElasticClient;
-import com.arakelian.elastic.api.BulkResponse;
-import com.arakelian.elastic.api.BulkResponse.BulkOperationResponse;
-import com.arakelian.elastic.api.BulkResponse.Item;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.bulk.event.IndexerListener;
+import com.arakelian.elastic.model.BulkResponse;
+import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
+import com.arakelian.elastic.model.BulkResponse.Item;
 import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
@@ -85,7 +85,9 @@ public class BulkIndexer<T> implements Closeable {
         private final int totalBytes;
         private final int delayMillis;
 
-        public Batch(final ImmutableList<BulkOperation> operations, final int totalBytes,
+        public Batch(
+                final ImmutableList<BulkOperation> operations,
+                final int totalBytes,
                 final int delayMillis) {
             Preconditions.checkNotNull(operations);
             this.id = BULK_ID.incrementAndGet();
@@ -127,9 +129,9 @@ public class BulkIndexer<T> implements Closeable {
 
             try {
                 // we assume Retryer verifies that result.isSuccessful() is true
-                Retryer<Response<BulkResponse>> retryer = config.getRetryer();
+                final Retryer<Response<BulkResponse>> retryer = config.getRetryer();
                 return retryer.call(() -> {
-                    return elasticClient.bulk(ops, false).execute();
+                    return elasticClient.bulk(ops, false);
                 });
             } catch (final ExecutionException e) {
                 throw new IOException("Unable to index " + this, e.getCause());
@@ -191,7 +193,9 @@ public class BulkIndexer<T> implements Closeable {
         private final Batch batch;
         private final ListenableFuture<Response<BulkResponse>> future;
 
-        private BatchListener(final ListenableFuture<Response<BulkResponse>> future, final Batch batch,
+        private BatchListener(
+                final ListenableFuture<Response<BulkResponse>> future,
+                final Batch batch,
                 final Stopwatch queued) {
             this.future = future;
             this.batch = batch;
