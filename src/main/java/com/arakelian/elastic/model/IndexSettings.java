@@ -17,6 +17,8 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
+
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableIndexSettings.class)
 @JsonDeserialize(builder = ImmutableIndexSettings.Builder.class)
-public interface IndexSettings {
+public interface IndexSettings extends Serializable {
     @Value.Default
     @JsonProperty("number_of_replicas")
     public default int getNumberOfReplicas() {

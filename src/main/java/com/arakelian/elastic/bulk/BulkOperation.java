@@ -20,7 +20,7 @@ package com.arakelian.elastic.bulk;
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.json.JsonFilter;

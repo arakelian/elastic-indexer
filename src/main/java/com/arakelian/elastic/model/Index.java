@@ -17,21 +17,59 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.jackson.ExcludeSerializer;
+import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableIndex.class)
 @JsonDeserialize(builder = ImmutableIndex.Builder.class)
-public interface Index {
-    @Nullable
+@JsonPropertyOrder({ "name", "settings", "mappings" })
+public interface Index extends Serializable {
+    public static class WithoutNameSerializer extends ExcludeSerializer<Index> {
+        private static final JsonPointerNotMatchedFilter filter = new JsonPointerNotMatchedFilter("/name");
+
+        public WithoutNameSerializer(final JsonSerializer<Object> delegate) {
+            super(Index.class, filter, delegate);
+        }
+    }
+
+    @Value.Check
+    public default void checkMappings() {
+        // must have _default_ mapping
+        final Map<String, Mapping> mappings = getMappings();
+        final Mapping mapping = mappings != null ? mappings.get(Mapping._DEFAULT_) : null;
+        Preconditions.checkState(
+                mapping != null,
+                "Index \"" + getName() + "\" does not contain _default_ mapping");
+    }
+
+    @JsonIgnore
+    @Value.Auxiliary
+    public default Mapping getDefaultMapping() {
+        return getMapping(Mapping._DEFAULT_);
+    }
+
+    public default Mapping getMapping(final String name) {
+        // use _default_ mapping if type does not have custom mapping
+        final Mapping mapping = getMappings().get(Mapping._DEFAULT_);
+        Preconditions.checkState(
+                mapping != null,
+                "Index \"" + getName() + "\" does not contain mapping \"" + name + "\"");
+        return mapping;
+    }
+
     @Value.Auxiliary
     @JsonProperty("mappings")
     public Map<String, Mapping> getMappings();
@@ -41,7 +79,6 @@ public interface Index {
      *
      * @return name of index
      */
-    @JsonIgnore
     public String getName();
 
     @Value.Default

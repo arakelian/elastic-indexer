@@ -33,42 +33,42 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
 
     @Test
     public void testAddBatch() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
 
-            try (final BulkIndexer<Person> indexer = elasticTestUtils.createIndexer(index)) {
+            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 indexer.index(people);
             }
 
             // verify we can find documents
             for (final Person person : people) {
-                elasticTestUtils.assertGetDocument(index, person, null);
+                assertGetDocument(index, person, null);
             }
         });
     }
 
     @Test
     public void testAddIndividually() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
 
-            try (final BulkIndexer<Person> indexer = elasticTestUtils.createIndexer(index)) {
+            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 for (final Person person : people) {
                     indexer.index(person);
                 }
             }
 
             for (final Person person : people) {
-                elasticTestUtils.assertGetDocument(index, person, null);
+                assertGetDocument(index, person, null);
             }
         });
     }
 
     @Test
     public void testDeleteBatch() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
-            try (final BulkIndexer<Person> indexer = elasticTestUtils.createIndexer(index)) {
+            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 // when indexing, the Elastic documents will receive a version timestamp that
                 // corresponds to the update date of the person
                 indexer.index(people);
@@ -82,9 +82,9 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
 
     @Test
     public void testDeleteIndividually() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final Iterator<Person> people = RandomPerson.iteratorOf(10);
-            try (final BulkIndexer<Person> indexer = elasticTestUtils.createIndexer(index)) {
+            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 indexer.index(RandomPerson.listOf(10));
                 while (people.hasNext()) {
                     indexer.delete(people.next());

@@ -17,9 +17,11 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
+
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -27,7 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableIndexDeleted.class)
 @JsonDeserialize(builder = ImmutableIndexDeleted.Builder.class)
-public interface IndexDeleted {
+public interface IndexDeleted extends Serializable {
     @Nullable
     @JsonProperty("acknowledged")
     public Boolean getAcknowledged();

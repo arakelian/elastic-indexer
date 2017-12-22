@@ -20,8 +20,8 @@ package com.arakelian.elastic.bulk.event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.arakelian.elastic.bulk.BulkIndexerStats;
 import com.arakelian.elastic.bulk.BulkOperation;
+import com.arakelian.elastic.model.BulkIndexerStats;
 import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 

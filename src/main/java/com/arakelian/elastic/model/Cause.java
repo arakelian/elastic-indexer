@@ -17,11 +17,12 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,7 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableCause.Builder.class)
 @JsonPropertyOrder({ "type", "reason", "caused_by", "resource.type", "resource.id", "shard", "index",
         "index_uiud", "root_cause", "stack_trace" })
-public interface Cause {
+public interface Cause extends Serializable {
     public static final String VERSION_CONFLICT_ENGINE_EXCEPTION = "version_conflict_engine_exception";
     public static final String STRICT_DYNAMIC_MAPPING_EXCEPTION = "strict_dynamic_mapping_exception";
 

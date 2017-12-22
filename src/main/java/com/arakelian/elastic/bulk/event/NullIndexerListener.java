@@ -17,8 +17,8 @@
 
 package com.arakelian.elastic.bulk.event;
 
-import com.arakelian.elastic.bulk.BulkIndexerStats;
 import com.arakelian.elastic.bulk.BulkOperation;
+import com.arakelian.elastic.model.BulkIndexerStats;
 import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 

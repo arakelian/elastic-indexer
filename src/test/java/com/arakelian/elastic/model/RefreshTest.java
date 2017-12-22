@@ -15,14 +15,30 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.doc;
+package com.arakelian.elastic.model;
 
-public class DocumentBuilderException extends RuntimeException {
-    public DocumentBuilderException(final String message) {
-        super(message);
+import java.io.IOException;
+
+import org.junit.Test;
+
+import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.jackson.utils.JacksonTestUtils;
+
+public class RefreshTest extends AbstractElasticModelTest {
+    public static final Refresh MINIMAL = ImmutableRefresh.builder() //
+            .build();
+
+    public RefreshTest(final String number) {
+        super(number);
     }
 
-    public DocumentBuilderException(final String message, final Throwable cause) {
-        super(message, cause);
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Refresh.class);
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(MINIMAL, Refresh.class);
     }
 }

@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.bulk;
+package com.arakelian.elastic.model;
 
 import java.util.concurrent.TimeUnit;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.bulk.BulkOperationFactory;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
-import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Preconditions;

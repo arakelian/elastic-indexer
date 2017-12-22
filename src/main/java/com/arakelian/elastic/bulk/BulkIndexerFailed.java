@@ -19,6 +19,8 @@ package com.arakelian.elastic.bulk;
 
 import java.io.IOException;
 
+import com.arakelian.elastic.model.BulkIndexerStats;
+
 /**
  * Exception throws when a {@link BulkIndexer} is closed and it has not successfully flushed all
  * data to the Elastic index.

@@ -71,14 +71,14 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
         try (final IndexerEventPublisher listener = new IndexerEventPublisher(64, handler)) {
             final List<Person> people = RandomPerson.listOf(10);
 
-            elasticTestUtils.withPersonIndex(index -> {
-                try (final BulkIndexer<Person> indexer = elasticTestUtils.createIndexer(index, listener)) {
+            withPersonIndex(index -> {
+                try (final BulkIndexer<Person> indexer = createIndexer(index, listener)) {
                     indexer.index(people);
                 }
 
                 // verify we can find documents
                 for (final Person person : people) {
-                    elasticTestUtils.assertGetDocument(index, person, null);
+                    assertGetDocument(index, person, null);
                 }
 
                 // make sure listener has processed all events

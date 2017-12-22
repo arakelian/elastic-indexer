@@ -17,6 +17,8 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
+
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,13 +28,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableShards.class)
 @JsonDeserialize(builder = ImmutableShards.Builder.class)
-public interface Shards {
+public interface Shards extends Serializable {
     @JsonProperty("failed")
-    public Integer getFailed();
+    public int getFailed();
 
     @JsonProperty("successful")
-    public Integer getSuccessful();
+    public int getSuccessful();
 
     @JsonProperty("total")
-    public Integer getTotal();
+    public int getTotal();
 }

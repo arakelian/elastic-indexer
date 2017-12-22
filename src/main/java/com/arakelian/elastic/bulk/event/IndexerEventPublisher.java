@@ -21,9 +21,9 @@ import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.arakelian.core.utils.ExecutorUtils;
-import com.arakelian.elastic.bulk.BulkIndexerStats;
 import com.arakelian.elastic.bulk.BulkOperation;
 import com.arakelian.elastic.bulk.event.IndexerEvent.Status;
+import com.arakelian.elastic.model.BulkIndexerStats;
 import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 import com.google.common.base.Preconditions;

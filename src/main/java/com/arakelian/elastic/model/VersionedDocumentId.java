@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic.model;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 

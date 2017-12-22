@@ -17,26 +17,10 @@
 
 package com.arakelian.elastic.bulk;
 
-import org.junit.After;
-import org.junit.Before;
-
 import com.arakelian.elastic.AbstractElasticTest;
-import com.arakelian.elastic.refresh.RefreshLimiter;
 
 public abstract class AbstractBulkIndexerTest extends AbstractElasticTest {
-    private RefreshLimiter refreshLimiter;
-
     public AbstractBulkIndexerTest(final String version) throws Exception {
         super(version);
-    }
-
-    @Before
-    public void createRefreshLimiter() {
-        refreshLimiter = elasticTestUtils.createRefreshLimiter();
-    }
-
-    @After
-    public void destroyRefreshLimiter() {
-        refreshLimiter.close();
     }
 }

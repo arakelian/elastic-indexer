@@ -60,15 +60,15 @@ public class ElasticClientTest extends AbstractElasticTest {
     private long assertDeleteWithExternalVersion(final Index index, final String id) throws IOException {
         // delete document with external version
         final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final DeletedDocument deleted = elasticTestUtils.assertSuccessful( //
+        final DeletedDocument deleted = assertSuccessful( //
                 DeletedDocument.class, //
                 elasticClient.deleteDocument( //
                         index.getName(), //
-                        ElasticTestUtils.DEFAULT_TYPE, //
+                        DEFAULT_TYPE, //
                         id, //
                         deleteMillis));
         assertEquals(index.getName(), deleted.getIndex());
-        assertEquals(ElasticTestUtils.DEFAULT_TYPE, deleted.getType());
+        assertEquals(DEFAULT_TYPE, deleted.getType());
         assertEquals(id, deleted.getId());
         assertEquals(id, deleted.getId());
         assertEquals("deleted", deleted.getResult());
@@ -81,18 +81,18 @@ public class ElasticClientTest extends AbstractElasticTest {
     private long assertIndexWithExternalVersion(final Index index, final Person person) throws IOException {
         // index document
         final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final IndexedDocument response = elasticTestUtils.assertSuccessful( //
+        final IndexedDocument response = assertSuccessful( //
                 IndexedDocument.class, //
                 elasticClient.indexDocument( //
                         index.getName(), //
-                        ElasticTestUtils.DEFAULT_TYPE, //
+                        DEFAULT_TYPE, //
                         person.getId(), //
                         JacksonUtils.toString(person, false), //
                         updateMillis));
 
         // verify response
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(ElasticTestUtils.DEFAULT_TYPE, response.getType());
+        assertEquals(DEFAULT_TYPE, response.getType());
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(updateMillis), response.getVersion());
@@ -105,16 +105,16 @@ public class ElasticClientTest extends AbstractElasticTest {
             final Person person,
             final long expectedVersion) throws IOException {
         // test default versioning
-        final IndexedDocument response = elasticTestUtils.assertSuccessful( //
+        final IndexedDocument response = assertSuccessful( //
                 IndexedDocument.class, //
                 elasticClient.indexDocument(
                         index.getName(), //
-                        ElasticTestUtils.DEFAULT_TYPE, //
+                        DEFAULT_TYPE, //
                         person.getId(), //
                         JacksonUtils.toString(person, false)));
 
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(ElasticTestUtils.DEFAULT_TYPE, response.getType());
+        assertEquals(DEFAULT_TYPE, response.getType());
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(expectedVersion), response.getVersion());
@@ -123,7 +123,7 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testClusterHealth() throws IOException {
-        final ClusterHealth health = elasticTestUtils.assertSuccessful(
+        final ClusterHealth health = assertSuccessful(
                 ClusterHealth.class, //
                 elasticClient.clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT));
         LOGGER.info("{}", health);
@@ -138,7 +138,7 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testDeleteAll() throws IOException {
-        final IndexDeleted response = elasticTestUtils.assertSuccessful(
+        final IndexDeleted response = assertSuccessful(
                 IndexDeleted.class, //
                 elasticClient.deleteAllIndexes());
         LOGGER.info("deleteAllIndexes: {}", response);
@@ -146,20 +146,18 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testDeleteNonExistantDocument() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             // verify can delete non-existant record
             assertEquals(
                     404,
-                    elasticClient.deleteDocument(
-                            index.getName(),
-                            ElasticTestUtils.DEFAULT_TYPE,
-                            MoreStringUtils.shortUuid()).code());
+                    elasticClient.deleteDocument(index.getName(), DEFAULT_TYPE, MoreStringUtils.shortUuid())
+                            .code());
         });
     }
 
     @Test
     public void testDeletes() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
             for (final Person person : people) {
                 assertIndexWithInternalVersion(index, person, 1);
@@ -170,11 +168,11 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testIndexWithExternalVersion() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
             for (final Person person : people) {
                 final long version = assertIndexWithExternalVersion(index, person);
-                elasticTestUtils.assertGetDocument(index, person, version);
+                assertGetDocument(index, person, version);
                 assertDeleteWithExternalVersion(index, person.getId());
             }
         });
@@ -182,11 +180,11 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testIndexWithInternalVersion() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
             for (final Person person : people) {
                 assertIndexWithInternalVersion(index, person, 1);
-                elasticTestUtils.assertGetDocument(index, person, Long.valueOf(1));
+                assertGetDocument(index, person, Long.valueOf(1));
                 final long deleteVersion = assertDeleteWithExternalVersion(index, person.getId());
                 assertIndexWithInternalVersion(index, person, deleteVersion + 1);
             }
@@ -200,13 +198,13 @@ public class ElasticClientTest extends AbstractElasticTest {
         for (final Type type : Type.values()) {
             final ImmutableMapping mapping = ImmutableMapping.builder() //
                     .dynamic(STRICT) //
-                    .addFields(
+                    .addField(
                             ImmutableField.builder() //
-                                    .name(ElasticTestUtils.DEFAULT_TYPE) //
+                                    .name(DEFAULT_TYPE) //
                                     .type(type) //
                                     .build())
                     .build();
-            elasticTestUtils.withIndex(mapping, index -> {
+            withIndex(mapping, index -> {
                 // pass if index created
             });
         }
@@ -214,7 +212,7 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testMget() throws IOException {
-        elasticTestUtils.withPersonIndex(index -> {
+        withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
             for (final Person person : people) {
                 assertIndexWithInternalVersion(index, person, 1);
@@ -223,27 +221,27 @@ public class ElasticClientTest extends AbstractElasticTest {
             // request ids that we just indexed
             final ImmutableMget.Builder builder = ImmutableMget.builder();
             for (final Person person : people) {
-                builder.addDocs(
+                builder.addDoc(
                         ImmutableMgetDocument.builder() //
                                 .index(index.getName()) //
-                                .type(ElasticTestUtils.DEFAULT_TYPE) //
+                                .type(DEFAULT_TYPE) //
                                 .id(person.getId()) //
                                 .build());
             }
 
             // request records we know don't exist
             for (int i = 0; i < 10; i++) {
-                builder.addDocs(
+                builder.addDoc(
                         ImmutableMgetDocument.builder() //
                                 .index(index.getName()) //
-                                .type(ElasticTestUtils.DEFAULT_TYPE) //
+                                .type(DEFAULT_TYPE) //
                                 .id(MoreStringUtils.shortUuid()) //
                                 .build());
             }
 
             // we should have received response for each record, whether found or not
             final ImmutableMget mget = builder.build();
-            final Documents documents = elasticTestUtils.assertSuccessful(
+            final Documents documents = assertSuccessful(
                     Documents.class, //
                     elasticClient.getDocuments(mget));
             assertNotNull(documents);
@@ -253,7 +251,7 @@ public class ElasticClientTest extends AbstractElasticTest {
 
     @Test
     public void testRefreshAll() throws IOException {
-        final Refresh response = elasticTestUtils.assertSuccessful(
+        final Refresh response = assertSuccessful(
                 Refresh.class, //
                 elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);

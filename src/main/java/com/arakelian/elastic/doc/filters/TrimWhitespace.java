@@ -15,14 +15,22 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.doc;
+package com.arakelian.elastic.doc.filters;
 
-import java.util.Map;
+import org.immutables.value.Value;
 
-import com.arakelian.elastic.model.Field;
+import com.arakelian.core.utils.MoreStringUtils;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-public interface DocumentBuilderPlugin {
-    public Map<Field, String> execute(DocumentBuilderConfig config, StringBuilder all);
-
-    public boolean requiresAll(DocumentBuilderConfig config);
+@Value.Immutable(singleton = true)
+@JsonSerialize(as = ImmutableTrimWhitespace.class)
+@JsonDeserialize(builder = ImmutableTrimWhitespace.Builder.class)
+@JsonTypeName(TokenFilter.TRIM_WHITESPACE)
+public abstract class TrimWhitespace extends AbstractCharFilter {
+    @Override
+    public String apply(final String value) {
+        return MoreStringUtils.trimWhitespace(value);
+    }
 }

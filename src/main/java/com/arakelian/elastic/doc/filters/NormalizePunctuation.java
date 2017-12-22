@@ -15,24 +15,22 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.bulk;
+package com.arakelian.elastic.doc.filters;
 
 import org.immutables.value.Value;
 
-@Value.Immutable(copy = false)
-public interface BulkIndexerStats {
-    public int getFailed();
+import com.arakelian.core.utils.MoreStringUtils;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-    public int getRetries();
-
-    public int getSubmitted();
-
-    public int getSuccessful();
-
-    @Value.Derived
-    public default int getTotal() {
-        return getSubmitted() + getRetries();
+@Value.Immutable(singleton = true)
+@JsonSerialize(as = ImmutableNormalizePunctuation.class)
+@JsonDeserialize(builder = ImmutableNormalizePunctuation.Builder.class)
+@JsonTypeName(TokenFilter.NORMALIZE_PUNCTUATION)
+public abstract class NormalizePunctuation extends AbstractCharFilter {
+    @Override
+    public String apply(final String value) {
+        return MoreStringUtils.normalizeTypography(value);
     }
-
-    public long getTotalBytes();
 }

@@ -20,28 +20,31 @@ package com.arakelian.elastic.doc;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
+import com.arakelian.elastic.doc.filters.TokenChain;
+import com.arakelian.elastic.doc.filters.TokenFilter;
+import com.arakelian.elastic.model.ElasticDocBuilderConfig;
 import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.Field.Type;
-import com.arakelian.elastic.model.Mapping;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonWriter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.io.BaseEncoding;
@@ -52,15 +55,61 @@ import com.google.common.io.BaseEncoding;
  *
  * This class is not thread-safe.
  */
-public class DocumentBuilder {
+public class ElasticDocBuilder {
+    private final class ElasticDocImpl implements ElasticDoc {
+        @Override
+        public CharSequence concatenate(final Predicate<Field> predicate) {
+            String sep = buf.length() != 0 ? " " : "";
+
+            // concatenate fields that match predicate
+            for (final String name : document.keySet()) {
+                final Field field = config.getMapping().getField(name);
+                if (predicate == null || predicate.test(field)) {
+                    for (final Object val : document.get(name)) {
+                        final String s = Objects.toString(val);
+                        buf.append(sep).append(s);
+                        sep = " ";
+                    }
+                }
+            }
+
+            return buf;
+        }
+
+        @Override
+        public ElasticDocBuilderConfig getConfig() {
+            return config;
+        }
+
+        @Override
+        public Set<String> getFields() {
+            return document.keySet();
+        }
+
+        @Override
+        public Collection<Object> getValues(final String field) {
+            Preconditions.checkArgument(
+                    config.getMapping().getField(field) != null,
+                    "Field \"%s\" is not part of mapping",
+                    field);
+            return document.get(field);
+        }
+    }
+
     /** Optional entity extractor **/
-    private final DocumentBuilderConfig config;
+    private final ElasticDocBuilderConfig config;
 
     /** The Elastic document we're building **/
-    private final Map<String, Object> document = Maps.newLinkedHashMap();
+    private final Multimap<String, Object> document = LinkedHashMultimap.create();
 
-    /** Scratch buffer used to build the _all TEXT field equivalent **/
-    private final StringBuilder _all = new StringBuilder();
+    /** Scratch buffer **/
+    private final StringBuilder buf = new StringBuilder();
+
+    /** Token filters **/
+    private final Map<Field, TokenFilter> tokenFilters = Maps.newLinkedHashMap();
+
+    /** Can only build one document at a time **/
+    private final Lock lock = new ReentrantLock();
 
     /**
      * An instance of {@link JsonWriter} that we can use for producing JSON.
@@ -71,106 +120,60 @@ public class DocumentBuilder {
     private final JsonWriter<StringWriter> writer = new JsonWriter<>(new StringWriter()).withPretty(false)
             .withSkipEmpty(true);
 
-    public DocumentBuilder(final DocumentBuilderConfig config) {
-        this.config = config;
+    public ElasticDocBuilder(final ElasticDocBuilderConfig config) {
+        this.config = Preconditions.checkNotNull(config);
     }
 
-    /**
-     * Appends a string to the _all field.
-     *
-     * @param value
-     *            Elastic field value
-     */
-    private void appendAll(final Object value) {
-        String sep = _all.length() != 0 ? " " : "";
-        if (value instanceof List<?>) {
-            // list of values
-            @SuppressWarnings("unchecked")
-            final List<String> valueList = (List<String>) value;
-            for (int i = 0, size = valueList.size(); i < size; i++) {
-                final String val = valueList.get(i);
-                _all.append(sep).append(val);
-                sep = " ";
+    public String build(final JsonNode root) throws ElasticDocBuilderException {
+        lock.lock();
+        try {
+            final List<ElasticDocBuilderPlugin> plugins = config.getPlugins();
+            final boolean havePlugins = plugins.size() != 0;
+            try {
+                final ElasticDocImpl elasticDoc;
+                if (havePlugins) {
+                    elasticDoc = new ElasticDocImpl();
+                    for (final ElasticDocBuilderPlugin plugin : plugins) {
+                        plugin.before(elasticDoc);
+                    }
+                } else {
+                    elasticDoc = null;
+                }
+
+                // map document fields to one or more index fields
+                for (final String sourcePath : config.getSourcePaths()) {
+                    descendSourcePath(root, sourcePath, 0);
+                }
+
+                if (havePlugins) {
+                    for (final ElasticDocBuilderPlugin plugin : plugins) {
+                        plugin.after(elasticDoc);
+                    }
+                }
+
+                final String json = writeDocument();
+                return json;
+            } catch (final IllegalArgumentException | IllegalStateException e) {
+                throw new ElasticDocBuilderException("Unable to build document", e);
+            } finally {
+                document.clear();
+                buf.setLength(0);
             }
-        } else if (value != null) {
-            // single value
-            _all.append(sep).append(value.toString());
+        } finally {
+            lock.unlock();
         }
     }
 
-    public synchronized String build(final DocumentMapping documentMapping, final String source)
-            throws DocumentBuilderException {
-        Preconditions.checkArgument(source != null, "root must be non-null");
-        Preconditions.checkArgument(documentMapping != null, "documentMapping must be non-null");
-
+    public String build(final String source) throws ElasticDocBuilderException {
         JsonNode root;
         try {
+            Preconditions.checkArgument(source != null, "source must be non-null");
             root = JacksonUtils.getObjectMapper().readTree(source);
-        } catch (final IOException e) {
-            throw new DocumentBuilderException("Unable to parse source document", e);
+        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
+            throw new ElasticDocBuilderException("Unable to parse source document", e);
         }
 
-        try {
-            // map document fields to one or more index fields
-            final Multimap<String, Field> sourcePathsToField = documentMapping.getSourcePathsToField();
-            final Set<String> paths = sourcePathsToField.keySet();
-            for (final String sourcePath : paths) {
-                descendSourcePath(root, sourcePath, 0, documentMapping);
-            }
-
-            final Mapping mapping = documentMapping.getMapping();
-
-            final List<DocumentBuilderPlugin> plugins = mapping.getPlugins();
-            final boolean requiresAll = plugins.stream() //
-                    .filter(plugin -> plugin.requiresAll(config)) //
-                    .findFirst() //
-                    .isPresent();
-            if (requiresAll) {
-                // required prior to entity recognition
-                buildAll(mapping);
-
-                // perform entity extraction
-                plugins.stream() //
-                        .map(plugin -> plugin.execute(config, _all)) //
-                        .forEach(map -> {
-                            for (final Map.Entry<Field, String> e : map.entrySet()) {
-                                final String standardizedText = e.getValue();
-                                putDocument(e.getKey(), standardizedText);
-                                appendAll(standardizedText);
-                            }
-                        });
-            }
-            final String json = writeDocument();
-            return json;
-        } finally {
-            clearDocument();
-            _all.setLength(0);
-        }
-    }
-
-    private void buildAll(final Mapping mapping) {
-        // concatenate all of the fields into a single buffer
-        for (final Entry<String, Object> entry : document.entrySet()) {
-            final String name = entry.getKey();
-            final Field field = mapping.getField(name);
-            if (field != null && field.isIncludeInAll() != null && field.isIncludeInAll().booleanValue()) {
-                final Object value = entry.getValue();
-                appendAll(value);
-            }
-        }
-    }
-
-    private void clearDocument() {
-        for (final Iterator<Entry<String, Object>> it = document.entrySet().iterator(); it.hasNext();) {
-            final Entry<String, Object> entry = it.next();
-            final Object value = entry.getValue();
-            if (value instanceof List<?>) {
-                final List<?> list = (List<?>) value;
-                list.clear();
-            } else {
-                it.remove();
-            }
-        }
+        return build(root);
     }
 
     protected Object coerceValue(final Field field, final String rawValue) {
@@ -197,7 +200,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue);
+                throw new TypeConverterException(field, trimmedValue);
             }
             // we return original value
             break;
@@ -209,7 +212,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue);
+                throw new TypeConverterException(field, trimmedValue);
             }
             return bool;
 
@@ -219,7 +222,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue);
+                throw new TypeConverterException(field, trimmedValue);
             }
             // standardize the date in ISO format
             return DateUtils.toStringIsoFormat(date);
@@ -231,7 +234,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
 
         case SHORT:
@@ -241,7 +244,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
 
         case INTEGER:
@@ -251,7 +254,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
 
         case LONG:
@@ -261,7 +264,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
 
         case DOUBLE:
@@ -271,7 +274,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
             // we don't want to lose any precision so we return original value
             break;
@@ -283,7 +286,7 @@ public class DocumentBuilder {
                 if (ignoreMalformed) {
                     return null;
                 }
-                throw new MalformedValueException(field, trimmedValue, nfe);
+                throw new TypeConverterException(field, trimmedValue, nfe);
             }
             // we don't want to lose any precision so we return original value
             break;
@@ -294,7 +297,7 @@ public class DocumentBuilder {
             break;
 
         default:
-            throw new MalformedValueException("Unrecognized field type: " + field, field, trimmedValue);
+            throw new TypeConverterException("Unrecognized field type: " + field, field, trimmedValue);
         }
 
         // use raw value but stripped all leading and trailing whitespace, which includes line
@@ -312,7 +315,7 @@ public class DocumentBuilder {
      * @param node
      *            source node
      */
-    private void collectValues(final Field targetField, final JsonNode node) {
+    private void collectValues(final Field field, final JsonNode node) {
         if (node == null || node.isNull() || node.isMissingNode() || node.isBinary()) {
             return;
         }
@@ -320,18 +323,18 @@ public class DocumentBuilder {
         if (node.isArray()) {
             for (int i = 0, size = node.size(); i < size; i++) {
                 final JsonNode item = node.get(i);
-                collectValues(targetField, item);
+                collectValues(field, item);
             }
         } else if (node.isObject()) {
             final Iterator<JsonNode> children = node.elements();
             while (children.hasNext()) {
-                collectValues(targetField, children.next());
+                collectValues(field, children.next());
             }
         } else if (!node.isPojo()) {
             // can't be NullNode
             final String text = node.asText();
             if (!StringUtils.isEmpty(text)) {
-                putDocument(targetField, text);
+                putDocument(field, text);
             }
         }
     }
@@ -350,11 +353,7 @@ public class DocumentBuilder {
      *            index at we are putting data into
      * @throws IOException
      */
-    private void descendSourcePath(
-            final JsonNode node,
-            final String sourcePath,
-            final int startPos,
-            final DocumentMapping documentMapping) {
+    private void descendSourcePath(final JsonNode node, final String sourcePath, final int startPos) {
         if (node == null || node.isNull()) {
             return;
         }
@@ -362,7 +361,7 @@ public class DocumentBuilder {
         // only arrays will have a non-zero size
         for (int i = 0, size = node.size(); i < size; i++) {
             final JsonNode item = node.get(i);
-            descendSourcePath(item, sourcePath, startPos, documentMapping);
+            descendSourcePath(item, sourcePath, startPos);
         }
 
         final int endPos = sourcePath.indexOf('/', startPos);
@@ -370,7 +369,7 @@ public class DocumentBuilder {
             // descend into subfield
             final String subfield = sourcePath.substring(startPos, endPos);
             final JsonNode subfieldNode = node.get(subfield);
-            descendSourcePath(subfieldNode, sourcePath, endPos + 1, documentMapping);
+            descendSourcePath(subfieldNode, sourcePath, endPos + 1);
             return;
         }
 
@@ -382,10 +381,10 @@ public class DocumentBuilder {
         }
 
         // we've arrived at path! put values into document
-        final Multimap<String, Field> sourcePathsToField = documentMapping.getSourcePathsToField();
-        final Collection<Field> fields = sourcePathsToField.get(sourcePath);
-        for (final Field targetField : fields) {
-            collectValues(targetField, fieldNode);
+        final Collection<Field> targets = config.getFieldsOf(sourcePath);
+
+        for (final Field field : targets) {
+            collectValues(field, fieldNode);
         }
     }
 
@@ -405,7 +404,7 @@ public class DocumentBuilder {
      *            value
      */
     private void putDocument(final Field field, final String rawValue) {
-        Preconditions.checkArgument(field != null, "field must be non-null");
+        Preconditions.checkArgument(field != null, "target must be non-null");
         if (StringUtils.isEmpty(rawValue)) {
             // we don't add empty strings to Elastic document
             return;
@@ -418,39 +417,29 @@ public class DocumentBuilder {
             return;
         }
 
-        final String name = field.getName();
-        final Object currentVal = document.get(name);
-        if (currentVal == null) {
-            // only one value has been specified for Elastic field so far
-            document.put(name, value);
-            return;
+        final TokenFilter filter;
+        if (tokenFilters.containsKey(field)) {
+            filter = tokenFilters.get(field);
+        } else {
+            filter = TokenChain.link(field.getTokenFilters());
+            tokenFilters.put(field, filter);
         }
 
-        if (currentVal instanceof List<?>) {
-            // two or more values have already been specified for the Elastic field
-            @SuppressWarnings("unchecked")
-            final List<String> valueList = (List<String>) currentVal;
-            if (!valueList.contains(value)) {
-                valueList.add(value);
+        filter.accept(value, token -> {
+            if (!StringUtils.isEmpty(token)) {
+                document.put(field.getName(), token);
             }
-            return;
-        }
-
-        // a second value has been specified for the Elastic field, so we need to
-        // switch to a list
-        final String currentString = currentVal.toString();
-        if (!value.equals(currentString)) {
-            final ArrayList<String> valueList = Lists.newArrayList(currentString, value);
-            document.put(name, valueList);
-        }
+        });
     }
 
-    private String writeDocument() {
+    private String writeDocument() throws ElasticDocBuilderException {
         try {
             // output fields
             writer.writeStartObject();
-            for (final Entry<String, Object> entry : document.entrySet()) {
-                writeField(writer, entry);
+
+            for (final String field : document.keySet()) {
+                final Collection<Object> values = document.get(field);
+                writeField(writer, field, values);
             }
             writer.writeEndObject();
 
@@ -460,39 +449,34 @@ public class DocumentBuilder {
             for (int i = 0, size = json.length(); i < size; i++) {
                 final char ch = json.charAt(i);
                 if (ch == '\n') {
-                    throw new DocumentBuilderException("Elastic document cannot contain newline character");
+                    throw new ElasticDocBuilderException("Elastic document cannot contain newline character");
                 }
             }
             return json;
         } catch (final IOException e) {
             // this should not happen because we're writing to a StringWriter
-            throw new DocumentBuilderException("Unable to create build Elastic document", e);
+            throw new ElasticDocBuilderException("Unable to create build Elastic document", e);
         } finally {
             writer.getWriter().getBuffer().setLength(0);
             writer.reset();
         }
     }
 
-    private void writeField(final JsonWriter<StringWriter> writer, final Entry<String, Object> entry)
-            throws IOException {
-        final String key = entry.getKey();
-        final Object value = entry.getValue();
-        if (value instanceof List<?>) {
-            final List<?> valueList = (List<?>) value;
-            final int size = valueList.size();
-            if (size == 1) {
-                writer.writeKeyUnescapedValue(key, valueList.get(0));
-            } else if (size > 1) {
-                writer.writeKey(key);
-                writer.writeStartArray();
-                for (int i = 0; i < size; i++) {
-                    writer.writeObject(valueList.get(i));
-                }
-                writer.writeEndArray();
+    private void writeField(
+            final JsonWriter<StringWriter> writer,
+            final String field,
+            final Collection<Object> values) throws IOException {
+
+        final int size = values.size();
+        if (size == 1) {
+            writer.writeKeyValue(field, values.iterator().next());
+        } else if (size > 1) {
+            writer.writeKey(field);
+            writer.writeStartArray();
+            for (final Object o : values) {
+                writer.writeObject(o);
             }
-        } else {
-            // single value
-            writer.writeKeyValue(key, value);
+            writer.writeEndArray();
         }
     }
 }

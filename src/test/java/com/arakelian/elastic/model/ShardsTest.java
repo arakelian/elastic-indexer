@@ -15,15 +15,33 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.feature;
+package com.arakelian.elastic.model;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.io.IOException;
 
-@Target({ ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.TYPE,
-        ElementType.PARAMETER })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Nullable {
+import org.junit.Test;
+
+import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.jackson.utils.JacksonTestUtils;
+
+public class ShardsTest extends AbstractElasticModelTest {
+    public static final Shards MINIMAL = ImmutableShards.builder() //
+            .total(10) //
+            .failed(0) //
+            .successful(10) //
+            .build();
+
+    public ShardsTest(final String number) {
+        super(number);
+    }
+
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Shards.class);
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(MINIMAL, Shards.class);
+    }
 }

@@ -17,11 +17,12 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableMget.class)
 @JsonDeserialize(builder = ImmutableMget.Builder.class)
-public interface Mget {
+public interface Mget extends Serializable {
     @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableMgetDocument.class)
     @JsonDeserialize(builder = ImmutableMgetDocument.Builder.class)

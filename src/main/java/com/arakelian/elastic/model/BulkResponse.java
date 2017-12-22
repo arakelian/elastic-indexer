@@ -22,9 +22,9 @@ import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.Elastic.Version6;
+import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views.Elastic.Version6;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
-import com.arakelian.elastic.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;

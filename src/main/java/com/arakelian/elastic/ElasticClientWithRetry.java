@@ -40,15 +40,15 @@ import com.google.common.base.Preconditions;
 
 import retrofit2.Response;
 
-public class ElasticClientWithRetryer implements ElasticClient {
+public class ElasticClientWithRetry implements ElasticClient {
     private final ElasticClient delegate;
     private final Retryer<Response<?>> retryer;
 
-    public ElasticClientWithRetryer(final ElasticClient delegate) {
+    public ElasticClientWithRetry(final ElasticClient delegate) {
         this(delegate, ElasticClientUtils.createElasticRetryer2());
     }
 
-    public ElasticClientWithRetryer(final ElasticClient delegate, final Retryer<Response<?>> retryer) {
+    public ElasticClientWithRetry(final ElasticClient delegate, final Retryer<Response<?>> retryer) {
         this.delegate = Preconditions.checkNotNull(delegate);
         this.retryer = Preconditions.checkNotNull(retryer);
     }

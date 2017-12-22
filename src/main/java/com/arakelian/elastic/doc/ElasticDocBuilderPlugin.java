@@ -17,8 +17,8 @@
 
 package com.arakelian.elastic.doc;
 
-import org.immutables.value.Value;
+public interface ElasticDocBuilderPlugin {
+    public void after(ElasticDoc doc);
 
-@Value.Immutable(copy = false)
-public interface DocumentBuilderConfig {
+    public void before(ElasticDoc doc);
 }

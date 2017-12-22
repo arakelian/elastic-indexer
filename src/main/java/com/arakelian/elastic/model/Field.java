@@ -17,14 +17,18 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.Elastic.Version5;
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views.Elastic;
+import com.arakelian.elastic.Views.Elastic.Version5;
+import com.arakelian.elastic.Views.Enhancement;
+import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -32,16 +36,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-@Value.Immutable(copy = false)
+@Value.Immutable
 @JsonSerialize(as = ImmutableField.class)
 @JsonDeserialize(builder = ImmutableField.Builder.class)
 @JsonPropertyOrder({ "name", "type", "format", "enabled", "store", "index", "index_options", "doc_values",
         "fielddata", "ignore_above", "ignore_malformed", "include_in_all", "copy_to", "analyzer",
         "search_analyzer" })
-public interface Field {
+public interface Field extends Serializable {
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
     public enum IndexOptions {
         DOCS, //
@@ -144,6 +149,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("analyzer")
+    @JsonView(Elastic.class)
     public String getAnalyzer();
 
     /**
@@ -157,11 +163,13 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("copy_to")
+    @JsonView(Elastic.class)
     public List<String> getCopyTo();
 
     @Value.Derived
     @Value.Auxiliary
     @JsonProperty("fields")
+    @JsonView(Elastic.class)
     public default Map<String, Field> getFieldsByName() {
         final Map<String, Field> names = Maps.newLinkedHashMap();
         for (final Field field : getSubfields()) {
@@ -181,6 +189,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("format")
+    @JsonView(Elastic.class)
     public String getFormat();
 
     /**
@@ -193,6 +202,7 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("ignore_above")
+    @JsonView(Elastic.class)
     public default Integer getIgnoreAbove() {
         if (isMetaField() || getType() != Type.KEYWORD) {
             return null;
@@ -212,6 +222,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("index_options")
+    @JsonView(Elastic.class)
     public IndexOptions getIndexOptions();
 
     /**
@@ -219,7 +230,6 @@ public interface Field {
      *
      * @return name of the Elastic index field that should be created.
      */
-    @JsonIgnore
     public String getName();
 
     /**
@@ -232,11 +242,13 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("null_value")
+    @JsonView(Elastic.class)
     public String getNullValue();
 
     @Nullable
     @Value.Auxiliary
     @JsonProperty("search_analyzer")
+    @JsonView(Elastic.class)
     public String getSearchAnalyzer();
 
     /**
@@ -264,12 +276,21 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("term_vector")
+    @JsonView(Elastic.class)
     public TermVector getTermVector();
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonView(Enhancement.class)
+    public default List<TokenFilter> getTokenFilters() {
+        return ImmutableList.of();
+    }
 
     @Nullable
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("type")
+    @JsonView(Elastic.class)
     public default Type getType() {
         return isMetaField() ? null : Type.TEXT;
     }
@@ -284,6 +305,7 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("doc_values")
+    @JsonView(Elastic.class)
     public default Boolean isDocValues() {
         if (isMetaField() || getType() == null) {
             return null;
@@ -303,6 +325,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("enabled")
+    @JsonView(Elastic.class)
     public Boolean isEnabled();
 
     /**
@@ -318,6 +341,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("fielddata")
+    @JsonView(Elastic.class)
     public Boolean isFielddata();
 
     /**
@@ -330,6 +354,7 @@ public interface Field {
     @Nullable
     @Value.Auxiliary
     @JsonProperty("ignore_malformed")
+    @JsonView(Elastic.class)
     public Boolean isIgnoreMalformed();
 
     /**
@@ -373,6 +398,7 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("index")
+    @JsonView(Elastic.class)
     public default Boolean isIndex() {
         if (isMetaField() || getType() == null) {
             return null;
@@ -383,8 +409,10 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonIgnore
+    @JsonView(Elastic.class)
     public default boolean isMetaField() {
-        return META_FIELDS.contains(getName());
+        final String name = getName();
+        return META_FIELDS.contains(name);
     }
 
     /**
@@ -399,6 +427,7 @@ public interface Field {
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("store")
+    @JsonView(Elastic.class)
     public default Boolean isStore() {
         if (isMetaField() || getType() == null) {
             return null;

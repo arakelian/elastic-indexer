@@ -19,23 +19,23 @@ package com.arakelian.elastic.doc;
 
 import com.arakelian.elastic.model.Field;
 
-public class MalformedValueException extends RuntimeException {
+public class TypeConverterException extends ElasticDocBuilderException {
     private final Field field;
     private final String rawValue;
 
-    public MalformedValueException(final Field field, final String rawValue) {
+    public TypeConverterException(final Field field, final String rawValue) {
         this(field, rawValue, null);
     }
 
-    public MalformedValueException(final Field field, final String rawValue, final Throwable cause) {
+    public TypeConverterException(final Field field, final String rawValue, final Throwable cause) {
         this("Malformed value for " + field + ": " + rawValue, field, rawValue, cause);
     }
 
-    public MalformedValueException(final String message, final Field field, final String rawValue) {
+    public TypeConverterException(final String message, final Field field, final String rawValue) {
         this(message, field, rawValue, null);
     }
 
-    public MalformedValueException(
+    public TypeConverterException(
             final String message,
             final Field field,
             final String rawValue,

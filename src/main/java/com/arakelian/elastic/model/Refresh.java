@@ -17,9 +17,11 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.Serializable;
+
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -27,7 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableRefresh.class)
 @JsonDeserialize(builder = ImmutableRefresh.Builder.class)
-public interface Refresh {
+public interface Refresh extends Serializable {
     @Nullable
     @JsonProperty("_shards")
     public Shards getShards();

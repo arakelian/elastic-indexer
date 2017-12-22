@@ -17,13 +17,10 @@
 
 package com.arakelian.elastic.model;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.Elastic.Version6;
-import com.arakelian.elastic.feature.Nullable;
+import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views.Elastic.Version6;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -52,19 +49,14 @@ public interface About {
         @JsonProperty("build_timestamp")
         public String getBuildTimestamp();
 
-        @JsonProperty("lucene_version")
-        public String getLuceneVersion();
-
         @JsonIgnore
         @Value.Derived
-        @Value.Auxiliary
-        public default int getMajor() {
-            final Matcher matcher = MAJOR_MINOR_BUILD.matcher(getNumber());
-            if (matcher.matches()) {
-                return Integer.parseInt(matcher.group(1));
-            }
-            return 0;
+        public default VersionComponents getComponents() {
+            return VersionComponents.of(getNumber());
         }
+
+        @JsonProperty("lucene_version")
+        public String getLuceneVersion();
 
         /**
          * Returns the minimum index compatibility version.
@@ -87,22 +79,9 @@ public interface About {
         @JsonView(Version6.class)
         public String getMinimumWireCompatibilityVersion();
 
-        @JsonIgnore
-        @Value.Derived
-        @Value.Auxiliary
-        public default int getMinor() {
-            final Matcher matcher = MAJOR_MINOR_BUILD.matcher(getNumber());
-            if (matcher.matches()) {
-                return Integer.parseInt(matcher.group(2));
-            }
-            return 0;
-        }
-
         @JsonProperty("number")
         public String getNumber();
     }
-
-    public static Pattern MAJOR_MINOR_BUILD = Pattern.compile("^(?:(\\d+)\\.)?(?:(\\d+)\\.)?(\\*|\\d+)$");
 
     @JsonProperty("cluster_name")
     public String getClusterName();
