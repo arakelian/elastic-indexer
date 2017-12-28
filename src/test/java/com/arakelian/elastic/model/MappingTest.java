@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,15 @@ package com.arakelian.elastic.model;
 
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
+import com.google.common.collect.ImmutableSet;
 
 public class MappingTest extends AbstractElasticModelTest {
-    public static final Mapping MINIMAL = ImmutableMapping.builder() //
+    public static final Mapping CONTACT = ImmutableMapping.builder() //
             .addField(ImmutableField.builder().name("name").build()) //
             .addField(ImmutableField.builder().name("street").build()) //
             .addField(ImmutableField.builder().name("city").build()) //
@@ -39,11 +41,30 @@ public class MappingTest extends AbstractElasticModelTest {
 
     @Test
     public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Mapping.class);
+        JacksonTestUtils.testReadWrite(objectMapper, CONTACT, Mapping.class);
+    }
+
+    @Test
+    public void testNormalization() {
+        // getFields() and getProperties() should refer to same list of fields
+        Assert.assertEquals(
+                ImmutableSet.copyOf(CONTACT.getFields()),
+                ImmutableSet.copyOf(CONTACT.getProperties().values()));
+
+        // we should be able to add a field to a mapping
+        final Mapping newMapping = ImmutableMapping.builder() //
+                .from(MappingTest.CONTACT) //
+                .addField(ImmutableField.builder().name("test").build()) //
+                .build();
+
+        // the new field should appear in getProperties()
+        Assert.assertEquals(
+                ImmutableSet.copyOf(newMapping.getFields()),
+                ImmutableSet.copyOf(newMapping.getProperties().values()));
     }
 
     @Test
     public void testSerializable() {
-        SerializableTestUtils.testSerializable(MINIMAL, Mapping.class);
+        SerializableTestUtils.testSerializable(CONTACT, Mapping.class);
     }
 }

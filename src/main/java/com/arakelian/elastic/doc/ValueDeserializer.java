@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic;
+package com.arakelian.elastic.doc;
 
-import java.io.IOException;
+import java.util.function.Consumer;
 
-import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.Field;
+import com.fasterxml.jackson.databind.JsonNode;
 
-public interface ElasticTestCallback {
-    public void doTest(Index index) throws IOException;
+public interface ValueDeserializer {
+    public void deserialize(final Field field, final JsonNode node, final Consumer<Object> consumer)
+            throws ValueException;
 }

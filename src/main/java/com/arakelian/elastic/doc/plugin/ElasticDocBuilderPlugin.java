@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.doc;
+package com.arakelian.elastic.doc.plugin;
 
-import com.arakelian.elastic.model.Field;
+import com.arakelian.elastic.doc.ElasticDoc;
+import com.arakelian.elastic.doc.ElasticDocBuilderException;
 
-public interface TypeConverter {
-    public Object coerceValue(final Field field, final String rawValue);
+public interface ElasticDocBuilderPlugin {
+    public void complete(ElasticDoc doc) throws ElasticDocBuilderException;
 }

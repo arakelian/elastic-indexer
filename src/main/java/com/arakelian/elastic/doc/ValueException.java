@@ -18,38 +18,41 @@
 package com.arakelian.elastic.doc;
 
 import com.arakelian.elastic.model.Field;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Preconditions;
 
-public class TypeConverterException extends ElasticDocBuilderException {
+public class ValueException extends ElasticDocBuilderException {
     private final Field field;
-    private final String rawValue;
+    private final JsonNode node;
 
-    public TypeConverterException(final Field field, final String rawValue) {
-        this(field, rawValue, null);
+    public ValueException(final Field field, final JsonNode node) {
+        this(field, node, null);
     }
 
-    public TypeConverterException(final Field field, final String rawValue, final Throwable cause) {
-        this("Malformed value for " + field + ": " + rawValue, field, rawValue, cause);
+    public ValueException(final Field field, final JsonNode node, final Throwable cause) {
+        this("Malformed value for " + field + ": " + node, field, node, cause);
     }
 
-    public TypeConverterException(final String message, final Field field, final String rawValue) {
-        this(message, field, rawValue, null);
+    public ValueException(final String message, final Field field, final JsonNode node) {
+        this(message, field, node, null);
     }
 
-    public TypeConverterException(
+    public ValueException(
             final String message,
             final Field field,
-            final String rawValue,
+            final JsonNode node,
             final Throwable cause) {
         super(message, cause);
+        Preconditions.checkArgument(node != null, "node must be non-null");
         this.field = field;
-        this.rawValue = rawValue;
+        this.node = node;
     }
 
     public final Field getField() {
         return field;
     }
 
-    public final String getRawValue() {
-        return rawValue;
+    public final JsonNode getNode() {
+        return node;
     }
 }

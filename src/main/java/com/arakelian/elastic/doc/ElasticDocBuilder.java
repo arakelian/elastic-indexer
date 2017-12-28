@@ -19,35 +19,29 @@ package com.arakelian.elastic.doc;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.arakelian.core.utils.DateUtils;
-import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.doc.filters.TokenChain;
 import com.arakelian.elastic.doc.filters.TokenFilter;
-import com.arakelian.elastic.model.ElasticDocBuilderConfig;
+import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
+import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
-import com.arakelian.elastic.model.Field.Type;
-import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonWriter;
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.BaseEncoding;
 
 /**
  * Builds an Elasticsearch document. Elasticsearch documents are simple (flat) maps that have string
@@ -58,26 +52,16 @@ import com.google.common.io.BaseEncoding;
 public class ElasticDocBuilder {
     private final class ElasticDocImpl implements ElasticDoc {
         @Override
-        public CharSequence concatenate(final Predicate<Field> predicate) {
-            String sep = buf.length() != 0 ? " " : "";
-
-            // concatenate fields that match predicate
-            for (final String name : document.keySet()) {
-                final Field field = config.getMapping().getField(name);
-                if (predicate == null || predicate.test(field)) {
-                    for (final Object val : document.get(name)) {
-                        final String s = Objects.toString(val);
-                        buf.append(sep).append(s);
-                        sep = " ";
-                    }
-                }
-            }
-
-            return buf;
+        public Collection<Object> get(final String field) {
+            Preconditions.checkArgument(
+                    config.getMapping().hasField(field),
+                    "Field \"%s\" is not part of mapping",
+                    field);
+            return document.get(field);
         }
 
         @Override
-        public ElasticDocBuilderConfig getConfig() {
+        public ElasticDocConfig getConfig() {
             return config;
         }
 
@@ -87,29 +71,40 @@ public class ElasticDocBuilder {
         }
 
         @Override
-        public Collection<Object> getValues(final String field) {
+        public boolean hasField(final String name) {
+            return config.getMapping().hasField(name);
+        }
+
+        @Override
+        public void traverse(Object value, Consumer<Object> consumer) {
+            ElasticDocBuilder.this.traverse(value, consumer);
+        }
+
+        @Override
+        public void put(final Field field, final Object value) {
+            Preconditions.checkArgument(field != null, "field must be non-null");
             Preconditions.checkArgument(
-                    config.getMapping().getField(field) != null,
+                    config.getMapping().hasField(field),
                     "Field \"%s\" is not part of mapping",
-                    field);
-            return document.get(field);
+                    field.getName());
+            ElasticDocBuilder.this.put(field, value);
         }
     }
 
     /** Optional entity extractor **/
-    private final ElasticDocBuilderConfig config;
+    private final ElasticDocConfig config;
 
     /** The Elastic document we're building **/
-    private final Multimap<String, Object> document = LinkedHashMultimap.create();
+    private final Multimap<String, Object> document;
 
     /** Scratch buffer **/
     private final StringBuilder buf = new StringBuilder();
 
     /** Token filters **/
-    private final Map<Field, TokenFilter> tokenFilters = Maps.newLinkedHashMap();
+    private final Map<Field, TokenFilter> tokenFilters;
 
     /** Can only build one document at a time **/
-    private final Lock lock = new ReentrantLock();
+    private final Lock lock;
 
     /**
      * An instance of {@link JsonWriter} that we can use for producing JSON.
@@ -120,35 +115,33 @@ public class ElasticDocBuilder {
     private final JsonWriter<StringWriter> writer = new JsonWriter<>(new StringWriter()).withPretty(false)
             .withSkipEmpty(true);
 
-    public ElasticDocBuilder(final ElasticDocBuilderConfig config) {
+    public ElasticDocBuilder(final ElasticDocConfig config) {
+        this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
+        this.document = LinkedHashMultimap.create();
+        this.tokenFilters = Maps.newLinkedHashMap();
     }
 
     public String build(final JsonNode root) throws ElasticDocBuilderException {
         lock.lock();
         try {
+            final ElasticDocImpl doc = new ElasticDocImpl();
             final List<ElasticDocBuilderPlugin> plugins = config.getPlugins();
-            final boolean havePlugins = plugins.size() != 0;
             try {
-                final ElasticDocImpl elasticDoc;
-                if (havePlugins) {
-                    elasticDoc = new ElasticDocImpl();
-                    for (final ElasticDocBuilderPlugin plugin : plugins) {
-                        plugin.before(elasticDoc);
-                    }
-                } else {
-                    elasticDoc = null;
-                }
-
                 // map document fields to one or more index fields
-                for (final String sourcePath : config.getSourcePaths()) {
-                    descendSourcePath(root, sourcePath, 0);
+                for (final JsonPointer sourcePath : config.getSourcePaths()) {
+                    final JsonNode node = root.at(sourcePath);
+
+                    // we've arrived at path! put values into document
+                    final Collection<Field> targets = config.getFieldsTargetedBy(sourcePath);
+                    for (final Field field : targets) {
+                        putNode(field, node);
+                    }
                 }
 
-                if (havePlugins) {
-                    for (final ElasticDocBuilderPlugin plugin : plugins) {
-                        plugin.after(elasticDoc);
-                    }
+                // give plugins a chance to augment document
+                for (final ElasticDocBuilderPlugin plugin : plugins) {
+                    plugin.complete(doc);
                 }
 
                 final String json = writeDocument();
@@ -164,228 +157,100 @@ public class ElasticDocBuilder {
         }
     }
 
-    public String build(final String source) throws ElasticDocBuilderException {
-        JsonNode root;
+    public String build(final String json) throws ElasticDocBuilderException {
+        JsonNode node;
         try {
-            Preconditions.checkArgument(source != null, "source must be non-null");
-            root = JacksonUtils.getObjectMapper().readTree(source);
+            Preconditions.checkArgument(json != null, "json must be non-null");
+            final ObjectMapper objectMapper = config.getObjectMapper();
+            node = objectMapper.readTree(json);
         } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
             throw new ElasticDocBuilderException("Unable to parse source document", e);
         }
 
-        return build(root);
+        return build(node);
     }
 
-    protected Object coerceValue(final Field field, final String rawValue) {
-        Preconditions.checkArgument(field != null, "field must be non-null");
-
-        // whitespace is not indexed and is therefore removed
-        final String trimmedValue = MoreStringUtils.trimWhitespace(rawValue);
-        if (trimmedValue == null || trimmedValue.length() == 0) {
-            return null;
+    protected TokenFilter getTokenFilter(final Field field) {
+        final TokenFilter filter;
+        if (tokenFilters.containsKey(field)) {
+            filter = tokenFilters.get(field);
+        } else {
+            filter = TokenChain.link(field.getTokenFilters());
+            tokenFilters.put(field, filter);
         }
-
-        final Type type = field.getType();
-        if (type == null) {
-            // cannot check value if type is unknown
-            return rawValue;
-        }
-
-        final boolean ignoreMalformed = field.isIgnoreMalformed() != null && field.isIgnoreMalformed();
-        switch (type) {
-        case BINARY: {
-            // note: base64 encoding is not the same thing as hex and can include all the letters of
-            // the alphabet
-            if (!BaseEncoding.base64().canDecode(trimmedValue)) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue);
-            }
-            // we return original value
-            break;
-        }
-
-        case BOOLEAN:
-            final Boolean bool = BooleanUtils.toBooleanObject(trimmedValue);
-            if (bool == null) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue);
-            }
-            return bool;
-
-        case DATE:
-            final ZonedDateTime date = DateUtils.toZonedDateTimeUtc(trimmedValue);
-            if (date == null) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue);
-            }
-            // standardize the date in ISO format
-            return DateUtils.toStringIsoFormat(date);
-
-        case BYTE:
-            try {
-                return Byte.parseByte(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-
-        case SHORT:
-            try {
-                return Short.parseShort(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-
-        case INTEGER:
-            try {
-                return Integer.parseInt(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-
-        case LONG:
-            try {
-                return Long.parseLong(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-
-        case DOUBLE:
-            try {
-                Double.parseDouble(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-            // we don't want to lose any precision so we return original value
-            break;
-
-        case FLOAT:
-            try {
-                Float.parseFloat(trimmedValue);
-            } catch (final NumberFormatException nfe) {
-                if (ignoreMalformed) {
-                    return null;
-                }
-                throw new TypeConverterException(field, trimmedValue, nfe);
-            }
-            // we don't want to lose any precision so we return original value
-            break;
-
-        case TEXT:
-        case KEYWORD:
-            // use raw value
-            break;
-
-        default:
-            throw new TypeConverterException("Unrecognized field type: " + field, field, trimmedValue);
-        }
-
-        // use raw value but stripped all leading and trailing whitespace, which includes line
-        // delimiters
-        return trimmedValue;
+        return filter;
     }
 
-    /**
-     * Collects all of the values from the given source node and pushes them into the Elastic
-     * document field. If the source node is an array or object, all of the descendant values are
-     * pushes into the target field.
-     *
-     * @param targetField
-     *            target field in Elastic document
-     * @param node
-     *            source node
-     */
-    private void collectValues(final Field field, final JsonNode node) {
-        if (node == null || node.isNull() || node.isMissingNode() || node.isBinary()) {
+    private void traverse(final Object obj, final Consumer<Object> consumer) {
+        Preconditions.checkArgument(consumer != null, "consumer must be non-null");
+        if (obj == null) {
             return;
         }
 
-        if (node.isArray()) {
-            for (int i = 0, size = node.size(); i < size; i++) {
-                final JsonNode item = node.get(i);
-                collectValues(field, item);
-            }
-        } else if (node.isObject()) {
-            final Iterator<JsonNode> children = node.elements();
-            while (children.hasNext()) {
-                collectValues(field, children.next());
-            }
-        } else if (!node.isPojo()) {
-            // can't be NullNode
-            final String text = node.asText();
-            if (!StringUtils.isEmpty(text)) {
-                putDocument(field, text);
-            }
+        if (obj instanceof CharSequence) {
+            consumer.accept(obj);
+            return;
         }
+        if (obj instanceof Number) {
+            consumer.accept(obj);
+            return;
+        }
+        if (obj instanceof Boolean) {
+            consumer.accept(obj);
+            return;
+        }
+
+        if (obj instanceof Map) {
+            for (Object v : ((Map) obj).values()) {
+                traverse(v, consumer);
+            }
+            return;
+        }
+
+        if (obj instanceof Collection) {
+            for (Object v : ((Collection) obj)) {
+                traverse(v, consumer);
+            }
+            return;
+        }
+        if (obj instanceof Object[]) {
+            for (Object v : ((Object[]) obj)) {
+                traverse(v, consumer);
+            }
+            return;
+        }
+
+        throw new IllegalStateException(
+                "Expecting simple JSON data type, but received: " + obj.getClass().getName());
     }
 
-    /**
-     * Recursively descend a source tree until we reach the source path, at which point we push all
-     * of the values into the target fields.
-     *
-     * @param node
-     *            our current location in the JSON document
-     * @param sourcePath
-     *            the path that we are traversing
-     * @param startPos
-     *            location that we are in the document
-     * @param mapping
-     *            index at we are putting data into
-     * @throws IOException
-     */
-    private void descendSourcePath(final JsonNode node, final String sourcePath, final int startPos) {
-        if (node == null || node.isNull()) {
+    private void put(final Field field, final Object obj) {
+        if (obj == null) {
+            // we don't store null values
             return;
         }
 
-        // only arrays will have a non-zero size
-        for (int i = 0, size = node.size(); i < size; i++) {
-            final JsonNode item = node.get(i);
-            descendSourcePath(item, sourcePath, startPos);
-        }
-
-        final int endPos = sourcePath.indexOf('/', startPos);
-        if (endPos != -1) {
-            // descend into subfield
-            final String subfield = sourcePath.substring(startPos, endPos);
-            final JsonNode subfieldNode = node.get(subfield);
-            descendSourcePath(subfieldNode, sourcePath, endPos + 1);
+        // serialize object
+        final Object ser = config.getValueSerializer().serialize(field, obj);
+        if (ser == null) {
             return;
         }
 
-        final String fieldName = sourcePath.substring(startPos);
-        final JsonNode fieldNode = node.get(fieldName);
-        if (fieldNode == null || fieldNode.isNull()) {
-            // the specified field was not found in the document
+        // apply token filters
+        if (ser instanceof CharSequence) {
+            getTokenFilter(field).accept(ser.toString(), token -> {
+                // we only store non-empty strings in document
+                if (!StringUtils.isEmpty(token)) {
+                    document.put(field.getName(), token);
+                }
+            });
             return;
         }
 
-        // we've arrived at path! put values into document
-        final Collection<Field> targets = config.getFieldsOf(sourcePath);
-
-        for (final Field field : targets) {
-            collectValues(field, fieldNode);
-        }
+        // make sure object is simple JSON type
+        traverse(ser, o -> {
+        });
+        document.put(field.getName(), obj);
     }
 
     /**
@@ -403,32 +268,10 @@ public class ElasticDocBuilder {
      * @param value
      *            value
      */
-    private void putDocument(final Field field, final String rawValue) {
-        Preconditions.checkArgument(field != null, "target must be non-null");
-        if (StringUtils.isEmpty(rawValue)) {
-            // we don't add empty strings to Elastic document
-            return;
-        }
-
-        // make sure raw value is accepted for field and that it is coerced into standardized format
-        // (particularly for dates)
-        final String value = Objects.toString(coerceValue(field, rawValue), null);
-        if (value == null) {
-            return;
-        }
-
-        final TokenFilter filter;
-        if (tokenFilters.containsKey(field)) {
-            filter = tokenFilters.get(field);
-        } else {
-            filter = TokenChain.link(field.getTokenFilters());
-            tokenFilters.put(field, filter);
-        }
-
-        filter.accept(value, token -> {
-            if (!StringUtils.isEmpty(token)) {
-                document.put(field.getName(), token);
-            }
+    private void putNode(final Field field, final JsonNode node) {
+        // pipeline: deserialize to object -> serialize object to string -> token filters
+        config.getValueDeserializer().deserialize(field, node, obj -> {
+            put(field, obj);
         });
     }
 

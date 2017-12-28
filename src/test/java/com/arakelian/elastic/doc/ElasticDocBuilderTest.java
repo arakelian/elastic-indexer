@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@
 
 package com.arakelian.elastic.doc;
 
+import static com.fasterxml.jackson.core.JsonPointer.compile;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,9 +26,9 @@ import org.junit.Test;
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.doc.filters.ImmutableUppercase;
 import com.arakelian.elastic.doc.filters.Splitter;
-import com.arakelian.elastic.model.ElasticDocBuilderConfig;
+import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field.Type;
-import com.arakelian.elastic.model.ImmutableElasticDocBuilderConfig;
+import com.arakelian.elastic.model.ImmutableElasticDocConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.Mapping;
@@ -109,9 +111,9 @@ public class ElasticDocBuilderTest {
                                 .build())
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("booleans", "booleans/false") //
+                .putTarget("booleans", compile("/booleans/false")) //
                 .build();
         Assert.assertEquals( //
                 "{\"booleans\":\"false\"}", //
@@ -130,13 +132,19 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("booleans", "booleans/true") //
+                .putTarget("booleans", compile("/booleans/true")) //
                 .build();
+        final String actual = new ElasticDocBuilder(config).build(sampleJson);
         Assert.assertEquals( //
                 "{\"booleans\":\"true\"}", //
-                new ElasticDocBuilder(config).build(sampleJson));
+                actual);
+    }
+
+    @Test
+    public void testGeopoint() {
+
     }
 
     @Test
@@ -151,9 +159,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("base64", "base64") //
+                .putTarget("base64", compile("/base64")) //
                 .build();
         Assert.assertEquals( //
                 "{\"base64\":[\"aGVsbG8gdGhlcmU=\",\"YXJha2VsaWFu\"]}", //
@@ -172,9 +180,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("numbers", "numbers") //
+                .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
                 "{\"numbers\":[\"-128\",\"0\",\"127\"]}", //
@@ -195,9 +203,9 @@ public class ElasticDocBuilderTest {
         final String date1 = DateUtils.toStringIsoFormat("2016-02-01");
         final String date2 = DateUtils.toStringIsoFormat("2016-09-04");
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("dates", "dates") //
+                .putTarget("dates", compile("/dates")) //
                 .build();
         Assert.assertEquals( //
                 "{\"dates\":[\"" + date1 + "\",\"" + date2 + "\",\"2016-12-21T16:46:39.830000000Z\"]}", //
@@ -216,12 +224,12 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
                 .addIdentityField("numbers") //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\",\"-9223372036854775808\",\"9223372036854775807\",\"3.14\",\"2.718\",\"6.67e-11\"]}",
+                "{\"numbers\":[\"-128.0\",\"0.0\",\"127.0\",\"-32768.0\",\"32767.0\",\"-2.147483648E9\",\"2.147483647E9\",\"-9.223372036854776E18\",\"9.223372036854776E18\",\"3.14\",\"2.718\",\"6.67E-11\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -237,13 +245,14 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("numbers", "numbers") //
+                .putTarget("numbers", compile("/numbers")) //
                 .build();
+        final String actual = new ElasticDocBuilder(config).build(sampleJson);
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\",\"-9223372036854775808\",\"9223372036854775807\",\"3.14\",\"2.718\",\"6.67e-11\"]}",
-                new ElasticDocBuilder(config).build(sampleJson));
+                "{\"numbers\":[\"-128.0\",\"0.0\",\"127.0\",\"-32768.0\",\"32767.0\",\"-2.14748365E9\",\"2.14748365E9\",\"-9.223372E18\",\"9.223372E18\",\"3.14\",\"2.718\",\"6.67E-11\"]}",
+                actual);
     }
 
     @Test
@@ -258,9 +267,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("numbers", "numbers") //
+                .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
                 "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\"]}",
@@ -279,9 +288,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("numbers", "numbers") //
+                .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
                 "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\",\"-9223372036854775808\",\"9223372036854775807\"]}",
@@ -300,9 +309,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("numbers", "numbers") //
+                .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
                 "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\"]}",
@@ -316,9 +325,9 @@ public class ElasticDocBuilderTest {
                 .addField(ImmutableField.builder().name("friends").build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("friends", "friends") //
+                .putTarget("friends", compile("/friends")) //
                 .build();
         Assert.assertEquals( //
                 "{\"friends\":[\"Moe\",\"Larry\",\"Curly\"]}",
@@ -332,9 +341,9 @@ public class ElasticDocBuilderTest {
                 .addField(ImmutableField.builder().name("name").build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("name", "name", "company/name") //
+                .putTarget("name", compile("/name"), compile("/company/name")) //
                 .build();
         Assert.assertEquals( //
                 "{\"name\":[\"Schuyler\",\"Hilll - Kassulke\"]}",
@@ -348,9 +357,9 @@ public class ElasticDocBuilderTest {
                 .addField(ImmutableField.builder().name("address").build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("address", "address") //
+                .putTarget("address", compile("/address")) //
                 .build();
         Assert.assertEquals(
                 "{\"address\":[\"Schumm Grove\",\"Apt. 364\",\"East Devin\",\"77081-9341\",\"-3.1352\",\"-25.6319\"]}",
@@ -366,11 +375,11 @@ public class ElasticDocBuilderTest {
                 .addField(ImmutableField.builder().name("phone").build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("name", "name") //
-                .putTarget("email", "email") //
-                .putTarget("phone", "phone") //
+                .putTarget("name", compile("/name")) //
+                .putTarget("email", compile("/email")) //
+                .putTarget("phone", compile("/phone")) //
                 .build();
         Assert.assertEquals(
                 "{\"name\":\"Schuyler\",\"email\":\"Schuyler_Bogan_Olson@gmail.com\",\"phone\":\"1-126-999-3806\"}",
@@ -389,9 +398,9 @@ public class ElasticDocBuilderTest {
                                 .build()) //
                 .build();
 
-        final ElasticDocBuilderConfig config = ImmutableElasticDocBuilderConfig.builder() //
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("tags", "tags") //
+                .putTarget("tags", compile("/tags")) //
                 .build();
         Assert.assertEquals(
                 "{\"tags\":[\"USER\",\"PERSON\",\"HUMAN\"]}",

@@ -43,9 +43,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-@Value.Immutable(copy = false)
+@Value.Immutable
 @JsonSerialize(as = ImmutableMapping.class)
 @JsonDeserialize(builder = ImmutableMapping.Builder.class)
 @JsonPropertyOrder({ "_all", "_source", "dynamic", "properties" })
@@ -120,9 +122,12 @@ public interface Mapping extends Serializable {
      *
      * @return list of fields in the index.
      */
-    @Value.Auxiliary
     @JsonIgnore
-    public List<Field> getFields();
+    @Value.Default
+    @Value.Auxiliary
+    public default List<Field> getFields() {
+        return ImmutableList.of();
+    }
 
     @Value.Default
     @Value.Auxiliary
@@ -130,11 +135,47 @@ public interface Mapping extends Serializable {
     @JsonSerialize(contentUsing = FieldSerializer.class)
     @JsonDeserialize(contentUsing = FieldDeserializer.class)
     public default Map<String, Field> getProperties() {
-        final Map<String, Field> names = Maps.newLinkedHashMap();
-        for (final Field field : getFields()) {
-            names.put(field.getName(), field);
+        return ImmutableMap.of();
+    }
+
+    @Value.Check
+    public default Mapping normalizeFields() {
+        Map<String, Field> props = getProperties();
+
+        List<Field> fields = getFields();
+        if (fields.size() == 0) {
+            // optimization: expose fields
+            return ((ImmutableMapping) this).withFields(props.values());
         }
-        return names;
+
+        // make sure we have properties for all fields
+        if (fields.size() == props.keySet().size()) {
+            boolean consistent = true;
+            for (Field field : fields) {
+                if (!props.containsKey(field.getName())) {
+                    consistent = false;
+                    break;
+                }
+            }
+            if (consistent) {
+                return this;
+            }
+        }
+
+        final Map<String, Field> newProps = Maps.newLinkedHashMap();
+        newProps.putAll(props);
+        for (final Field field : fields) {
+            String name = field.getName();
+            if (!newProps.containsKey(name)) {
+                newProps.put(name, field);
+            }
+        }
+
+        return ImmutableMapping.builder() //
+                .from(this) //
+                .properties(newProps) //
+                .fields(newProps.values()) //
+                .build();
     }
 
     /**
@@ -154,5 +195,13 @@ public interface Mapping extends Serializable {
                 .name("_source") //
                 .enabled(true) //
                 .build();
+    }
+
+    public default boolean hasField(final Field field) {
+        return field != null && getProperties().containsKey(field.getName());
+    }
+
+    public default boolean hasField(final String name) {
+        return name != null && getProperties().containsKey(name);
     }
 }

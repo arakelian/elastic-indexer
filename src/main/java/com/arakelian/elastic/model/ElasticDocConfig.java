@@ -17,17 +17,30 @@
 
 package com.arakelian.elastic.model;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.doc.ElasticDocBuilderPlugin;
+import com.arakelian.elastic.doc.DefaultValueDeserializer;
+import com.arakelian.elastic.doc.DefaultValueSerializer;
+import com.arakelian.elastic.doc.ValueDeserializer;
+import com.arakelian.elastic.doc.ValueSerializer;
+import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
+import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
@@ -37,11 +50,29 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableElasticDocBuilderConfig.class)
-@JsonDeserialize(builder = ImmutableElasticDocBuilderConfig.Builder.class)
+@JsonSerialize(as = ImmutableElasticDocConfig.class)
+@JsonDeserialize(builder = ImmutableElasticDocConfig.Builder.class)
 @JsonPropertyOrder({ "targets", "mapping" })
-public abstract class ElasticDocBuilderConfig implements Serializable {
-    public Collection<Field> getFieldsOf(final String sourcePath) {
+public abstract class ElasticDocConfig {
+    public static class JsonPointerDeserializer extends JsonDeserializer<JsonPointer> {
+        @Override
+        public JsonPointer deserialize(final JsonParser p, final DeserializationContext ctxt)
+                throws IOException, JsonProcessingException {
+            return JsonPointer.compile(p.getText());
+        }
+    }
+
+    public static class JsonPointerSerializer extends JsonSerializer<JsonPointer> {
+        @Override
+        public void serialize(
+                final JsonPointer value,
+                final JsonGenerator gen,
+                final SerializerProvider serializers) throws IOException, JsonProcessingException {
+            gen.writeString(value.toString());
+        }
+    }
+
+    public Collection<Field> getFieldsTargetedBy(final JsonPointer sourcePath) {
         final Collection<Field> collection = getSourcePathsMapping().get(sourcePath);
         return collection != null ? collection : ImmutableList.of();
     }
@@ -61,6 +92,18 @@ public abstract class ElasticDocBuilderConfig implements Serializable {
     public abstract Mapping getMapping();
 
     /**
+     * Returns the {@link ObjectMapper} used for parsing JSON documents.
+     *
+     * @return the {@link ObjectMapper} used for parsing JSON documents.
+     */
+    @JsonIgnore
+    @Value.Default
+    @Value.Auxiliary
+    public ObjectMapper getObjectMapper() {
+        return JacksonUtils.getObjectMapper();
+    }
+
+    /**
      * Returns a list of plugins configured for this mapping.
      *
      * @return list of plugins configured for this mapping.
@@ -74,7 +117,7 @@ public abstract class ElasticDocBuilderConfig implements Serializable {
 
     @JsonIgnore
     @Value.Derived
-    public Set<String> getSourcePaths() {
+    public Set<JsonPointer> getSourcePaths() {
         // must copy otherwise not serializable
         return ImmutableSet.copyOf(getSourcePathsMapping().keySet());
     }
@@ -87,19 +130,18 @@ public abstract class ElasticDocBuilderConfig implements Serializable {
     @JsonIgnore
     @Value.Lazy
     @JsonDeserialize(as = LinkedHashMultimap.class)
-    protected Multimap<String, Field> getSourcePathsMapping() {
-        final Multimap<String, Field> result = LinkedHashMultimap.create();
+    protected Multimap<JsonPointer, Field> getSourcePathsMapping() {
+        final Multimap<JsonPointer, Field> result = LinkedHashMultimap.create();
         final Mapping mapping = getMapping();
 
-        for (final String target : getTargets().keySet()) {
+        final Multimap<String, JsonPointer> targets = getTargets();
+        for (final String target : targets.keySet()) {
             final Field field = mapping.getField(target);
             if (field == null) {
                 throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
             }
-            for (final String path : getTargets().get(target)) {
-                if (!StringUtils.isEmpty(path)) {
-                    result.put(path, field);
-                }
+            for (final JsonPointer path : targets.get(target)) {
+                result.put(path, field);
             }
         }
 
@@ -112,35 +154,51 @@ public abstract class ElasticDocBuilderConfig implements Serializable {
      * @return list of source paths that should be mapped to each Elastic field.
      */
     @Value.Default
-    @JsonDeserialize(as = LinkedHashMultimap.class)
-    public Multimap<String, String> getTargets() {
+    @JsonDeserialize(as = LinkedHashMultimap.class, contentUsing = JsonPointerDeserializer.class)
+    @JsonSerialize(contentUsing = JsonPointerSerializer.class)
+    public Multimap<String, JsonPointer> getTargets() {
         return LinkedHashMultimap.create();
     }
 
     @JsonIgnore
+    @Value.Default
+    @Value.Auxiliary
+    public ValueDeserializer getValueDeserializer() {
+        return new DefaultValueDeserializer();
+    }
+
+    @JsonIgnore
+    @Value.Default
+    @Value.Auxiliary
+    public ValueSerializer getValueSerializer() {
+        return new DefaultValueSerializer();
+    }
+
+    @JsonIgnore
     @Value.Check
-    protected ElasticDocBuilderConfig normalizeTargets() {
+    protected ElasticDocConfig normalizeTargets() {
         final Set<String> identityFields = getIdentityFields();
         if (identityFields.size() == 0) {
             return this;
         }
 
-        final LinkedHashMultimap<String, String> newTargets = LinkedHashMultimap.create();
+        final LinkedHashMultimap<String, JsonPointer> newTargets = LinkedHashMultimap.create();
         for (final String identity : identityFields) {
+            final JsonPointer target = JsonPointer.compile("/" + identity);
             if (getTargets().containsKey(identity)) {
-                final Collection<String> target = getTargets().get(identity);
+                final Collection<JsonPointer> targets = getTargets().get(identity);
                 Preconditions.checkState(
-                        target.contains(identity), //
+                        targets.contains(target), //
                         "Target \"%s\" is not an identity mapping",
                         identity);
             }
 
             // add target
-            newTargets.put(identity, identity);
+            newTargets.put(identity, target);
         }
 
         // rebuild with additional targets
-        return ImmutableElasticDocBuilderConfig.builder() //
+        return ImmutableElasticDocConfig.builder() //
                 .from(this) //
                 .identityFields(ImmutableSet.of()) //
                 .targets(newTargets) //

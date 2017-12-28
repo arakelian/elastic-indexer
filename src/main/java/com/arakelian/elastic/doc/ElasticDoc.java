@@ -19,17 +19,21 @@ package com.arakelian.elastic.doc;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
-import com.arakelian.elastic.model.ElasticDocBuilderConfig;
+import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
 
 public interface ElasticDoc {
-    public CharSequence concatenate(final Predicate<Field> predicate);
+    public Collection<Object> get(final String field);
 
-    public ElasticDocBuilderConfig getConfig();
+    public boolean hasField(final String name);
+
+    public ElasticDocConfig getConfig();
 
     public Set<String> getFields();
 
-    public Collection<Object> getValues(final String field);
+    public void traverse(final Object value, final Consumer<Object> consumer);
+
+    public void put(final Field field, final Object value);
 }

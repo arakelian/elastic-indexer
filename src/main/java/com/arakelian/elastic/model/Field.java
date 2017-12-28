@@ -43,10 +43,10 @@ import com.google.common.collect.Sets;
 @Value.Immutable
 @JsonSerialize(as = ImmutableField.class)
 @JsonDeserialize(builder = ImmutableField.Builder.class)
-@JsonPropertyOrder({ "name", "type", "format", "enabled", "store", "index", "index_options", "doc_values",
-        "fielddata", "ignore_above", "ignore_malformed", "include_in_all", "copy_to", "analyzer",
-        "search_analyzer" })
-public interface Field extends Serializable {
+@JsonPropertyOrder({ "name", "type", "scaling_factor", "format", "enabled", "store", "index", "index_options",
+        "doc_values", "fielddata", "ignore_above", "ignore_malformed", "include_in_all", "copy_to",
+        "analyzer", "search_analyzer" })
+public abstract class Field implements Serializable {
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
     public enum IndexOptions {
         DOCS, //
@@ -78,50 +78,29 @@ public interface Field extends Serializable {
 
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html
     public enum Type {
-        TEXT(true, true, false), //
-        KEYWORD(false, true, false), //
-        BYTE(false, true, false), //
-        SHORT(false, true, false), //
-        INTEGER(false, true, false), //
-        LONG(false, true, false), //
-        FLOAT(false, true, false), //
-        DOUBLE(false, true, false), //
-        DATE(false, true, false), //
-        BOOLEAN(false, true, false), //
-        BINARY(false, false, true);
-
-        /**
-         * True if field can be analyzed. The only field which supports this is {@link #TEXT}.
-         **/
-        private final boolean analyzed;
-
-        /**
-         * True if field should be indexed by default.
-         */
-        private final Boolean indexDefault;
-
-        /**
-         * True if field should be indexed by default.
-         */
-        private final Boolean storeDefault;
-
-        private Type(final boolean analyzed, final Boolean indexDefault, final Boolean storeDefault) {
-            this.analyzed = analyzed;
-            this.indexDefault = indexDefault;
-            this.storeDefault = storeDefault;
-        }
-
-        public final Boolean getIndexDefault() {
-            return indexDefault;
-        }
-
-        public final Boolean getStoreDefault() {
-            return storeDefault;
-        }
-
-        public final boolean isAnalyzed() {
-            return analyzed;
-        }
+        TEXT, //
+        KEYWORD, //
+        BYTE, //
+        SHORT, //
+        INTEGER, //
+        LONG, //
+        FLOAT, //
+        DOUBLE, //
+        DATE, //
+        BOOLEAN, //
+        BINARY, //
+        HALF_FLOAT, //
+        SCALED_FLOAT, //
+        INTEGER_RANGE, //
+        FLOAT_RANGE, //
+        LONG_RANGE, //
+        DOUBLE_RANGE, //
+        DATE_RANGE, //
+        GEO_POINT, //
+        // GEO_SHAPE, //
+        IP, //
+        COMPLETION, //
+        TOKEN_COUNT;
 
         @Override
         @JsonValue
@@ -146,11 +125,27 @@ public interface Field extends Serializable {
             "_type", //
             "_uid");
 
+    @Override
+    public boolean equals(@javax.annotation.Nullable final Object another) {
+        if (this == another) {
+            return true;
+        }
+        return another instanceof ImmutableField && equalTo((ImmutableField) another);
+    }
+
+    private boolean equalTo(final ImmutableField another) {
+        return getName().equals(another.getName());
+    }
+
     @Nullable
+    @Value.Default
     @Value.Auxiliary
     @JsonProperty("analyzer")
     @JsonView(Elastic.class)
-    public String getAnalyzer();
+    public String getAnalyzer() {
+        // must specify an analyzer for TOKEN_COUNT fields
+        return getType() == Type.TOKEN_COUNT ? "standard" : null;
+    }
 
     /**
      * Returns a list of fields that this field value should be copied to.
@@ -164,13 +159,13 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("copy_to")
     @JsonView(Elastic.class)
-    public List<String> getCopyTo();
+    public abstract List<String> getCopyTo();
 
     @Value.Derived
     @Value.Auxiliary
     @JsonProperty("fields")
     @JsonView(Elastic.class)
-    public default Map<String, Field> getFieldsByName() {
+    public Map<String, Field> getFieldsByName() {
         final Map<String, Field> names = Maps.newLinkedHashMap();
         for (final Field field : getSubfields()) {
             names.put(field.getName(), field);
@@ -190,7 +185,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("format")
     @JsonView(Elastic.class)
-    public String getFormat();
+    public abstract String getFormat();
 
     /**
      * Returns the maximum length of strings that can be indexed or stored. Strings longer than the
@@ -203,7 +198,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("ignore_above")
     @JsonView(Elastic.class)
-    public default Integer getIgnoreAbove() {
+    public Integer getIgnoreAbove() {
         if (isMetaField() || getType() != Type.KEYWORD) {
             return null;
         }
@@ -223,14 +218,14 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("index_options")
     @JsonView(Elastic.class)
-    public IndexOptions getIndexOptions();
+    public abstract IndexOptions getIndexOptions();
 
     /**
      * Returns the name of the Elastic index field that should be created.
      *
      * @return name of the Elastic index field that should be created.
      */
-    public String getName();
+    public abstract String getName();
 
     /**
      * Returns a value that will replace null values during indexed. Normally, null values cannot be
@@ -243,13 +238,22 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("null_value")
     @JsonView(Elastic.class)
-    public String getNullValue();
+    public abstract String getNullValue();
+
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("scaling_factor")
+    @JsonView(Elastic.class)
+    public Integer getScalingFactor() {
+        return getType() == Type.SCALED_FLOAT ? 100 : null;
+    }
 
     @Nullable
     @Value.Auxiliary
     @JsonProperty("search_analyzer")
     @JsonView(Elastic.class)
-    public String getSearchAnalyzer();
+    public abstract String getSearchAnalyzer();
 
     /**
      * Returns a list of subfields, if any. A field that has subfields is called a "multi-field" in
@@ -263,7 +267,7 @@ public interface Field extends Serializable {
      */
     @Value.Auxiliary
     @JsonIgnore
-    public List<Field> getSubfields();
+    public abstract List<Field> getSubfields();
 
     /**
      * Returns setting that determines what information is added to the inverted index.
@@ -277,21 +281,20 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("term_vector")
     @JsonView(Elastic.class)
-    public TermVector getTermVector();
+    public abstract TermVector getTermVector();
 
     @Value.Default
     @Value.Auxiliary
     @JsonView(Enhancement.class)
-    public default List<TokenFilter> getTokenFilters() {
+    public List<TokenFilter> getTokenFilters() {
         return ImmutableList.of();
     }
 
     @Nullable
     @Value.Default
-    @Value.Auxiliary
     @JsonProperty("type")
     @JsonView(Elastic.class)
-    public default Type getType() {
+    public Type getType() {
         return isMetaField() ? null : Type.TEXT;
     }
 
@@ -306,11 +309,17 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("doc_values")
     @JsonView(Elastic.class)
-    public default Boolean isDocValues() {
-        if (isMetaField() || getType() == null) {
+    public Boolean isDocValues() {
+        final Type type = getType();
+        if (type == null || isMetaField() || type == Type.COMPLETION) {
             return null;
         }
-        return Boolean.TRUE.equals(isIndex()) && !getType().isAnalyzed();
+        return Boolean.TRUE.equals(isIndex()) && !(type == Type.TEXT || //
+                type == Type.INTEGER_RANGE || //
+                type == Type.FLOAT_RANGE || //
+                type == Type.LONG_RANGE || //
+                type == Type.DOUBLE_RANGE || //
+                type == Type.DATE_RANGE);
     }
 
     /**
@@ -326,7 +335,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("enabled")
     @JsonView(Elastic.class)
-    public Boolean isEnabled();
+    public abstract Boolean isEnabled();
 
     /**
      * Returns true if field data is enabled for field.
@@ -342,7 +351,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("fielddata")
     @JsonView(Elastic.class)
-    public Boolean isFielddata();
+    public abstract Boolean isFielddata();
 
     /**
      * Returns true if this field should ignore illegal values detected when building Elastic
@@ -355,7 +364,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("ignore_malformed")
     @JsonView(Elastic.class)
-    public Boolean isIgnoreMalformed();
+    public abstract Boolean isIgnoreMalformed();
 
     /**
      * Returns true if this field should not be included in _all.
@@ -370,7 +379,7 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("include_in_all")
     @JsonView(Version5.class)
-    public default Boolean isIncludeInAll() {
+    public Boolean isIncludeInAll() {
         if (isMetaField() || getType() == null) {
             return null;
         }
@@ -399,18 +408,19 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("index")
     @JsonView(Elastic.class)
-    public default Boolean isIndex() {
-        if (isMetaField() || getType() == null) {
+    public Boolean isIndex() {
+        final Type type = getType();
+        if (type == null || isMetaField() || type == Type.COMPLETION) {
             return null;
         }
-        return getType().getIndexDefault();
+        return type != Type.BINARY;
     }
 
     @Value.Default
     @Value.Auxiliary
     @JsonIgnore
     @JsonView(Elastic.class)
-    public default boolean isMetaField() {
+    public boolean isMetaField() {
         final String name = getName();
         return META_FIELDS.contains(name);
     }
@@ -428,10 +438,11 @@ public interface Field extends Serializable {
     @Value.Auxiliary
     @JsonProperty("store")
     @JsonView(Elastic.class)
-    public default Boolean isStore() {
-        if (isMetaField() || getType() == null) {
+    public Boolean isStore() {
+        final Type type = getType();
+        if (type == null || isMetaField() || type == Type.COMPLETION) {
             return null;
         }
-        return getType().getStoreDefault();
+        return type == Type.BINARY;
     }
 }

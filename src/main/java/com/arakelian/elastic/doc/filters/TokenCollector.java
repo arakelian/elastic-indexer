@@ -17,43 +17,7 @@
 
 package com.arakelian.elastic.doc.filters;
 
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
+import com.arakelian.elastic.doc.ValueCollector;
 
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-
-public final class TokenCollector implements Consumer<String> {
-    private final List<String> list = Lists.newArrayList();
-    private final boolean omitEmpty;
-
-    public TokenCollector() {
-        this(true);
-    }
-
-    public TokenCollector(final boolean omitEmpty) {
-        this.omitEmpty = omitEmpty;
-    }
-
-    @Override
-    public void accept(final String value) {
-        if (!omitEmpty || !StringUtils.isEmpty(value)) {
-            list.add(value);
-        }
-    }
-
-    public List<String> get() {
-        return list;
-    }
-
-    public Set<String> getUnique() {
-        return ImmutableSet.copyOf(get());
-    }
-
-    public void reset() {
-        list.clear();
-    }
+public final class TokenCollector extends ValueCollector<String> {
 }
