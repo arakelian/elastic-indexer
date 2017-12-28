@@ -17,7 +17,6 @@
 
 package com.arakelian.elastic;
 
-import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -37,9 +36,6 @@ import com.arakelian.elastic.model.ClusterHealth;
 import com.arakelian.elastic.model.ClusterHealth.Status;
 import com.arakelian.elastic.model.DeletedDocument;
 import com.arakelian.elastic.model.Documents;
-import com.arakelian.elastic.model.Field.Type;
-import com.arakelian.elastic.model.ImmutableField;
-import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.ImmutableMget;
 import com.arakelian.elastic.model.ImmutableMgetDocument;
 import com.arakelian.elastic.model.Index;
@@ -189,25 +185,6 @@ public class ElasticClientTest extends AbstractElasticTest {
                 assertIndexWithInternalVersion(index, person, deleteVersion + 1);
             }
         });
-    }
-
-    @Test
-    public void testMappingWithEachFieldType() throws Exception {
-        // mappings for each field type will be created, using default values for "store", "index",
-        // "doc_values", "include_in_all", and so forth.
-        for (final Type type : Type.values()) {
-            final ImmutableMapping mapping = ImmutableMapping.builder() //
-                    .dynamic(STRICT) //
-                    .addField(
-                            ImmutableField.builder() //
-                                    .name(DEFAULT_TYPE) //
-                                    .type(type) //
-                                    .build())
-                    .build();
-            withIndex(mapping, index -> {
-                // pass if index created
-            });
-        }
     }
 
     @Test

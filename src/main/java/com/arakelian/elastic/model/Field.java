@@ -126,6 +126,7 @@ public abstract class Field implements Serializable {
             "_uid");
 
     @Override
+    @SuppressWarnings("EqualsHashCode")
     public boolean equals(@javax.annotation.Nullable final Object another) {
         if (this == another) {
             return true;
@@ -380,7 +381,8 @@ public abstract class Field implements Serializable {
     @JsonProperty("include_in_all")
     @JsonView(Version5.class)
     public Boolean isIncludeInAll() {
-        if (isMetaField() || getType() == null) {
+        Type type = getType();
+        if (type == null || isMetaField() || type == Type.COMPLETION) {
             return null;
         }
 

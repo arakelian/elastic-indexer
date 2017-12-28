@@ -247,7 +247,7 @@ public class DefaultValueDeserializer implements ValueDeserializer {
         }
     }
 
-    private final class TextDeserializer extends AbstractReader {
+    private final static class TextDeserializer extends AbstractReader {
         @Override
         protected void doRead(final Field field, final JsonNode node, final Consumer<Object> consumer)
                 throws ValueException {

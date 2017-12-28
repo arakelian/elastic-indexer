@@ -21,11 +21,14 @@ import com.arakelian.elastic.model.Field;
 
 public interface ValueSerializer {
     /**
+     * <p>
      * Converts a complex Java type to a simple type, suitable for rendering to JSON without any
      * further type conversion.
+     * </p>
      * 
      * <p>
      * Supported Java types:
+     * </p>
      * <ul>
      * <li><code>CharSequence</code> for JSON strings</li>
      * <li><code>Boolean</code> for JSON booleans</li>
@@ -33,7 +36,6 @@ public interface ValueSerializer {
      * <li><code>Collection</code> or <code>Object[]</code> for JSON arrays</li>
      * <li><code>Map</code> for JSON objects</li>
      * </ul>
-     * </p>
      * 
      * @param field
      *            Elastic field definition

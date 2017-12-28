@@ -47,7 +47,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-@Value.Immutable
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableMapping.class)
 @JsonDeserialize(builder = ImmutableMapping.Builder.class)
 @JsonPropertyOrder({ "_all", "_source", "dynamic", "properties" })
@@ -145,7 +145,10 @@ public interface Mapping extends Serializable {
         List<Field> fields = getFields();
         if (fields.size() == 0) {
             // optimization: expose fields
-            return ((ImmutableMapping) this).withFields(props.values());
+            return ImmutableMapping.builder() //
+                    .from(this) //
+                    .fields(props.values()) //
+                    .build();
         }
 
         // make sure we have properties for all fields
