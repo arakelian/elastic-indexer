@@ -24,24 +24,19 @@ import org.junit.Test;
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
-public class ShardsTest extends AbstractElasticModelTest {
-    public static final Shards MINIMAL = ImmutableShards.builder() //
-            .total(10) //
-            .failed(0) //
-            .successful(10) //
+public class IntegerRangeTest {
+    public static final IntegerRange EXTREMA = ImmutableIntegerRange.builder() //
+            .gte(Integer.MIN_VALUE) //
+            .lte(Integer.MAX_VALUE) //
             .build();
-
-    public ShardsTest(final String number) {
-        super(number);
-    }
 
     @Test
     public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Shards.class);
+        JacksonTestUtils.testReadWrite(EXTREMA, IntegerRange.class);
     }
 
     @Test
     public void testSerializable() {
-        SerializableTestUtils.testSerializable(MINIMAL, Shards.class);
+        SerializableTestUtils.testSerializable(EXTREMA, IntegerRange.class);
     }
 }

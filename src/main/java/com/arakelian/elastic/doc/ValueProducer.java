@@ -17,12 +17,12 @@
 
 package com.arakelian.elastic.doc;
 
-public class ElasticDocBuilderException extends RuntimeException {
-    public ElasticDocBuilderException(final String message) {
-        super(message);
-    }
+import java.util.function.Consumer;
 
-    public ElasticDocBuilderException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
+import com.arakelian.elastic.model.Field;
+import com.fasterxml.jackson.databind.JsonNode;
+
+public interface ValueProducer {
+    public void traverse(final Field field, final JsonNode node, final Consumer<Object> consumer)
+            throws ValueException;
 }

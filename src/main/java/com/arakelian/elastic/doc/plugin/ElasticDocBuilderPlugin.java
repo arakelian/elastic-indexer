@@ -18,8 +18,8 @@
 package com.arakelian.elastic.doc.plugin;
 
 import com.arakelian.elastic.doc.ElasticDoc;
-import com.arakelian.elastic.doc.ElasticDocBuilderException;
+import com.arakelian.elastic.doc.ElasticDocException;
 
 public interface ElasticDocBuilderPlugin {
-    public void complete(ElasticDoc doc) throws ElasticDocBuilderException;
+    public void completed(final ElasticDoc doc) throws ElasticDocException;
 }

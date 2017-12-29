@@ -18,30 +18,28 @@
 package com.arakelian.elastic.model;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
-public class ShardsTest extends AbstractElasticModelTest {
-    public static final Shards MINIMAL = ImmutableShards.builder() //
-            .total(10) //
-            .failed(0) //
-            .successful(10) //
+public class DateRangeTest {
+    public static final DateRange EXTREMA = ImmutableDateRange.builder() //
+            .gte(ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault())) //
+            .lte(ZonedDateTime.now(ZoneId.systemDefault())) //
             .build();
-
-    public ShardsTest(final String number) {
-        super(number);
-    }
 
     @Test
     public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Shards.class);
+        JacksonTestUtils.testReadWrite(EXTREMA, DateRange.class);
     }
 
     @Test
     public void testSerializable() {
-        SerializableTestUtils.testSerializable(MINIMAL, Shards.class);
+        SerializableTestUtils.testSerializable(EXTREMA, DateRange.class);
     }
 }

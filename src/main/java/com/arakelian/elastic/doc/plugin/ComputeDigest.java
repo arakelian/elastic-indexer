@@ -17,11 +17,14 @@
 
 package com.arakelian.elastic.doc.plugin;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,13 +32,17 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.doc.ElasticDoc;
-import com.arakelian.elastic.doc.ElasticDocBuilderException;
+import com.arakelian.elastic.doc.ElasticDocException;
+import com.arakelian.elastic.doc.ValueException;
 import com.arakelian.elastic.model.Field;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
 public class ComputeDigest implements ElasticDocBuilderPlugin {
@@ -100,31 +107,36 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
     }
 
     @Override
-    public void complete(final ElasticDoc doc) {
-        final MessageDigest func;
+    public void completed(final ElasticDoc doc) throws ElasticDocException {
+        // we will compute digest on serialized Elastic document
+        JsonNode root;
         try {
-            func = getMessageDigest();
+            final String json = doc.writeDocumentAsJson();
+            root = doc.getConfig().getObjectMapper().readValue(json, JsonNode.class);
+        } catch (final IOException e) {
+            throw new ElasticDocException("Unable to parse Elastic document", e);
+        }
+
+        final MessageDigest digester;
+        try {
+            digester = getMessageDigest();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            throw new ElasticDocBuilderException("Unable to create hash function with " + config.toString(),
-                    e);
+            throw new ElasticDocException("Unable to create hash function with " + config.toString(), e);
         }
 
-        for (final String field : doc.getFields()) {
-            if (!config.getPredicate().test(field)) {
-                continue;
-            }
+        // traverse JSON
+        traverse(root, config.getPredicate(), node -> {
+            // null nodes converted to "null" which is important so that digest changes between a
+            // true empty string and a null value.
+            final String text = node.asText();
+            final byte[] bytes = text.getBytes(Charsets.UTF_8);
+            digester.update(bytes);
+        });
 
-            final Collection<Object> values = doc.get(field);
-            for (final Object val : values) {
-                doc.traverse(val, o -> {
-                    func.digest(o.toString().getBytes(Charsets.UTF_8));
-                });
-            }
-        }
-
+        // add digest field
         final Field field = doc.getConfig().getMapping().getField(config.getFieldName());
-        final String hash = BaseEncoding.base64().omitPadding().encode(func.digest());
-        doc.put(field, hash);
+        final String digest = BaseEncoding.base64().omitPadding().encode(digester.digest());
+        doc.put(field, digest);
     }
 
     protected MessageDigest getMessageDigest() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -133,6 +145,45 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
             return MessageDigest.getInstance(config.getAlgorithm());
         } else {
             return MessageDigest.getInstance(config.getAlgorithm(), provider);
+        }
+    }
+
+    protected void traverse(
+            final JsonNode node,
+            final Predicate<String> fieldPredicate,
+            final Consumer<JsonNode> consumer) throws ValueException {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return;
+        }
+
+        if (node.isArray()) {
+            // note: we do sort arrays because ordering is significant (example: geopoints)
+            for (int i = 0, size = node.size(); i < size; i++) {
+                final JsonNode item = node.get(i);
+                traverse(item, null, consumer);
+            }
+            return;
+        }
+
+        if (node.isObject()) {
+            // we sort all the field names, to ensure that digest doesn't change just because fields
+            // appear in different orders
+            final ObjectNode obj = (ObjectNode) node;
+            final List<String> names = Lists.newArrayList(obj.fieldNames());
+            Collections.sort(names);
+
+            for (final String name : names) {
+                // optionally narrow the list of fields included in digest
+                if (fieldPredicate == null || fieldPredicate.test(name)) {
+                    final JsonNode child = obj.get(name);
+                    traverse(child, null, consumer);
+                }
+            }
+            return;
+        }
+
+        if (!node.isPojo()) {
+            consumer.accept(node);
         }
     }
 }

@@ -24,10 +24,8 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.doc.DefaultValueDeserializer;
-import com.arakelian.elastic.doc.DefaultValueSerializer;
-import com.arakelian.elastic.doc.ValueDeserializer;
-import com.arakelian.elastic.doc.ValueSerializer;
+import com.arakelian.elastic.doc.DefaultValueProducer;
+import com.arakelian.elastic.doc.ValueProducer;
 import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -163,15 +161,8 @@ public abstract class ElasticDocConfig {
     @JsonIgnore
     @Value.Default
     @Value.Auxiliary
-    public ValueDeserializer getValueDeserializer() {
-        return new DefaultValueDeserializer();
-    }
-
-    @JsonIgnore
-    @Value.Default
-    @Value.Auxiliary
-    public ValueSerializer getValueSerializer() {
-        return new DefaultValueSerializer();
+    public ValueProducer getValueProducer() {
+        return new DefaultValueProducer(getObjectMapper());
     }
 
     @JsonIgnore

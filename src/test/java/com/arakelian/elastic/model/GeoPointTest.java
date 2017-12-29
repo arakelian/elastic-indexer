@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 package com.arakelian.elastic.model;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.io.IOException;
 
@@ -45,6 +46,7 @@ public class GeoPointTest {
     @Test
     public void testGeohash() throws IOException {
         final GeoPoint point = testJackson("\"drm3btev3e86\"", 41.12d, -71.34d);
+        Assert.assertEquals(POINT, point.round(6));
         Assert.assertEquals("drm3btev3e86", point.getGeohash());
     }
 
@@ -77,6 +79,16 @@ public class GeoPointTest {
         assertEquals(lat, point.getLat(), 0.001d);
         assertEquals(lon, point.getLon(), 0.001d);
         return point;
+    }
+
+    @Test
+    public void testRounding() {
+        final GeoPoint point = GeoPoint.of("drm3btev3e86");
+        for (int places = 0; places < 10; places++) {
+            final GeoPoint rounded = point.round(places);
+            assertSame(rounded, rounded.round(places));
+        }
+        Assert.assertEquals(POINT, point.round(6));
     }
 
     @Test

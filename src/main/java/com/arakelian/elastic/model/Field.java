@@ -138,6 +138,14 @@ public abstract class Field implements Serializable {
         return getName().equals(another.getName());
     }
 
+    /**
+     * Returns the analyzer used by this field.
+     *
+     * For TOKEN_COUNT fields, the analyzer is required, and so therefore we default one below to
+     * make it easy to create new mappings by just specifyig a field type.
+     *
+     * @return the analyzer used by this field.
+     */
     @Nullable
     @Value.Default
     @Value.Auxiliary
@@ -147,6 +155,37 @@ public abstract class Field implements Serializable {
         // must specify an analyzer for TOKEN_COUNT fields
         return getType() == Type.TOKEN_COUNT ? "standard" : null;
     }
+
+    /**
+     * Returns a query time boosting. Accepts a floating point number, defaults to 1.0.
+     *
+     * @return a query time boosting
+     *
+     * @see <a
+     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-boost.html">boost</a>
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("boost")
+    @JsonView(Elastic.class)
+    public abstract Double getBoost();
+
+    /**
+     * Returns true if Elastic should try to convert strings to numbers and truncate fractions for
+     * integers.
+     *
+     * @return true if Elastic should try to convert strings to numbers and truncate fractions for
+     *         integers
+     *
+     * @see <a
+     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/range.html">Range
+     *      Datatypes</a>
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("coerce")
+    @JsonView(Elastic.class)
+    public abstract Boolean getCoerce();
 
     /**
      * Returns a list of fields that this field value should be copied to.
@@ -229,9 +268,10 @@ public abstract class Field implements Serializable {
     public abstract String getName();
 
     /**
-     * Returns a value that will replace null values during indexed. Normally, null values cannot be
-     * indexed or searched. This parameter allows you to replace explicit null values with another
-     * value that can be indexed and searched instead.
+     * Returns a value that will replace null values during indexed.
+     *
+     * Normally, null values cannot be indexed or searched. This parameter allows you to replace
+     * explicit null values with another value that can be indexed and searched instead.
      *
      * @return value that will replace null values during indexed
      */
@@ -381,7 +421,7 @@ public abstract class Field implements Serializable {
     @JsonProperty("include_in_all")
     @JsonView(Version5.class)
     public Boolean isIncludeInAll() {
-        Type type = getType();
+        final Type type = getType();
         if (type == null || isMetaField() || type == Type.COMPLETION) {
             return null;
         }

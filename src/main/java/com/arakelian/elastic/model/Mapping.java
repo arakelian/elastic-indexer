@@ -138,49 +138,6 @@ public interface Mapping extends Serializable {
         return ImmutableMap.of();
     }
 
-    @Value.Check
-    public default Mapping normalizeFields() {
-        Map<String, Field> props = getProperties();
-
-        List<Field> fields = getFields();
-        if (fields.size() == 0) {
-            // optimization: expose fields
-            return ImmutableMapping.builder() //
-                    .from(this) //
-                    .fields(props.values()) //
-                    .build();
-        }
-
-        // make sure we have properties for all fields
-        if (fields.size() == props.keySet().size()) {
-            boolean consistent = true;
-            for (Field field : fields) {
-                if (!props.containsKey(field.getName())) {
-                    consistent = false;
-                    break;
-                }
-            }
-            if (consistent) {
-                return this;
-            }
-        }
-
-        final Map<String, Field> newProps = Maps.newLinkedHashMap();
-        newProps.putAll(props);
-        for (final Field field : fields) {
-            String name = field.getName();
-            if (!newProps.containsKey(name)) {
-                newProps.put(name, field);
-            }
-        }
-
-        return ImmutableMapping.builder() //
-                .from(this) //
-                .properties(newProps) //
-                .fields(newProps.values()) //
-                .build();
-    }
-
     /**
      * Returns configuration of _source meta field.
      *
@@ -206,5 +163,48 @@ public interface Mapping extends Serializable {
 
     public default boolean hasField(final String name) {
         return name != null && getProperties().containsKey(name);
+    }
+
+    @Value.Check
+    public default Mapping normalizeFields() {
+        final Map<String, Field> props = getProperties();
+
+        final List<Field> fields = getFields();
+        if (fields.size() == 0) {
+            // optimization: expose fields
+            return ImmutableMapping.builder() //
+                    .from(this) //
+                    .fields(props.values()) //
+                    .build();
+        }
+
+        // make sure we have properties for all fields
+        if (fields.size() == props.keySet().size()) {
+            boolean consistent = true;
+            for (final Field field : fields) {
+                if (!props.containsKey(field.getName())) {
+                    consistent = false;
+                    break;
+                }
+            }
+            if (consistent) {
+                return this;
+            }
+        }
+
+        final Map<String, Field> newProps = Maps.newLinkedHashMap();
+        newProps.putAll(props);
+        for (final Field field : fields) {
+            final String name = field.getName();
+            if (!newProps.containsKey(name)) {
+                newProps.put(name, field);
+            }
+        }
+
+        return ImmutableMapping.builder() //
+                .from(this) //
+                .properties(newProps) //
+                .fields(newProps.values()) //
+                .build();
     }
 }

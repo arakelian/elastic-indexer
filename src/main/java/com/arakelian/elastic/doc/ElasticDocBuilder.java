@@ -18,14 +18,12 @@
 package com.arakelian.elastic.doc;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,7 +32,6 @@ import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
-import com.arakelian.json.JsonWriter;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,6 +63,11 @@ public class ElasticDocBuilder {
         }
 
         @Override
+        public Map<String, Object> getDocumentAsMap() {
+            return ElasticDocBuilder.this.getDocumentAsMap();
+        }
+
+        @Override
         public Set<String> getFields() {
             return document.keySet();
         }
@@ -73,11 +75,6 @@ public class ElasticDocBuilder {
         @Override
         public boolean hasField(final String name) {
             return config.getMapping().hasField(name);
-        }
-
-        @Override
-        public void traverse(Object value, Consumer<Object> consumer) {
-            ElasticDocBuilder.this.traverse(value, consumer);
         }
 
         @Override
@@ -89,16 +86,18 @@ public class ElasticDocBuilder {
                     field.getName());
             ElasticDocBuilder.this.put(field, value);
         }
+
+        @Override
+        public String writeDocumentAsJson() {
+            return ElasticDocBuilder.this.writeDocumentAsJson();
+        }
     }
 
     /** Optional entity extractor **/
-    private final ElasticDocConfig config;
+    protected final ElasticDocConfig config;
 
     /** The Elastic document we're building **/
-    private final Multimap<String, Object> document;
-
-    /** Scratch buffer **/
-    private final StringBuilder buf = new StringBuilder();
+    protected final Multimap<String, Object> document;
 
     /** Token filters **/
     private final Map<Field, TokenFilter> tokenFilters;
@@ -106,23 +105,18 @@ public class ElasticDocBuilder {
     /** Can only build one document at a time **/
     private final Lock lock;
 
-    /**
-     * An instance of {@link JsonWriter} that we can use for producing JSON.
-     *
-     * Note that Elastic bulk api requires that each document be on a single line so standard JSON
-     * formatting is disabled. We also prevent empty fields from being written.
-     */
-    private final JsonWriter<StringWriter> writer = new JsonWriter<>(new StringWriter()).withPretty(false)
-            .withSkipEmpty(true);
+    /** Object writer for document serialization **/
+    protected final ObjectMapper mapper;
 
     public ElasticDocBuilder(final ElasticDocConfig config) {
         this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
         this.document = LinkedHashMultimap.create();
         this.tokenFilters = Maps.newLinkedHashMap();
+        this.mapper = config.getObjectMapper();
     }
 
-    public String build(final JsonNode root) throws ElasticDocBuilderException {
+    public String build(final JsonNode root) throws ElasticDocException {
         lock.lock();
         try {
             final ElasticDocImpl doc = new ElasticDocImpl();
@@ -141,33 +135,70 @@ public class ElasticDocBuilder {
 
                 // give plugins a chance to augment document
                 for (final ElasticDocBuilderPlugin plugin : plugins) {
-                    plugin.complete(doc);
+                    plugin.completed(doc);
                 }
 
-                final String json = writeDocument();
+                final String json = writeDocumentAsJson();
                 return json;
             } catch (final IllegalArgumentException | IllegalStateException e) {
-                throw new ElasticDocBuilderException("Unable to build document", e);
+                throw new ElasticDocException("Unable to build document", e);
             } finally {
                 document.clear();
-                buf.setLength(0);
             }
         } finally {
             lock.unlock();
         }
     }
 
-    public String build(final String json) throws ElasticDocBuilderException {
+    public String build(final String json) throws ElasticDocException {
         JsonNode node;
         try {
             Preconditions.checkArgument(json != null, "json must be non-null");
-            final ObjectMapper objectMapper = config.getObjectMapper();
-            node = objectMapper.readTree(json);
+            node = mapper.readTree(json);
         } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
-            throw new ElasticDocBuilderException("Unable to parse source document", e);
+            throw new ElasticDocException("Unable to parse source document", e);
         }
 
         return build(node);
+    }
+
+    /**
+     * Returns the Elastic document as a simple map.
+     *
+     * Field names are will be ordered as they are in the mapping, and values are listed in the
+     * order they were added to the document.
+     *
+     * @return the document as a simple map.
+     */
+    protected Map<String, Object> getDocumentAsMap() {
+        final Map<String, Object> map = Maps.newLinkedHashMap();
+
+        // add fields in the order that they appear in the mapping
+        final Set<String> mappingFields = config.getMapping().getProperties().keySet();
+        for (final String mappingField : mappingFields) {
+            if (document.containsKey(mappingField)) {
+                final Collection<Object> values = document.get(mappingField);
+                if (values.size() == 1) {
+                    map.put(mappingField, values.iterator().next());
+                } else {
+                    map.put(mappingField, values);
+                }
+            }
+        }
+
+        // add fields that do not appear in mapping
+        for (final String field : document.keys()) {
+            if (!mappingFields.contains(field)) {
+                final Collection<Object> values = document.get(field);
+                if (values.size() == 1) {
+                    map.put(field, values.iterator().next());
+                } else {
+                    map.put(field, values);
+                }
+            }
+        }
+
+        return map;
     }
 
     protected TokenFilter getTokenFilter(final Field field) {
@@ -181,64 +212,15 @@ public class ElasticDocBuilder {
         return filter;
     }
 
-    private void traverse(final Object obj, final Consumer<Object> consumer) {
-        Preconditions.checkArgument(consumer != null, "consumer must be non-null");
-        if (obj == null) {
-            return;
-        }
-
-        if (obj instanceof CharSequence) {
-            consumer.accept(obj);
-            return;
-        }
-        if (obj instanceof Number) {
-            consumer.accept(obj);
-            return;
-        }
-        if (obj instanceof Boolean) {
-            consumer.accept(obj);
-            return;
-        }
-
-        if (obj instanceof Map) {
-            for (Object v : ((Map) obj).values()) {
-                traverse(v, consumer);
-            }
-            return;
-        }
-
-        if (obj instanceof Collection) {
-            for (Object v : ((Collection) obj)) {
-                traverse(v, consumer);
-            }
-            return;
-        }
-        if (obj instanceof Object[]) {
-            for (Object v : ((Object[]) obj)) {
-                traverse(v, consumer);
-            }
-            return;
-        }
-
-        throw new IllegalStateException(
-                "Expecting simple JSON data type, but received: " + obj.getClass().getName());
-    }
-
-    private void put(final Field field, final Object obj) {
+    protected void put(final Field field, final Object obj) {
         if (obj == null) {
             // we don't store null values
             return;
         }
 
-        // serialize object
-        final Object ser = config.getValueSerializer().serialize(field, obj);
-        if (ser == null) {
-            return;
-        }
-
         // apply token filters
-        if (ser instanceof CharSequence) {
-            getTokenFilter(field).accept(ser.toString(), token -> {
+        if (obj instanceof CharSequence) {
+            getTokenFilter(field).accept(obj.toString(), token -> {
                 // we only store non-empty strings in document
                 if (!StringUtils.isEmpty(token)) {
                     document.put(field.getName(), token);
@@ -247,9 +229,7 @@ public class ElasticDocBuilder {
             return;
         }
 
-        // make sure object is simple JSON type
-        traverse(ser, o -> {
-        });
+        // store object
         document.put(field.getName(), obj);
     }
 
@@ -268,58 +248,23 @@ public class ElasticDocBuilder {
      * @param value
      *            value
      */
-    private void putNode(final Field field, final JsonNode node) {
-        // pipeline: deserialize to object -> serialize object to string -> token filters
-        config.getValueDeserializer().deserialize(field, node, obj -> {
+    protected void putNode(final Field field, final JsonNode node) {
+        // pipeline: deserialize to object -> token filters for textual data
+        config.getValueProducer().traverse(field, node, obj -> {
             put(field, obj);
         });
     }
 
-    private String writeDocument() throws ElasticDocBuilderException {
+    protected String writeDocumentAsJson() throws ElasticDocException {
         try {
-            // output fields
-            writer.writeStartObject();
-
-            for (final String field : document.keySet()) {
-                final Collection<Object> values = document.get(field);
-                writeField(writer, field, values);
-            }
-            writer.writeEndObject();
-
-            final String json = writer.flush().getWriter().toString();
-
-            // sanity check
-            for (int i = 0, size = json.length(); i < size; i++) {
-                final char ch = json.charAt(i);
-                if (ch == '\n') {
-                    throw new ElasticDocBuilderException("Elastic document cannot contain newline character");
-                }
-            }
+            // note: we convert document to a "regular" map so that single-value fields are not
+            // rendered as arrays; for cosmetic purposes, we also rearrange the map keys to align
+            // with the ordering specified in the index mapping.
+            final Map<String, Object> map = getDocumentAsMap();
+            final String json = mapper.writeValueAsString(map);
             return json;
         } catch (final IOException e) {
-            // this should not happen because we're writing to a StringWriter
-            throw new ElasticDocBuilderException("Unable to create build Elastic document", e);
-        } finally {
-            writer.getWriter().getBuffer().setLength(0);
-            writer.reset();
-        }
-    }
-
-    private void writeField(
-            final JsonWriter<StringWriter> writer,
-            final String field,
-            final Collection<Object> values) throws IOException {
-
-        final int size = values.size();
-        if (size == 1) {
-            writer.writeKeyValue(field, values.iterator().next());
-        } else if (size > 1) {
-            writer.writeKey(field);
-            writer.writeStartArray();
-            for (final Object o : values) {
-                writer.writeObject(o);
-            }
-            writer.writeEndArray();
+            throw new ElasticDocException("Unable to serialize Elastic document", e);
         }
     }
 }

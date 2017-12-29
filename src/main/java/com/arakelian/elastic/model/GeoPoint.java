@@ -19,6 +19,8 @@ package com.arakelian.elastic.model;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.immutables.value.Value;
 
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableGeoPoint.class)
@@ -190,23 +193,6 @@ public abstract class GeoPoint implements Serializable {
                 .build();
     }
 
-    @Value.Check
-    protected void checkCoordinateBounds() {
-        // validates latitude is within standard +/-90 coordinate bounds
-        final double lat = getLat();
-        if (Double.isNaN(lat) || lat < MIN_LAT_INCL || lat > MAX_LAT_INCL) {
-            throw new IllegalArgumentException(
-                    "invalid latitude " + lat + "; must be between " + MIN_LAT_INCL + " and " + MAX_LAT_INCL);
-        }
-
-        // validates longitude is within standard +/-180 coordinate bounds
-        final double lon = getLon();
-        if (Double.isNaN(lon) || lon < MIN_LON_INCL || lon > MAX_LON_INCL) {
-            throw new IllegalArgumentException("invalid longitude " + lon + "; must be between "
-                    + MIN_LON_INCL + " and " + MAX_LON_INCL);
-        }
-    }
-
     @JsonIgnore
     @Value.Lazy
     @Value.Auxiliary
@@ -266,4 +252,51 @@ public abstract class GeoPoint implements Serializable {
     public abstract double getLat();
 
     public abstract double getLon();
+
+    @Value.Check
+    protected GeoPoint normalize() {
+        // validates latitude is within standard +/-90 coordinate bounds
+        final double lat = getLat();
+        if (Double.isNaN(lat) || lat < MIN_LAT_INCL || lat > MAX_LAT_INCL) {
+            throw new IllegalArgumentException(
+                    "invalid latitude " + lat + "; must be between " + MIN_LAT_INCL + " and " + MAX_LAT_INCL);
+        }
+
+        // validates longitude is within standard +/-180 coordinate bounds
+        final double lon = getLon();
+        if (Double.isNaN(lon) || lon < MIN_LON_INCL || lon > MAX_LON_INCL) {
+            throw new IllegalArgumentException("invalid longitude " + lon + "; must be between "
+                    + MIN_LON_INCL + " and " + MAX_LON_INCL);
+        }
+
+        // 7 decimal places is worth 1.1 millimiters of accuracy; this is good for charting motions
+        // of tectonic plates and movements of volcanoes. Permanent, corrected, constantly-running
+        // GPS base stations might be able to achieve this level of accuracy
+        final int places = 7;
+        return round(places);
+    }
+
+    public GeoPoint round(final int places) {
+        Preconditions.checkArgument(places >= 0, "places must be >=0");
+
+        final double lat = getLat();
+        final double newLat = new BigDecimal(Double.toString(lat)) //
+                .setScale(2, RoundingMode.HALF_UP) //
+                .doubleValue();
+
+        final double lon = getLon();
+        final double newLon = new BigDecimal(Double.toString(lon)) //
+                .setScale(2, RoundingMode.HALF_UP) //
+                .doubleValue();
+
+        if (Double.doubleToLongBits(lat) == Double.doubleToLongBits(newLat)
+                && Double.doubleToLongBits(lon) == Double.doubleToLongBits(newLon)) {
+            return this;
+        }
+
+        return ImmutableGeoPoint.builder() //
+                .lat(newLat) //
+                .lon(newLon) //
+                .build();
+    }
 }

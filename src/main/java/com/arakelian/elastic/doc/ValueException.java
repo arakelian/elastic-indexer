@@ -21,7 +21,7 @@ import com.arakelian.elastic.model.Field;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 
-public class ValueException extends ElasticDocBuilderException {
+public class ValueException extends ElasticDocException {
     private final Field field;
     private final JsonNode node;
 
