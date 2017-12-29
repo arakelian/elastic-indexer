@@ -41,6 +41,7 @@ import com.arakelian.elastic.model.ImmutableMgetDocument;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
+import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.fake.model.Person;
 import com.arakelian.fake.model.RandomPerson;
@@ -224,6 +225,14 @@ public class ElasticClientTest extends AbstractElasticTest {
             assertNotNull(documents);
             assertEquals(mget.getDocs().size(), documents.getDocs().size());
         });
+    }
+
+    @Test
+    public void testNodes() throws IOException {
+        final Nodes response = assertSuccessful(
+                Nodes.class, //
+                elasticClient.nodes());
+        LOGGER.info("nodes: {}", response);
     }
 
     @Test

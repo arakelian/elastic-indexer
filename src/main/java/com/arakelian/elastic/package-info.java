@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-@Value.Style(get = { "is*", "get*" }, depluralize = true)
+@Value.Style(//
+        get = { "is*", "get*" }, //
+        depluralize = true, //
+        depluralizeDictionary = { //
+                "person:people", //
+                "index:indexes", //
+                "address:addresses" })
 package com.arakelian.elastic;
 
 import org.immutables.value.Value;

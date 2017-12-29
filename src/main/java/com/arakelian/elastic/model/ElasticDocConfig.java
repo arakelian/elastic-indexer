@@ -165,6 +165,12 @@ public abstract class ElasticDocConfig {
         return new DefaultValueProducer(getObjectMapper());
     }
 
+    @Value.Default
+    @Value.Auxiliary
+    public boolean isCompact() {
+        return true;
+    }
+
     @JsonIgnore
     @Value.Check
     protected ElasticDocConfig normalizeTargets() {

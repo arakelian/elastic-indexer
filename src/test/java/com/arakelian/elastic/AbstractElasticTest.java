@@ -93,11 +93,11 @@ public abstract class AbstractElasticTest {
     public static Object[] data() {
         return new Object[] { //
                 "5.2.1", //
-                "5.3.3", //
-                "5.4.3", //
-                "5.5.3", //
-                "5.6.5", //
-                "6.0.1", //
+                // "5.3.3", //
+                // "5.4.3", //
+                // "5.5.3", //
+                // "5.6.5", //
+                // "6.0.1", //
                 "6.1.0" //
         };
     }

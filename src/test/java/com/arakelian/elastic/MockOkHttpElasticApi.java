@@ -31,6 +31,7 @@ import com.arakelian.elastic.model.IndexCreated;
 import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
+import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
 
 import retrofit2.Call;
@@ -137,6 +138,11 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
 
     @Override
     public Call<Void> indexExists(final String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Call<Nodes> nodes() {
         throw new UnsupportedOperationException();
     }
 

@@ -28,6 +28,7 @@ import com.arakelian.elastic.model.IndexCreated;
 import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
+import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
 
 import okhttp3.MediaType;
@@ -203,6 +204,9 @@ public interface OkHttpElasticApi {
      */
     @HEAD("/{name}")
     Call<Void> indexExists(@Path("name") String name);
+
+    @GET("/_nodes/http")
+    Call<Nodes> nodes();
 
     @POST("/_refresh")
     Call<Refresh> refreshAllIndexes();

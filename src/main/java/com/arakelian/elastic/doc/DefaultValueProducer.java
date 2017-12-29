@@ -107,7 +107,9 @@ public class DefaultValueProducer implements ValueProducer {
 
             try {
                 final byte[] value = BaseEncoding.base64().decode(asText(field, node));
-                consumer.accept(value);
+                if (value != null && value.length != 0) {
+                    consumer.accept(value);
+                }
             } catch (final IllegalArgumentException e) {
                 malformed(field, node, e);
             }
@@ -350,15 +352,12 @@ public class DefaultValueProducer implements ValueProducer {
         return node.asText(null);
     }
 
-    protected void collectBooleans(final Field field, final JsonNode node, final Consumer<Object> consumer) {
-        booleanProducer.collect(field, node, consumer);
+    protected void collectBinarys(final Field field, final JsonNode node, final Consumer<Object> consumer) {
+        binaryProducer.collect(field, node, consumer);
     }
 
-    protected void collectByteArrays(
-            final Field field,
-            final JsonNode node,
-            final Consumer<Object> consumer) {
-        binaryProducer.collect(field, node, consumer);
+    protected void collectBooleans(final Field field, final JsonNode node, final Consumer<Object> consumer) {
+        booleanProducer.collect(field, node, consumer);
     }
 
     protected void collectBytes(final Field field, final JsonNode node, final Consumer<Object> consumer) {
@@ -454,7 +453,7 @@ public class DefaultValueProducer implements ValueProducer {
 
         switch (type) {
         case BINARY:
-            collectByteArrays(field, node, consumer);
+            collectBinarys(field, node, consumer);
             break;
         case BOOLEAN:
             collectBooleans(field, node, consumer);

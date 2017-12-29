@@ -32,6 +32,7 @@ import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
+import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,11 +90,11 @@ public class ElasticDocBuilder {
 
         @Override
         public String writeDocumentAsJson() {
-            return ElasticDocBuilder.this.writeDocumentAsJson();
+            return ElasticDocBuilder.this.writeDocumentAsJson(false);
         }
     }
 
-    /** Optional entity extractor **/
+    /** Elastic document configuration **/
     protected final ElasticDocConfig config;
 
     /** The Elastic document we're building **/
@@ -138,7 +139,7 @@ public class ElasticDocBuilder {
                     plugin.completed(doc);
                 }
 
-                final String json = writeDocumentAsJson();
+                final String json = writeDocumentAsJson(config.isCompact());
                 return json;
             } catch (final IllegalArgumentException | IllegalStateException e) {
                 throw new ElasticDocException("Unable to build document", e);
@@ -236,16 +237,9 @@ public class ElasticDocBuilder {
     /**
      * Adds a field/value pair to an Elasticsearch document.
      *
-     * If the specified value is an empty string, the field is not added to the Elastic document.
-     * Similarly, if the specified value has already been added to the field, it is not added a
-     * second time.
-     *
-     * Note that in an Elasticsearch document a field may have more than value, so this method will
-     * automatically build a list if needed.
-     *
-     * @param fieldName
-     *            name of Elasticsearch field (must be part of Elastic index mapping properties)
-     * @param value
+     * @param field
+     *            field
+     * @param node
      *            value
      */
     protected void putNode(final Field field, final JsonNode node) {
@@ -255,13 +249,18 @@ public class ElasticDocBuilder {
         });
     }
 
-    protected String writeDocumentAsJson() throws ElasticDocException {
+    protected String writeDocumentAsJson(final boolean compact) throws ElasticDocException {
         try {
             // note: we convert document to a "regular" map so that single-value fields are not
             // rendered as arrays; for cosmetic purposes, we also rearrange the map keys to align
             // with the ordering specified in the index mapping.
             final Map<String, Object> map = getDocumentAsMap();
+
+            // return JSON
             final String json = mapper.writeValueAsString(map);
+            if (compact) {
+                return JsonFilter.compact(json);
+            }
             return json;
         } catch (final IOException e) {
             throw new ElasticDocException("Unable to serialize Elastic document", e);

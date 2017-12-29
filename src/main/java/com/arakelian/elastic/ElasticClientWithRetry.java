@@ -32,6 +32,7 @@ import com.arakelian.elastic.model.IndexCreated;
 import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
+import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
@@ -192,6 +193,13 @@ public class ElasticClientWithRetry implements ElasticClient {
     public Response<Void> indexExists(final String name) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.indexExists(name);
+        });
+    }
+
+    @Override
+    public Response<Nodes> nodes() throws ElasticException {
+        return executeWithRetry(() -> {
+            return delegate.nodes();
         });
     }
 

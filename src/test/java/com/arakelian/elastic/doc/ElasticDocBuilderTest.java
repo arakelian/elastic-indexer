@@ -87,7 +87,7 @@ public class ElasticDocBuilderTest {
                 "      \"off\": [\"off\"],\n" + //
                 "      \"f\": [\"f\"]\n" + //
                 "    },\n" + //
-                "    \"invalid\": [\"blah\"]\n" + //
+                "    \"invalid\": [\"blah\",\"\"]\n" + //
                 "  },\n" + //
                 "  \"tags\": \"user person human\",\n" + //
                 "  \"website\": \"minerva.name\",\n" + //
@@ -116,7 +116,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("booleans", compile("/booleans/false")) //
                 .build();
         Assert.assertEquals( //
-                "{\"booleans\":\"false\"}", //
+                "{\"booleans\":false}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -138,7 +138,7 @@ public class ElasticDocBuilderTest {
                 .build();
         final String actual = new ElasticDocBuilder(config).build(sampleJson);
         Assert.assertEquals( //
-                "{\"booleans\":\"true\"}", //
+                "{\"booleans\":true}", //
                 actual);
     }
 
@@ -185,7 +185,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\"]}", //
+                "{\"numbers\":[-128,0,127]}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -229,7 +229,7 @@ public class ElasticDocBuilderTest {
                 .addIdentityField("numbers") //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128.0\",\"0.0\",\"127.0\",\"-32768.0\",\"32767.0\",\"-2.147483648E9\",\"2.147483647E9\",\"-9.223372036854776E18\",\"9.223372036854776E18\",\"3.14\",\"2.718\",\"6.67E-11\"]}",
+                "{\"numbers\":[-128.0,0.0,127.0,-32768.0,32767.0,-2.147483648E9,2.147483647E9,-9.223372036854776E18,9.223372036854776E18,3.14,2.718,6.67E-11]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -251,7 +251,7 @@ public class ElasticDocBuilderTest {
                 .build();
         final String actual = new ElasticDocBuilder(config).build(sampleJson);
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128.0\",\"0.0\",\"127.0\",\"-32768.0\",\"32767.0\",\"-2.14748365E9\",\"2.14748365E9\",\"-9.223372E18\",\"9.223372E18\",\"3.14\",\"2.718\",\"6.67E-11\"]}",
+                "{\"numbers\":[-128.0,0.0,127.0,-32768.0,32767.0,-2.14748365E9,2.14748365E9,-9.223372E18,9.223372E18,3.14,2.718,6.67E-11]}",
                 actual);
     }
 
@@ -272,7 +272,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\"]}",
+                "{\"numbers\":[-128,0,127,-32768,32767,-2147483648,2147483647]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -293,7 +293,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\",\"-2147483648\",\"2147483647\",\"-9223372036854775808\",\"9223372036854775807\"]}",
+                "{\"numbers\":[-128,0,127,-32768,32767,-2147483648,2147483647,-9223372036854775808,9223372036854775807]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
@@ -314,7 +314,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("numbers", compile("/numbers")) //
                 .build();
         Assert.assertEquals( //
-                "{\"numbers\":[\"-128\",\"0\",\"127\",\"-32768\",\"32767\"]}",
+                "{\"numbers\":[-128,0,127,-32768,32767]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
 
