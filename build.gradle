@@ -27,7 +27,7 @@ plugins {
 
     // to ensure clean code
     id "net.ltgt.errorprone" version "0.0.13"
-    
+
     // for shading dependencies when running in Hadoop environment
     id "com.github.johnrengelman.shadow" version "2.0.2"
 
@@ -40,45 +40,16 @@ group   = 'com.arakelian'
 // common gradle code shared between projects
 apply from: "gradle/core.gradle"
 
-shadowJar {
-    mergeServiceFiles()
-    
-    // we are only shadowing 'shadow' dependencies
-    configurations = [project.configurations.shadow]
-    
-    // guava is problematic in Hadoop environments
-    classifier = 'shadow'
-    relocate 'com.google.common', 'com.arakelian.elastic.com.google.common'
-    relocate 'com.google.thirdparty', 'com.arakelian.elastic.com.google.thirdparty'
-}
-
-task minify(type: proguard.gradle.ProGuardTask, dependsOn:shadowJar) {
-    injars tasks['shadowJar'].archivePath
-    outjars tasks['shadowJar'].archivePath.toString().replace("shadow","no-guava")
-    libraryjars fileTree(dir: "${System.getProperty('java.home')}/lib/", include: "*.jar")
-    keep "class !com.arakelian.elastic.com.** { *; }"
-    dontskipnonpubliclibraryclassmembers
-    dontobfuscate
-    dontoptimize
-    dontwarn
-}
-
-artifacts {
-    archives(file: file(tasks['shadowJar'].archivePath.toString().replace("shadow","no-guava")), builtBy: minify) {
-        classifier = "no-guava"
-    }
-}
-
 dependencies {
     processor 'org.immutables:value:2.5.6'
 
-    compile 'com.arakelian:more-commons:[1.5,2.0['
-    compile 'com.arakelian:jackson-utils:[1.5,2.0['
-    compile 'com.arakelian:json-filter:[1.5,2.0['
-    compile 'com.arakelian:key-value-store:[1.5,2.0['
+    compile 'com.arakelian:more-commons:1.6.1'
+    compile 'com.arakelian:jackson-utils:1.6.2'
+    compile 'com.arakelian:json-filter:1.6.0'
+    compile 'com.arakelian:key-value-store:1.5.1'
 
     // use of guava is problematic in some environments, especially Hadoop where
-    // dependency updates are slow and Guava deprecates / updates major version quickly 
+    // dependency updates are slow and Guava deprecates / updates major version quickly
     shadow  'com.google.guava:guava:23.6-jre'
 
     // third party
@@ -104,9 +75,59 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.28.1'
-    testCompile 'com.arakelian:more-commons:[1.5,2.0[:tests'
-    testCompile 'com.arakelian:jackson-utils:[1.5,2.0[:tests'
-    testCompile 'com.arakelian:docker-junit-rule:[1.5,2.0['
-    testCompile 'com.arakelian:faker:[1.5,2.0['
+    testCompile 'com.arakelian:more-commons:1.6.1:tests'
+    testCompile 'com.arakelian:jackson-utils:1.6.2:tests'
+    testCompile 'com.arakelian:docker-junit-rule:1.6.0'
+    testCompile 'com.arakelian:faker:1.5.1'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
 }
+
+shadowJar {
+    mergeServiceFiles()
+
+    // we don't want poms for third-party stuff
+    exclude 'META-INF/maven/**/*'
+
+    // we are only shadowing 'shadow' dependencies
+    configurations = [project.configurations.shadow]
+
+    // shadow artifact is temporary resource that is processed by ProGuard to
+    // remove unused classes
+    classifier = 'temp'
+
+    // guava is problematic in Hadoop environments
+    relocate 'com.google.common', 'repackaged.com.arakelian.elastic.com.google.common'
+    relocate 'com.google.thirdparty', 'repackaged.com.arakelian.elastic.com.google.thirdparty'
+}
+
+task shadowSources {
+    doLast {
+        // shadow plugin doesn't handle source code as well, so we do that ourselves
+        shadowFiles( 'com.google.common', 'repackaged.com.arakelian.elastic.com.google.common' )
+    }
+}
+
+def shadowedJar = file(tasks['shadowJar'].archivePath.toString().replace("temp","shadowed"))
+
+task minify(type: proguard.gradle.ProGuardTask, dependsOn:shadowJar) {
+    injars tasks['shadowJar'].archivePath
+    outjars shadowedJar
+    libraryjars fileTree(dir: "${System.getProperty('java.home')}/lib/", include: "*.jar")
+    keep "class com.arakelian.** { *; }"
+    dontnote 'repackaged.*'
+    dontskipnonpubliclibraryclassmembers
+    dontobfuscate
+    dontwarn
+}
+
+artifacts {
+    archives(file: shadowedJar, builtBy: minify) {
+        classifier = "no-guava"
+    }
+}
+
+// make sure shadowed source code is included with -sources .jar
+// sourcesJar.dependsOn(shadowSources);
+
+// do not shadow until we have shadow sources
+shadowJar.dependsOn(sourcesJar)

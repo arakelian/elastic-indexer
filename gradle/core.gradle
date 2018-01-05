@@ -46,6 +46,7 @@ task javadocJar(type: Jar, dependsOn:classes) {
 task sourcesJar(type:Jar, dependsOn:classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
+    from files("build/tmp/shadowSources")
 }
 
 // other projects may want to extend our unit tests
@@ -96,6 +97,71 @@ test {
     afterTest { desc, result ->
         // nice to see test results as they are executed
         println "${desc.className} > ${desc.name}  ${result.resultType}"
+    }
+}
+
+ext.withFileSystem = { uri, callback ->
+    java.nio.file.FileSystem fileSystem = null
+    try {
+        fileSystem = java.nio.file.FileSystems.newFileSystem(uri, [:])
+        callback(fileSystem)
+    } catch (java.nio.file.FileSystemAlreadyExistsException e) {
+        fileSystem = java.nio.file.FileSystems.getFileSystem(uri)
+        callback(fileSystem)
+    } finally {
+        if (fileSystem != null) {
+            fileSystem.close();
+        }
+    }
+}
+
+ext.shadowFiles = { originalPackage, shadowedPackage ->
+    String originalPath = originalPackage.replace('.', '/')
+    String shadowedPath = shadowedPackage.replace('.', '/')
+
+    java.nio.charset.Charset sourceCharset = java.nio.charset.StandardCharsets.UTF_8
+    java.nio.file.Path shadowedSourceDir = file("build/tmp/shadowSources").toPath()
+
+    def componentIds = configurations.shadow.incoming.resolutionResult.allDependencies.collect { it.selected.id }
+    def result = dependencies.createArtifactResolutionQuery()
+            .forComponents(componentIds)
+            .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
+            .execute()
+
+    for (component in result.resolvedComponents) {
+        component.getArtifacts(SourcesArtifact).each {
+            // println "Processing sources for ${component.id}: ${it.file}"
+
+            int sourceFileCounter = 0
+            withFileSystem(new URI("jar:" + new File(it.file.absolutePath).toURI() )) { sourceJarFileSystem ->
+
+                zipTree(it.file).visit { element ->
+                    String relativePath = element.relativePath.toString()
+                    if (relativePath.startsWith("META-INF") || element.file.isDirectory() || !element.file.getName().endsWith(".java")) {
+                        return
+                    }
+
+                    if(!relativePath.startsWith(originalPath)) {
+                        return
+                    }
+
+                    java.nio.file.Path shadowedFile = shadowedSourceDir.resolve(relativePath.replace(originalPath, shadowedPath))
+                    if (java.nio.file.Files.exists(shadowedFile)) {
+                        return
+                    }
+
+                    if (!java.nio.file.Files.exists(shadowedFile.getParent())) {
+                        java.nio.file.Files.createDirectories(shadowedFile.getParent())
+                    }
+                    sourceFileCounter++
+
+                    java.nio.file.Path originalFile = sourceJarFileSystem.getPath(element.relativePath.toString())
+                    String content = new String(java.nio.file.Files.readAllBytes(originalFile), sourceCharset);
+                    content = content.replaceAll(originalPackage, shadowedPackage);
+                    java.nio.file.Files.write(shadowedFile, content.getBytes(sourceCharset));
+                }
+            }
+        }
     }
 }
 
