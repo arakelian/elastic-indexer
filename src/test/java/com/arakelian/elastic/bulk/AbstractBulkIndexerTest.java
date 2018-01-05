@@ -17,9 +17,9 @@
 
 package com.arakelian.elastic.bulk;
 
-import com.arakelian.elastic.AbstractElasticTest;
+import com.arakelian.elastic.AbstractElasticDockerTest;
 
-public abstract class AbstractBulkIndexerTest extends AbstractElasticTest {
+public abstract class AbstractBulkIndexerTest extends AbstractElasticDockerTest {
     public AbstractBulkIndexerTest(final String version) throws Exception {
         super(version);
     }

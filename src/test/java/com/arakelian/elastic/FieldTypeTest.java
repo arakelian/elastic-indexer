@@ -46,7 +46,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 @RunWith(Parameterized.class)
-public class FieldTypeTest extends AbstractElasticTest {
+public class FieldTypeTest extends AbstractElasticDockerTest {
 
     /**
      * Returns the cross-product of all Elastic versions and field types
@@ -55,7 +55,7 @@ public class FieldTypeTest extends AbstractElasticTest {
      */
     @Parameters(name = "elastic-{0} / {1}")
     public static Object[][] data() {
-        final Object[] versions = AbstractElasticTest.data();
+        final Object[] versions = AbstractElasticDockerTest.data();
         final Type[] types = Type.values();
         final int vlen = versions.length;
         final int tlen = types.length;

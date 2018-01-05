@@ -47,7 +47,7 @@ import com.arakelian.fake.model.Person;
 import com.arakelian.fake.model.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 
-public class ElasticClientTest extends AbstractElasticTest {
+public class ElasticClientTest extends AbstractElasticDockerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientTest.class);
 
     public ElasticClientTest(final String version) throws Exception {
