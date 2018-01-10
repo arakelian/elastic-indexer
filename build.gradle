@@ -1,17 +1,5 @@
 // elastic-indexer
 
-buildscript {
-    repositories {
-      jcenter()
-      flatDir {
-        dirs 'lib'
-      }
-    }
-    dependencies {
-        classpath ':proguard'
-    }
-}
-
 plugins {
     id 'java'
     id 'maven'
@@ -28,29 +16,49 @@ plugins {
     // to ensure clean code
     id "net.ltgt.errorprone" version "0.0.13"
 
-    // for shading dependencies when running in Hadoop environment
-    id "com.github.johnrengelman.shadow" version "2.0.2"
-
     // for deployment to Maven Central
     id "io.codearte.nexus-staging" version "0.11.0"
+
+    // for building fat jar
+    id "com.github.johnrengelman.shadow" version "2.0.2"
+
+    // useful utilities
+    id "com.arakelian.multitool" version "1.2.0"
 }
 
 group   = 'com.arakelian'
 
-// common gradle code shared between projects
-apply from: "gradle/core.gradle"
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4.1'
+}
+
+multitool {
+    relocates += [
+        'org.apache.commons'          : 'repackaged.com.arakelian.elastic.${prefix}org.apache.commons',
+        'com.google.common'           : 'repackaged.com.arakelian.elastic.${prefix}com.google.common',
+        'com.google.thirdparty'       : 'repackaged.com.arakelian.elastic.${prefix}com.google.thirdparty',
+        'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
+        'com.github.rholder.retry'    : 'repackaged.com.arakelian.docker.junit.${prefix}com.github.rholder.retry',
+    ]
+    proguardOptions += [
+        'keepattributes' : 'Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod'
+    ]
+}
 
 dependencies {
     processor 'org.immutables:value:2.5.6'
 
-    compile 'com.arakelian:more-commons:1.6.1'
-    compile 'com.arakelian:jackson-utils:1.6.2'
-    compile 'com.arakelian:json-filter:1.6.0'
-    compile 'com.arakelian:key-value-store:1.5.1'
+    compile 'com.arakelian:more-commons:1.7.0'
+    compile 'com.arakelian:jackson-utils:1.7.0'
+    compile 'com.arakelian:json-filter:1.7.0'
+    compile 'com.arakelian:key-value-store:1.7.0'
 
-    // use of guava is problematic in some environments, especially Hadoop where
-    // dependency updates are slow and Guava deprecates / updates major version quickly
+    // shadow Guava due to frequent downstream incompatibility issues
     shadow  'com.google.guava:guava:23.6-jre'
+
+    // shadow stuff we use very little of, to reduce dependencies
+    shadow 'org.apache.commons:commons-lang3:3.7'
+    shadow  'com.github.rholder:guava-retrying:2.0.0'
 
     // third party
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
@@ -60,9 +68,7 @@ dependencies {
     compile 'com.squareup.retrofit2:adapter-guava:2.3.0'
     compile 'com.squareup.okhttp3:okhttp:3.9.1'
     compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
-    compile 'com.github.rholder:guava-retrying:2.0.0'
     compile 'com.lmax:disruptor:3.3.7'
-    compile 'org.apache.commons:commons-lang3:3.7'
 
     // logging
     testCompile 'org.apache.logging.log4j:log4j-api:2.9.1'
@@ -75,59 +81,9 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.28.1'
-    testCompile 'com.arakelian:more-commons:1.6.1:tests'
-    testCompile 'com.arakelian:jackson-utils:1.6.2:tests'
-    testCompile 'com.arakelian:docker-junit-rule:1.6.0'
+    testCompile 'com.arakelian:more-commons:1.7.0:tests'
+    testCompile 'com.arakelian:jackson-utils:1.7.0:tests'
+    testCompile 'com.arakelian:docker-junit-rule:1.7.3'
     testCompile 'com.arakelian:faker:1.5.1'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
 }
-
-shadowJar {
-    mergeServiceFiles()
-
-    // we don't want poms for third-party stuff
-    exclude 'META-INF/maven/**/*'
-
-    // we are only shadowing 'shadow' dependencies
-    configurations = [project.configurations.shadow]
-
-    // shadow artifact is temporary resource that is processed by ProGuard to
-    // remove unused classes
-    classifier = 'temp'
-
-    // guava is problematic in Hadoop environments
-    relocate 'com.google.common', 'repackaged.com.arakelian.elastic.com.google.common'
-    relocate 'com.google.thirdparty', 'repackaged.com.arakelian.elastic.com.google.thirdparty'
-}
-
-task shadowSources {
-    doLast {
-        // shadow plugin doesn't handle source code as well, so we do that ourselves
-        shadowFiles( 'com.google.common', 'repackaged.com.arakelian.elastic.com.google.common' )
-    }
-}
-
-def shadowedJar = file(tasks['shadowJar'].archivePath.toString().replace("temp","shadowed"))
-
-task minify(type: proguard.gradle.ProGuardTask, dependsOn:shadowJar) {
-    injars tasks['shadowJar'].archivePath
-    outjars shadowedJar
-    libraryjars fileTree(dir: "${System.getProperty('java.home')}/lib/", include: "*.jar")
-    keep "class com.arakelian.** { *; }"
-    dontnote 'repackaged.*'
-    dontskipnonpubliclibraryclassmembers
-    dontobfuscate
-    dontwarn
-}
-
-artifacts {
-    archives(file: shadowedJar, builtBy: minify) {
-        classifier = "no-guava"
-    }
-}
-
-// make sure shadowed source code is included with -sources .jar
-// sourcesJar.dependsOn(shadowSources);
-
-// do not shadow until we have shadow sources
-shadowJar.dependsOn(sourcesJar)
