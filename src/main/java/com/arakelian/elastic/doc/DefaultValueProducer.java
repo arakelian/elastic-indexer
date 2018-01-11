@@ -162,6 +162,19 @@ public class DefaultValueProducer implements ValueProducer {
         @Override
         protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
                 throws ValueException {
+            if (node.isIntegralNumber() && node.canConvertToLong()) {
+                // our implementation is smart about detecting epoch units (seconds, milliseconds,
+                // and microseconds)
+                final long val = node.longValue();
+                final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(val);
+                if (value == null) {
+                    malformed(field, node, null);
+                } else {
+                    consumer.accept(value);
+                }
+                return;
+            }
+
             // we support a wide variety of text formats, and always encoding in UTC
             final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(asText(field, node));
             if (value == null) {
