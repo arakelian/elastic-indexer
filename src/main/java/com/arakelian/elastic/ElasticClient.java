@@ -114,8 +114,8 @@ public interface ElasticClient {
      *            document that is being indexed
      * @return response from Elastic indicating that document was indexed
      *
-     * @see <a
-     *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @see <a href=
+     *      "https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
@@ -147,8 +147,8 @@ public interface ElasticClient {
      *            Number of milliseconds since epoch (normalized to UTC time)
      * @return response from Elastic indicating that document was indexed
      *
-     * @see <a
-     *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @see <a href=
+     *      "https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      * @throws ElasticException
      *             if there an exception making HTTP request
      */

@@ -144,8 +144,8 @@ public interface OkHttpElasticApi {
      *            document that is being indexed
      * @return response from Elastic indicating that document was indexed
      *
-     * @see <a
-     *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @see <a href=
+     *      "https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      */
     @PUT("/{name}/{type}/{id}")
     @Headers("Content-Type: application/json; charset=UTF-8")
@@ -180,8 +180,8 @@ public interface OkHttpElasticApi {
      *            Number of milliseconds since epoch (normalized to UTC time)
      * @return response from Elastic indicating that document was indexed
      *
-     * @see <a
-     *      href="https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
+     * @see <a href=
+     *      "https://www.elastic.co/blog/elasticsearch-versioning-support">https://www.elastic.co/blog/elasticsearch-versioning-support</a>
      */
     @PUT("/{name}/{type}/{id}?version_type=external")
     @Headers("Content-Type: application/json; charset=UTF-8")

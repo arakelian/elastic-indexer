@@ -161,8 +161,8 @@ public abstract class Field implements Serializable {
      *
      * @return a query time boosting
      *
-     * @see <a
-     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-boost.html">boost</a>
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-boost.html">boost</a>
      */
     @Nullable
     @Value.Auxiliary
@@ -177,8 +177,8 @@ public abstract class Field implements Serializable {
      * @return true if Elastic should try to convert strings to numbers and truncate fractions for
      *         integers
      *
-     * @see <a
-     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/range.html">Range
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/range.html">Range
      *      Datatypes</a>
      */
     @Nullable
@@ -412,8 +412,8 @@ public abstract class Field implements Serializable {
      *
      * @return true if this field should not be included in _all.
      *
-     * @see <a
-     *      href="https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html</a>
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html">https://www.elastic.co/guide/en/elasticsearch/reference/current/include-in-all.html</a>
      */
     @Nullable
     @Value.Default
@@ -442,8 +442,8 @@ public abstract class Field implements Serializable {
      *
      * @return flag that indicates if field is indexed.
      *
-     * @see <a
-     *      href="https://github.com/elastic/elasticsearch/issues/21134">https://github.com/elastic/elasticsearch/issues/21134</a>
+     * @see <a href=
+     *      "https://github.com/elastic/elasticsearch/issues/21134">https://github.com/elastic/elasticsearch/issues/21134</a>
      */
     @Nullable
     @Value.Default
