@@ -198,7 +198,7 @@ public abstract class ElasticDocConfig {
         return ImmutableElasticDocConfig.builder() //
                 .from(this) //
                 .identityFields(ImmutableSet.of()) //
-                .targets(newTargets) //
+                .putAllTargets(newTargets) //
                 .build();
     }
 }
