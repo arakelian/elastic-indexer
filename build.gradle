@@ -50,7 +50,7 @@ dependencies {
 
     compile 'com.arakelian:more-commons:1.7.1'
     compile 'com.arakelian:jackson-utils:1.7.0'
-    compile 'com.arakelian:json-filter:1.7.0'
+    compile 'com.arakelian:json-filter:1.7.1'
     compile 'com.arakelian:key-value-store:1.7.0'
 
     // shadow Guava due to frequent downstream incompatibility issues
