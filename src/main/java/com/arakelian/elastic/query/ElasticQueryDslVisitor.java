@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,8 +83,8 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
             writer.writeStartObject();
 
             writeFieldValue("fields", qs.getFields());
-            writeFieldValue("query", qs.getQueryString());
             writeFieldValue("default_field", qs.getDefaultField());
+            writeFieldValue("query", qs.getQueryString());
             writeFieldValue("default_operator", qs.getDefaultOperator());
             writeFieldValue("analyzer", qs.getAnalyzer());
             writeFieldValue("quote_analyzer", qs.getQuoteAnalyzer());
@@ -179,19 +179,37 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
     }
 
     private void writeFieldValue(final String field, final Object value) throws IOException {
-        if (value != null) {
+        if (value == null) {
+            // omit null values
+            return;
+        }
+
+        if (value instanceof Collection) {
+            final Collection c = (Collection) value;
+            if (c.size() == 0) {
+                // omit empty collections
+                return;
+            }
             writer.writeFieldName(field);
-            if (value instanceof Collection) {
-                final Collection c = (Collection) value;
-                writer.writeStartArray();
-                for (final Object o : c) {
-                    writer.writeObject(o);
-                }
-                writer.writeEndArray();
-            } else {
-                writer.writeObject(value);
+            writer.writeStartArray();
+            for (final Object o : c) {
+                writer.writeObject(o);
+            }
+            writer.writeEndArray();
+            return;
+        }
+
+        if (value instanceof CharSequence) {
+            final CharSequence csq = (CharSequence) value;
+            if (csq.length() == 0) {
+                // omit empty strings
+                return;
             }
         }
+
+        // output value
+        writer.writeFieldName(field);
+        writer.writeObject(value);
     }
 
     private void writeFieldValue(final String field, final String value) throws IOException {

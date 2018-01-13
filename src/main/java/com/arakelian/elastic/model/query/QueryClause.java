@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,21 @@
 
 package com.arakelian.elastic.model.query;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.List;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.query.ElasticQueryDslVisitor;
 import com.arakelian.elastic.query.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @JsonTypeInfo(property = "type", use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({ //
@@ -54,18 +60,6 @@ public interface QueryClause extends Serializable {
     public static final String TERMS_QUERY = "terms";
     public static final String WILDCARD_QUERY = "wildcard";
 
-    public default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        visitor.leave(this);
-    }
-
-    @JsonIgnore
-    @Value.Derived
-    @Value.Auxiliary
-    public boolean isEmpty();
-
     static int countNotEmpty(final List<QueryClause> clauses) {
         if (clauses == null) {
             return 0;
@@ -79,4 +73,30 @@ public interface QueryClause extends Serializable {
         }
         return count;
     }
+
+    public static String toElasticQuery(final QueryClause query, final ObjectMapper mapper)
+            throws IOException {
+        final JsonFactory factory = mapper.getFactory();
+
+        final StringWriter writer = new StringWriter();
+        try (final JsonGenerator gen = factory.createGenerator(writer).useDefaultPrettyPrinter()) {
+            gen.writeStartObject();
+            query.accept(new ElasticQueryDslVisitor(gen));
+            gen.writeEndObject();
+        }
+        final String actual = writer.getBuffer().toString();
+        return actual;
+    }
+
+    public default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        visitor.leave(this);
+    }
+
+    @JsonIgnore
+    @Value.Derived
+    @Value.Auxiliary
+    public boolean isEmpty();
 }

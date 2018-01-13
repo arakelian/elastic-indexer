@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +45,16 @@ import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.SearchHits;
+import com.arakelian.elastic.model.SearchResponse;
+import com.arakelian.elastic.model.query.ImmutableQuery;
+import com.arakelian.elastic.model.query.ImmutableQueryStringQuery;
+import com.arakelian.elastic.model.query.Query;
 import com.arakelian.fake.model.Person;
 import com.arakelian.fake.model.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
+
+import net.javacrumbs.jsonunit.JsonAssert;
 
 public class ElasticClientTest extends AbstractElasticDockerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientTest.class);
@@ -54,11 +63,10 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         super(version);
     }
 
-    private long assertDeleteWithExternalVersion(final Index index, final String id) throws IOException {
+    private long assertDeleteWithExternalVersion(final Index index, final String id) {
         // delete document with external version
         final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
         final DeletedDocument deleted = assertSuccessful( //
-                DeletedDocument.class, //
                 elasticClient.deleteDocument( //
                         index.getName(), //
                         DEFAULT_TYPE, //
@@ -79,7 +87,6 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         // index document
         final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
         final IndexedDocument response = assertSuccessful( //
-                IndexedDocument.class, //
                 elasticClient.indexDocument( //
                         index.getName(), //
                         DEFAULT_TYPE, //
@@ -103,7 +110,6 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
             final long expectedVersion) throws IOException {
         // test default versioning
         final IndexedDocument response = assertSuccessful( //
-                IndexedDocument.class, //
                 elasticClient.indexDocument(
                         index.getName(), //
                         DEFAULT_TYPE, //
@@ -119,9 +125,8 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     }
 
     @Test
-    public void testClusterHealth() throws IOException {
+    public void testClusterHealth() {
         final ClusterHealth health = assertSuccessful(
-                ClusterHealth.class, //
                 elasticClient.clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT));
         LOGGER.info("{}", health);
 
@@ -134,10 +139,8 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     }
 
     @Test
-    public void testDeleteAll() throws IOException {
-        final IndexDeleted response = assertSuccessful(
-                IndexDeleted.class, //
-                elasticClient.deleteAllIndexes());
+    public void testDeleteAll() {
+        final IndexDeleted response = assertSuccessful(elasticClient.deleteAllIndexes());
         LOGGER.info("deleteAllIndexes: {}", response);
     }
 
@@ -145,10 +148,12 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     public void testDeleteNonExistantDocument() throws IOException {
         withPersonIndex(index -> {
             // verify can delete non-existant record
-            assertEquals(
-                    404,
-                    elasticClient.deleteDocument(index.getName(), DEFAULT_TYPE, MoreStringUtils.shortUuid())
-                            .code());
+            try {
+                elasticClient.deleteDocument(index.getName(), DEFAULT_TYPE, MoreStringUtils.shortUuid());
+                Assert.fail("Delete of non-existant document should have thrown 404");
+            } catch (final ElasticNotFoundException e) {
+                // successful
+            }
         });
     }
 
@@ -219,27 +224,52 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
             // we should have received response for each record, whether found or not
             final ImmutableMget mget = builder.build();
-            final Documents documents = assertSuccessful(
-                    Documents.class, //
-                    elasticClient.getDocuments(mget));
+            final Documents documents = assertSuccessful(elasticClient.getDocuments(mget));
             assertNotNull(documents);
             assertEquals(mget.getDocs().size(), documents.getDocs().size());
         });
     }
 
     @Test
-    public void testNodes() throws IOException {
-        final Nodes response = assertSuccessful(
-                Nodes.class, //
-                elasticClient.nodes());
+    public void testNodes() {
+        final Nodes response = assertSuccessful(elasticClient.nodes());
         LOGGER.info("nodes: {}", response);
     }
 
     @Test
-    public void testRefreshAll() throws IOException {
-        final Refresh response = assertSuccessful(
-                Refresh.class, //
-                elasticClient.refreshAllIndexes());
+    public void testRefreshAll() {
+        final Refresh response = assertSuccessful(elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
+    }
+
+    @Test
+    public void testSearch() throws IOException {
+        withPersonIndex(index -> {
+            final List<Person> people = RandomPerson.listOf(10);
+            for (final Person person : people) {
+                assertIndexWithInternalVersion(index, person, 1);
+            }
+
+            final Person person = people.get(0);
+            final Query query = ImmutableQuery.builder() //
+                    .query(
+                            ImmutableQueryStringQuery.builder() //
+                                    .defaultField("lastName") //
+                                    .queryString(person.getLastName()) //
+                                    .build()) //
+                    .build();
+
+            elasticClient.refreshIndex(index.getName());
+            final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), query));
+
+            final SearchHits hits = result.getHits();
+            assertEquals(1, hits.getTotal());
+
+            final Map<String, Object> hit = hits.getHit(0);
+            JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
+            JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
+            JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
+            JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
+        });
     }
 }

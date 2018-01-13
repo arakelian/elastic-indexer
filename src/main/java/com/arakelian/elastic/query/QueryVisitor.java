@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@
 
 package com.arakelian.elastic.query;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.arakelian.elastic.model.query.BoolQuery;
@@ -36,10 +35,6 @@ import com.arakelian.elastic.model.query.WildcardQuery;
 @SuppressWarnings("unused")
 public class QueryVisitor {
     private final AtomicInteger depth = new AtomicInteger();
-
-    protected int getDepth() {
-        return depth.get();
-    }
 
     public boolean enter(final QueryClause clause) {
         depth.incrementAndGet();
@@ -88,6 +83,10 @@ public class QueryVisitor {
 
     public boolean enterWildcardQuery(final WildcardQuery wildcardQuery) {
         return true;
+    }
+
+    protected int getDepth() {
+        return depth.get();
     }
 
     public void leave(final QueryClause clause) {

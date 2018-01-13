@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,23 +30,20 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
-
-import retrofit2.Response;
+import com.arakelian.elastic.model.SearchResponse;
+import com.arakelian.elastic.model.query.Query;
 
 public interface ElasticClient {
-    Response<About> about() throws ElasticException;
+    About about() throws ElasticException;
 
-    Response<BulkResponse> bulk(String operations, Boolean pretty) throws ElasticException;
+    BulkResponse bulk(String operations, Boolean pretty) throws ElasticException;
 
-    Response<ClusterHealth> clusterHealth() throws ElasticException;
+    ClusterHealth clusterHealth() throws ElasticException;
 
-    Response<ClusterHealth> clusterHealth(ClusterHealth.Status waitForStatus, String timeout)
+    ClusterHealth clusterHealth(ClusterHealth.Status waitForStatus, String timeout) throws ElasticException;
+
+    ClusterHealth clusterHealthForIndex(String names, ClusterHealth.Status waitForStatus, String timeout)
             throws ElasticException;
-
-    Response<ClusterHealth> clusterHealthForIndex(
-            String names,
-            ClusterHealth.Status waitForStatus,
-            String timeout) throws ElasticException;
 
     /**
      * Create an index in Elastic.
@@ -62,7 +59,7 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<IndexCreated> createIndex(String name, Index index) throws ElasticException;
+    IndexCreated createIndex(String name, Index index) throws ElasticException;
 
     /**
      * Delete all indexes from Elastic.
@@ -74,11 +71,11 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<IndexDeleted> deleteAllIndexes() throws ElasticException;
+    IndexDeleted deleteAllIndexes() throws ElasticException;
 
-    Response<DeletedDocument> deleteDocument(String name, String type, String id) throws ElasticException;
+    DeletedDocument deleteDocument(String name, String type, String id) throws ElasticException;
 
-    Response<DeletedDocument> deleteDocument(String name, String type, String id, long epochMillisUtc)
+    DeletedDocument deleteDocument(String name, String type, String id, long epochMillisUtc)
             throws ElasticException;
 
     /**
@@ -93,12 +90,11 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<IndexDeleted> deleteIndex(String names) throws ElasticException;
+    IndexDeleted deleteIndex(String names) throws ElasticException;
 
-    Response<Document> getDocument(String name, String type, String id, String sourceFields)
-            throws ElasticException;
+    Document getDocument(String name, String type, String id, String sourceFields) throws ElasticException;
 
-    Response<Documents> getDocuments(Mget mget) throws ElasticException;
+    Documents getDocuments(Mget mget) throws ElasticException;
 
     /**
      * Indexes a document using default versioning scheme, which simply increments the document
@@ -119,7 +115,7 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<IndexedDocument> indexDocument(String name, String type, String id, String document)
+    IndexedDocument indexDocument(String name, String type, String id, String document)
             throws ElasticException;
 
     /**
@@ -152,12 +148,8 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<IndexedDocument> indexDocument(
-            String name,
-            String type,
-            String id,
-            String document,
-            long epochMillisUtc) throws ElasticException;
+    IndexedDocument indexDocument(String name, String type, String id, String document, long epochMillisUtc)
+            throws ElasticException;
 
     /**
      * Checks to see if specified index exists
@@ -171,11 +163,13 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    Response<Void> indexExists(String name) throws ElasticException;
+    boolean indexExists(String name) throws ElasticException;
 
-    Response<Nodes> nodes() throws ElasticException;
+    Nodes nodes() throws ElasticException;
 
-    Response<Refresh> refreshAllIndexes() throws ElasticException;
+    Refresh refreshAllIndexes() throws ElasticException;
 
-    Response<Refresh> refreshIndex(String names) throws ElasticException;
+    Refresh refreshIndex(String names) throws ElasticException;
+
+    SearchResponse search(String name, Query query);
 }

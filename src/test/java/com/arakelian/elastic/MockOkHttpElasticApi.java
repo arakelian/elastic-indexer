@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.SearchResponse;
 
 import retrofit2.Call;
 import retrofit2.mock.BehaviorDelegate;
@@ -153,6 +154,11 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
 
     @Override
     public Call<Refresh> refreshIndex(final String names) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Call<SearchResponse> search(final String name, final String query) {
         throw new UnsupportedOperationException();
     }
 }

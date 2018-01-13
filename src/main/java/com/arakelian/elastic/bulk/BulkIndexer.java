@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,8 +69,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import retrofit2.Response;
-
 /**
  * Indexes or deletes a group of documents from one or more Elastic indexes using the Elastic Bulk
  * Index API.
@@ -82,7 +80,7 @@ public class BulkIndexer<T> implements Closeable {
     /**
      * Represents a single, asynchronous flushing of bulk operations to the Elastic Bulk API.
      */
-    private final class Batch implements Callable<Response<BulkResponse>> {
+    private final class Batch implements Callable<BulkResponse> {
         private final int id;
         private final ImmutableList<BulkOperation> operations;
         private final int totalBytes;
@@ -118,7 +116,7 @@ public class BulkIndexer<T> implements Closeable {
         }
 
         @Override
-        public Response<BulkResponse> call() throws IOException, InterruptedException {
+        public BulkResponse call() throws IOException, InterruptedException {
             if (delayMillis != 0) {
                 LOGGER.info(
                         "Waiting {} before sending {}",
@@ -132,7 +130,7 @@ public class BulkIndexer<T> implements Closeable {
 
             try {
                 // we assume Retryer verifies that result.isSuccessful() is true
-                final Retryer<Response<BulkResponse>> retryer = config.getRetryer();
+                final Retryer<BulkResponse> retryer = config.getRetryer();
                 return retryer.call(() -> {
                     return elasticClient.bulk(ops, false);
                 });
@@ -142,14 +140,6 @@ public class BulkIndexer<T> implements Closeable {
                 throw new IOException("Unable to index " + this, e);
             } finally {
                 refreshIndexes();
-            }
-        }
-
-        private void failed(final Response<BulkResponse> result) {
-            final IndexerListener listener = config.getListener();
-            for (final BulkOperation op : operations) {
-                failed.incrementAndGet();
-                listener.onFailure(op, result);
             }
         }
 
@@ -194,10 +184,10 @@ public class BulkIndexer<T> implements Closeable {
     private final class BatchListener implements Runnable {
         private final Stopwatch queued;
         private final Batch batch;
-        private final ListenableFuture<Response<BulkResponse>> future;
+        private final ListenableFuture<BulkResponse> future;
 
         private BatchListener(
-                final ListenableFuture<Response<BulkResponse>> future,
+                final ListenableFuture<BulkResponse> future,
                 final Batch batch,
                 final Stopwatch queued) {
             this.future = future;
@@ -210,19 +200,13 @@ public class BulkIndexer<T> implements Closeable {
             batch.failed(t);
         }
 
-        public void onSuccess(final Response<BulkResponse> result) throws RejectedExecutionException {
+        public void onSuccess(final BulkResponse bulk) throws RejectedExecutionException {
             LOGGER.debug("Completed {} after {}", batch, queued);
 
             final IndexerListener listener = config.getListener();
-            if (!result.isSuccessful()) {
-                // Elastic did not return response with individual operations, fail the entire batch
-                batch.failed(result);
-                return;
-            }
 
             // according to ES documentation, the response order is correlated 1-to-1 with
             // request order
-            final BulkResponse bulk = result.body();
             final List<Item> items = bulk.getItems();
             final int size = items.size();
             Preconditions.checkState(
@@ -301,7 +285,7 @@ public class BulkIndexer<T> implements Closeable {
 
         @Override
         public void run() {
-            final Response<BulkResponse> value;
+            final BulkResponse value;
             try {
                 value = getUninterruptibly(future);
             } catch (final ExecutionException e) {
@@ -769,7 +753,7 @@ public class BulkIndexer<T> implements Closeable {
     private void submitBatch(final Batch batch) throws RejectedExecutionException {
         LOGGER.info("Queuing {}", batch);
         final Stopwatch queued = Stopwatch.createStarted();
-        final ListenableFuture<Response<BulkResponse>> future;
+        final ListenableFuture<BulkResponse> future;
         try {
             future = batchExecutor.submit(batch);
         } catch (final RejectedExecutionException e) {

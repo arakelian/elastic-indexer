@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.ElasticClient;
+import com.arakelian.elastic.ElasticHttpException;
 import com.arakelian.elastic.OkHttpElasticApi;
 import com.arakelian.elastic.OkHttpElasticClient;
 import com.arakelian.elastic.Views.Elastic.Version5;
@@ -72,6 +73,10 @@ public class ElasticClientUtils {
             if (exception instanceof SocketTimeoutException) {
                 // Retry if the server dropped connection on us
                 return true;
+            }
+            if (exception instanceof ElasticHttpException) {
+                final ElasticHttpException e = (ElasticHttpException) exception;
+                return retryIfResponse(e.getStatusCode());
             }
             // otherwise do not retry
             return false;
@@ -126,23 +131,16 @@ public class ElasticClientUtils {
                 .addCallAdapterFactory(GuavaCallAdapterFactory.create()) //
                 .build();
         final OkHttpElasticApi api = retrofit.create(OkHttpElasticApi.class);
-        final ElasticClient elasticClient = new OkHttpElasticClient(api, version);
+        final ElasticClient elasticClient = new OkHttpElasticClient(api, mapper, version);
         return elasticClient;
     }
 
-    public static <T> Retryer<Response<T>> createElasticRetryer() {
-        return RetryerBuilder.<Response<T>> newBuilder() //
+    public static <T> Retryer<T> createElasticRetryer() {
+        return RetryerBuilder.<T> newBuilder() //
                 .retryIfException(new RetryIoException()) //
-                .retryIfResult(result -> retryIfResponse(result)) //
                 .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
                 .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
                 .build();
-    }
-
-    @SuppressWarnings({ "unchecked" })
-    public static Retryer<Response<?>> createElasticRetryer2() {
-        final Retryer result = createElasticRetryer();
-        return result;
     }
 
     private static Class<?> getJsonView(final VersionComponents version) {
@@ -218,7 +216,7 @@ public class ElasticClientUtils {
         // wait for elastic
         try {
             final About info = retryer.call(() -> {
-                return elasticClient.about().body();
+                return elasticClient.about();
             });
             return info;
         } catch (final ExecutionException e) {

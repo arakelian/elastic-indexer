@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,50 +34,49 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.SearchResponse;
+import com.arakelian.elastic.model.query.Query;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Preconditions;
 
-import retrofit2.Response;
-
 public class ElasticClientWithRetry implements ElasticClient {
     private final ElasticClient delegate;
-    private final Retryer<Response<?>> retryer;
+    private final Retryer<Object> retryer;
 
     public ElasticClientWithRetry(final ElasticClient delegate) {
-        this(delegate, ElasticClientUtils.createElasticRetryer2());
+        this(delegate, ElasticClientUtils.createElasticRetryer());
     }
 
-    public ElasticClientWithRetry(final ElasticClient delegate, final Retryer<Response<?>> retryer) {
+    public ElasticClientWithRetry(final ElasticClient delegate, final Retryer<Object> retryer) {
         this.delegate = Preconditions.checkNotNull(delegate);
         this.retryer = Preconditions.checkNotNull(retryer);
     }
 
     @Override
-    public Response<About> about() throws ElasticException {
+    public About about() throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.about();
         });
     }
 
     @Override
-    public Response<BulkResponse> bulk(final String operations, final Boolean pretty)
-            throws ElasticException {
+    public BulkResponse bulk(final String operations, final Boolean pretty) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.bulk(operations, pretty);
         });
     }
 
     @Override
-    public Response<ClusterHealth> clusterHealth() throws ElasticException {
+    public ClusterHealth clusterHealth() throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.clusterHealth();
         });
     }
 
     @Override
-    public Response<ClusterHealth> clusterHealth(final Status waitForStatus, final String timeout)
+    public ClusterHealth clusterHealth(final Status waitForStatus, final String timeout)
             throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.clusterHealth(waitForStatus, timeout);
@@ -85,7 +84,7 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<ClusterHealth> clusterHealthForIndex(
+    public ClusterHealth clusterHealthForIndex(
             final String names,
             final Status waitForStatus,
             final String timeout) throws ElasticException {
@@ -95,21 +94,21 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<IndexCreated> createIndex(final String name, final Index index) throws ElasticException {
+    public IndexCreated createIndex(final String name, final Index index) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.createIndex(name, index);
         });
     }
 
     @Override
-    public Response<IndexDeleted> deleteAllIndexes() throws ElasticException {
+    public IndexDeleted deleteAllIndexes() throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.deleteAllIndexes();
         });
     }
 
     @Override
-    public Response<DeletedDocument> deleteDocument(final String name, final String type, final String id)
+    public DeletedDocument deleteDocument(final String name, final String type, final String id)
             throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.deleteDocument(name, type, id);
@@ -117,7 +116,7 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<DeletedDocument> deleteDocument(
+    public DeletedDocument deleteDocument(
             final String name,
             final String type,
             final String id,
@@ -128,28 +127,32 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<IndexDeleted> deleteIndex(final String names) throws ElasticException {
+    public IndexDeleted deleteIndex(final String names) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.deleteIndex(names);
         });
     }
 
-    protected <T> Response<T> executeWithRetry(final Callable<Response<T>> callable) throws ElasticException {
+    protected <T> T executeWithRetry(final Callable<T> callable) throws ElasticException {
         try {
             @SuppressWarnings("unchecked")
-            final Response<T> response = (Response<T>) retryer.call(() -> {
+            final T response = (T) retryer.call(() -> {
                 return callable.call();
             });
             return response;
         } catch (final ExecutionException e) {
-            throw new ElasticException("Unable to index " + this, e.getCause());
+            final Throwable cause = e.getCause();
+            if (cause instanceof ElasticException) {
+                throw (ElasticException) cause;
+            }
+            throw new ElasticException(e);
         } catch (final RetryException e) {
-            throw new ElasticException("Unable to index " + this, e);
+            throw new ElasticException(e);
         }
     }
 
     @Override
-    public Response<Document> getDocument(
+    public Document getDocument(
             final String name,
             final String type,
             final String id,
@@ -160,14 +163,14 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<Documents> getDocuments(final Mget mget) throws ElasticException {
+    public Documents getDocuments(final Mget mget) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.getDocuments(mget);
         });
     }
 
     @Override
-    public Response<IndexedDocument> indexDocument(
+    public IndexedDocument indexDocument(
             final String name,
             final String type,
             final String id,
@@ -178,7 +181,7 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<IndexedDocument> indexDocument(
+    public IndexedDocument indexDocument(
             final String name,
             final String type,
             final String id,
@@ -190,30 +193,37 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public Response<Void> indexExists(final String name) throws ElasticException {
+    public boolean indexExists(final String name) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.indexExists(name);
         });
     }
 
     @Override
-    public Response<Nodes> nodes() throws ElasticException {
+    public Nodes nodes() throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.nodes();
         });
     }
 
     @Override
-    public Response<Refresh> refreshAllIndexes() throws ElasticException {
+    public Refresh refreshAllIndexes() throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.refreshAllIndexes();
         });
     }
 
     @Override
-    public Response<Refresh> refreshIndex(final String names) throws ElasticException {
+    public Refresh refreshIndex(final String names) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.refreshIndex(names);
+        });
+    }
+
+    @Override
+    public SearchResponse search(final String name, final Query query) {
+        return executeWithRetry(() -> {
+            return delegate.search(name, query);
         });
     }
 }

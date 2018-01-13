@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,6 @@ import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
-
-import retrofit2.Response;
 
 public class IndexerEventPublisher implements IndexerListener, Closeable {
     /** Optional disruptor we create, start and shutdown **/
@@ -108,7 +106,7 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
     }
 
     @Override
-    public void onFailure(final BulkOperation op, final Response<BulkResponse> result) {
+    public void onFailure(final BulkOperation op, final BulkResponse result) {
         failed(op);
     }
 

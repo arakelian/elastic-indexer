@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.RateLimiter;
-
-import retrofit2.Response;
 
 /**
  * Indexes or deletes a group of documents from one or more Elastic indexes using the Elastic Bulk
@@ -159,13 +157,13 @@ public class RefreshLimiter implements Closeable {
         final long id = index.getFutures().incrementAndGet();
         LOGGER.debug("Queuing refresh {} of index \"{}\"", id, index.name);
 
-        ListenableFuture<Response<Refresh>> future = null;
+        ListenableFuture<Refresh> future = null;
         try {
             // process asynchronously
             future = doSubmit(index);
 
             // define callback when completed
-            Futures.addCallback(future, new FutureCallback<Response<Refresh>>() {
+            Futures.addCallback(future, new FutureCallback<Refresh>() {
                 private void completeQuietly(final Index index) {
                     try {
                         complete(index);
@@ -181,13 +179,12 @@ public class RefreshLimiter implements Closeable {
                 }
 
                 @Override
-                public void onSuccess(final Response<Refresh> result) {
+                public void onSuccess(final Refresh result) {
                     // refresh may have failed
                     LOGGER.debug(
-                            "Refresh {} of index \"{}\" completed with status code {} after {}: {}",
+                            "Refresh {} of index \"{}\" completed successfully after {}: {}",
                             id,
                             index.name,
-                            result.code(),
                             timer,
                             result);
                     completeQuietly(index);
@@ -211,13 +208,11 @@ public class RefreshLimiter implements Closeable {
      * @return result of call to Elastic client if successful
      * @throws IOException
      */
-    private Response<Refresh> doRefresh(final Index index) throws IOException {
+    private Refresh doRefresh(final Index index) throws IOException {
         LOGGER.debug("Refreshing index \"{}\"", index.name);
         index.getAttempts().incrementAndGet();
-        final Response<Refresh> response = elasticClient.refreshIndex(index.name);
-        if (response.isSuccessful()) {
-            index.getSuccessful().incrementAndGet();
-        }
+        final Refresh response = elasticClient.refreshIndex(index.name);
+        index.getSuccessful().incrementAndGet();
         return response;
     }
 
@@ -234,15 +229,15 @@ public class RefreshLimiter implements Closeable {
      */
     private boolean doRefreshQuietly(final Index index) {
         try {
-            final Response<Refresh> response = doRefresh(index);
-            return response != null && response.isSuccessful();
+            final Refresh response = doRefresh(index);
+            return response != null;
         } catch (final IOException e) {
             LOGGER.warn("Safetly ignoring refresh failure: {}", e.getMessage());
             return false;
         }
     }
 
-    private ListenableFuture<Response<Refresh>> doSubmit(final Index index) {
+    private ListenableFuture<Refresh> doSubmit(final Index index) {
         try {
             return refreshExecutor.submit(() -> {
                 // acquire rate limiter before we do anything

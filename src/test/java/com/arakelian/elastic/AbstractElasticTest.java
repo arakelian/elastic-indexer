@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,12 @@ package com.arakelian.elastic;
 
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,7 +35,6 @@ import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.model.About;
 import com.arakelian.elastic.model.ClusterHealth;
 import com.arakelian.elastic.model.ClusterHealth.Status;
-import com.arakelian.elastic.model.ElasticError;
 import com.arakelian.elastic.model.ImmutableIndex;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.IndexCreated;
@@ -51,41 +46,30 @@ import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
 import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
-import com.arakelian.json.JsonFilter;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import okhttp3.OkHttpClient;
-import retrofit2.Response;
 
 public abstract class AbstractElasticTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticTest.class);
 
     public static final String DEFAULT_TYPE = "test";
 
-    protected abstract String getElasticUrl();
-
-    protected abstract ElasticClient getElasticClient();
-
-    protected abstract ElasticClientWithRetry getElasticClientWithRetry();
-
     private RefreshLimiter refreshLimiter;
 
-    protected final void assertCreateIndex(final Index index) throws IOException {
+    protected final void assertCreateIndex(final Index index) {
         // verify it does not already exist
         assertIndexNotExists(index);
 
         // create index
         final IndexCreated response = assertSuccessful(
-                IndexCreated.class, //
                 getElasticClientWithRetry().createIndex(index.getName(), index));
         LOGGER.info("Create index response: {}", response);
         assertEquals(Boolean.TRUE, response.getAcknowledged());
         assertEquals(Boolean.TRUE, response.getShardsAcknowledged());
     }
 
-    protected final void assertDeleteIndex(final String name) throws IOException {
+    protected final void assertDeleteIndex(final String name) {
         final IndexDeleted response = assertSuccessful( //
-                IndexDeleted.class, //
                 getElasticClientWithRetry().deleteIndex(name));
 
         LOGGER.info("Delete Index response: {}", response);
@@ -93,53 +77,23 @@ public abstract class AbstractElasticTest {
     }
 
     protected final void assertIndexExists(final Index index) throws ElasticException {
-        final Response<Void> response = getElasticClientWithRetry().indexExists(index.getName());
-        assertTrue(response.isSuccessful());
+        final boolean exists = getElasticClientWithRetry().indexExists(index.getName());
+        Assert.assertTrue("Index " + index.getName() + " does not exist", exists);
     }
 
     protected final void assertIndexNotExists(final Index index) throws ElasticException {
-        final Response<Void> response = getElasticClientWithRetry().indexExists(index.getName());
-        assertFalse(response.isSuccessful());
+        final boolean exists = getElasticClientWithRetry().indexExists(index.getName());
+        Assert.assertFalse("Index " + index.getName() + " exists", exists);
     }
 
-    protected final void assertRefreshIndex(final Index index) throws IOException {
-        final Refresh response = assertSuccessful(
-                Refresh.class, //
-                getElasticClientWithRetry().refreshIndex(index.getName()));
+    protected final void assertRefreshIndex(final Index index) {
+        final Refresh response = assertSuccessful(getElasticClientWithRetry().refreshIndex(index.getName()));
         LOGGER.info("Refresh response: {}", response);
     }
 
-    protected final <T> T assertSuccessful(final Class<T> clazz, final Response<T> response)
-            throws IOException {
-        final boolean successful = response.isSuccessful();
-        if (successful) {
-            final T result = response.body();
-            assertNotNull(result);
-            return result;
-        }
-
-        final String body = response.errorBody().string();
-        if (response.code() == 404) {
-            // retrofit treats 404 like error but they are not as far as Elastic is concerned
-            final T result = StringUtils.isEmpty(body) ? null
-                    : JacksonUtils.getJsonProcessors().readValue(body, clazz);
-            assertNotNull(result);
-            return result;
-        }
-
-        final ElasticError error;
-        try {
-            error = StringUtils.isEmpty(body) ? null
-                    : JacksonUtils.getJsonProcessors().readValue(body, ElasticError.class);
-        } catch (final JsonMappingException e) {
-            LOGGER.error("Expecting error response: {}", JsonFilter.prettyify(body));
-            throw new IllegalStateException("Unable to deserialize non-successful response (status code: "
-                    + response.code() + ") as an Error", e);
-        }
-
-        assertNotNull(error);
-        fail("Elastic fail called: " + error);
-        return null;
+    protected final <T> T assertSuccessful(final T response) {
+        assertNotNull(response);
+        return response;
     }
 
     @Before
@@ -156,6 +110,12 @@ public abstract class AbstractElasticTest {
     public final void destroyRefreshLimiter() {
         refreshLimiter.close();
     }
+
+    protected abstract ElasticClient getElasticClient();
+
+    protected abstract ElasticClientWithRetry getElasticClientWithRetry();
+
+    protected abstract String getElasticUrl();
 
     protected final RefreshLimiter getRefreshLimiter() {
         return refreshLimiter;
@@ -185,10 +145,9 @@ public abstract class AbstractElasticTest {
         return version;
     }
 
-    protected final void waitForIndexReady(final Index index) throws IOException {
+    protected final void waitForIndexReady(final Index index) {
         // wait for it to be available
         final ClusterHealth response = assertSuccessful(
-                ClusterHealth.class, //
                 getElasticClientWithRetry().clusterHealthForIndex( //
                         index.getName(), //
                         Status.YELLOW, //
