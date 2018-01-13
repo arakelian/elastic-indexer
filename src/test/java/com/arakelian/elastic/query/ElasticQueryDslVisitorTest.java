@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,18 @@
 
 package com.arakelian.elastic.query;
 
-import java.io.IOException;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.arakelian.elastic.model.query.ImmutableBoolQuery;
-import com.arakelian.elastic.model.query.ImmutableQueryStringQuery;
-import com.arakelian.elastic.model.query.ImmutableTermsQuery;
-import com.arakelian.elastic.model.query.QueryClause;
-import com.arakelian.elastic.model.query.QueryStringQuery;
-import com.arakelian.elastic.model.query.TermsQuery;
+import com.arakelian.elastic.model.search.ImmutableBoolQuery;
+import com.arakelian.elastic.model.search.ImmutableQueryStringQuery;
+import com.arakelian.elastic.model.search.ImmutableSearch;
+import com.arakelian.elastic.model.search.ImmutableTermsQuery;
+import com.arakelian.elastic.model.search.Query;
+import com.arakelian.elastic.model.search.QueryStringQuery;
+import com.arakelian.elastic.model.search.Search;
+import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -50,7 +50,7 @@ public class ElasticQueryDslVisitorTest {
     private final ObjectMapper mapper = JacksonUtils.getObjectMapper();
 
     @Test
-    public void testBoolQuery() throws IOException {
+    public void testBoolQuery() {
         validateQueryDsl(
                 ImmutableBoolQuery.builder() //
                         .addMustClause(TERMS_QUERY) //
@@ -82,7 +82,7 @@ public class ElasticQueryDslVisitorTest {
     }
 
     @Test
-    public void testQueryStringQuery() throws IOException {
+    public void testQueryStringQuery() {
         validateQueryDsl(ElasticQueryDslVisitorTest.QUERY_STRING_QUERY, "" + //
                 "{\n" + //
                 "  \"query\" : {\n" + //
@@ -95,7 +95,7 @@ public class ElasticQueryDslVisitorTest {
     }
 
     @Test
-    public void testTermsQuery() throws IOException {
+    public void testTermsQuery() {
         validateQueryDsl(
                 ElasticQueryDslVisitorTest.TERMS_QUERY, //
                 "" + //
@@ -108,8 +108,13 @@ public class ElasticQueryDslVisitorTest {
                         "}");
     }
 
-    private void validateQueryDsl(final QueryClause query, final String expected) throws IOException {
-        final String dsl = QueryClause.toElasticQuery(query, mapper);
+    private void validateQueryDsl(final Query query, final String expected) {
+        final Search search = ImmutableSearch.builder().query(query).build();
+
+        final String dsl = JacksonUtils.toString(writer -> {
+            Search.serialize(writer, search);
+        }, mapper, true);
+
         LOGGER.info("Query DSL: {}", dsl);
         JsonAssert.assertJsonEquals(expected, dsl);
     }

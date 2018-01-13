@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
-import com.arakelian.elastic.model.SearchResponse;
+import com.arakelian.elastic.model.search.SearchResponse;
+import com.arakelian.elastic.model.search.SearchType;
 
 import okhttp3.MediaType;
 import retrofit2.Call;
@@ -217,5 +218,11 @@ public interface OkHttpElasticApi {
 
     @POST("/{name}/_search")
     @Headers("Content-Type: application/json; charset=UTF-8")
-    Call<SearchResponse> search(@Path("name") String name, @Body String query);
+    Call<SearchResponse> search(
+            @Path("name") String name,
+            @Query("preference") String preference,
+            @Query("scroll") String scroll,
+            @Query("search_type") SearchType searchType,
+            @Query("request_cache") Boolean requestCache,
+            @Body String query);
 }

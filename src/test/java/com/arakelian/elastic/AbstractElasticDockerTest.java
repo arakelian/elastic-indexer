@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -48,10 +49,12 @@ import com.arakelian.elastic.model.ImmutableBulkIndexerConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.fake.model.Person;
+import com.arakelian.fake.model.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
 
@@ -61,6 +64,11 @@ import okhttp3.logging.HttpLoggingInterceptor.Level;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
+    @FunctionalInterface
+    public interface WithPeopleCallback {
+        public void accept(Index index, List<Person> people) throws IOException;
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticDockerTest.class);
 
     @ClassRule
@@ -84,6 +92,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected final DockerConfig config;
     protected final String elasticUrl;
     protected final ElasticClient elasticClient;
+
     protected final ElasticClientWithRetry elasticClientWithRetry;
 
     public AbstractElasticDockerTest(final String imageVersion) throws Exception {
@@ -161,6 +170,26 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         assertTrue(document.isFound());
     }
 
+    protected void assertIndexWithInternalVersion(
+            final Index index,
+            final Person person,
+            final long expectedVersion) throws IOException {
+        // test default versioning
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument(
+                        index.getName(), //
+                        DEFAULT_TYPE, //
+                        person.getId(), //
+                        JacksonUtils.toString(person, false)));
+
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
+    }
+
     public BulkIndexer<Person> createIndexer(final Index index) {
         return createIndexer(index, LoggingIndexerListener.SINGLETON);
     }
@@ -192,11 +221,23 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                         ImmutableField.builder() //
                                 .name("firstName") //
                                 .type(Type.TEXT) //
+                                .putField(
+                                        "raw",
+                                        ImmutableField.builder() //
+                                                .name("raw") //
+                                                .type(Type.KEYWORD) //
+                                                .build()) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("lastName") //
                                 .type(Type.TEXT) //
+                                .putField(
+                                        "raw",
+                                        ImmutableField.builder() //
+                                                .name("raw") //
+                                                .type(Type.KEYWORD) //
+                                                .build()) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
@@ -237,7 +278,18 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return elasticUrl;
     }
 
-    public void withPersonIndex(final ElasticTestCallback test) throws IOException {
+    protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)
+            throws IOException {
+        withPersonIndex(index -> {
+            final List<Person> people = RandomPerson.listOf(numberOfPeople);
+            for (final Person person : people) {
+                assertIndexWithInternalVersion(index, person, 1);
+            }
+            callback.accept(index, people);
+        });
+    }
+
+    public void withPersonIndex(final WithIndexCallback test) throws IOException {
         withIndex(createPersonMapping(), test);
     }
 }

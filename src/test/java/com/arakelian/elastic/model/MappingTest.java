@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,22 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.google.common.collect.ImmutableSet;
 
 public class MappingTest extends AbstractElasticModelTest {
     public static final Mapping CONTACT = ImmutableMapping.builder() //
-            .addField(ImmutableField.builder().name("name").build()) //
+            .addField(
+                    ImmutableField.builder() //
+                            .name("name") //
+                            .putField(
+                                    "raw",
+                                    ImmutableField.builder() //
+                                            .name("raw") //
+                                            .type(Type.KEYWORD) //
+                                            .build()) //
+                            .build()) //
             .addField(ImmutableField.builder().name("street").build()) //
             .addField(ImmutableField.builder().name("city").build()) //
             .addField(ImmutableField.builder().name("state").build()) //

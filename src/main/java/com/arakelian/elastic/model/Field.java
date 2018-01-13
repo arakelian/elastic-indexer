@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,8 @@ import com.arakelian.elastic.Views.Elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
 import com.arakelian.elastic.doc.filters.TokenFilter;
+import com.arakelian.elastic.model.Mapping.FieldDeserializer;
+import com.arakelian.elastic.model.Mapping.FieldSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -37,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 @Value.Immutable
@@ -201,16 +203,13 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public abstract List<String> getCopyTo();
 
-    @Value.Derived
+    @Value.Default
     @Value.Auxiliary
     @JsonProperty("fields")
-    @JsonView(Elastic.class)
-    public Map<String, Field> getFieldsByName() {
-        final Map<String, Field> names = Maps.newLinkedHashMap();
-        for (final Field field : getSubfields()) {
-            names.put(field.getName(), field);
-        }
-        return names;
+    @JsonSerialize(contentUsing = FieldSerializer.class)
+    @JsonDeserialize(contentUsing = FieldDeserializer.class)
+    public Map<String, Field> getFields() {
+        return ImmutableMap.of();
     }
 
     /**
@@ -242,8 +241,11 @@ public abstract class Field implements Serializable {
         if (isMetaField() || getType() != Type.KEYWORD) {
             return null;
         }
-        // see: https://en.wikipedia.org/wiki/Longest_word_in_English
-        return Integer.valueOf(45);
+
+        // see: https://github.com/elastic/elasticsearch/issues/27992
+        // - ignore_above has a default value of 2^31-1 on keyword fields
+        // - The default dynamic mappings for strings has ignore_above: 256.
+        return Integer.valueOf(256);
     }
 
     /**
@@ -295,20 +297,6 @@ public abstract class Field implements Serializable {
     @JsonProperty("search_analyzer")
     @JsonView(Elastic.class)
     public abstract String getSearchAnalyzer();
-
-    /**
-     * Returns a list of subfields, if any. A field that has subfields is called a "multi-field" in
-     * Elastic parlance.
-     *
-     * Note: It is often useful to index the same field in different ways for different purposes.
-     * This is the purpose of multi-fields. For instance, a string field could be mapped as a text
-     * field for full-text search, and as a keyword field for sorting or aggregations
-     *
-     * @return list of subfields if any
-     */
-    @Value.Auxiliary
-    @JsonIgnore
-    public abstract List<Field> getSubfields();
 
     /**
      * Returns setting that determines what information is added to the inverted index.

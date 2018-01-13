@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -45,11 +46,18 @@ import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
-import com.arakelian.elastic.model.SearchHits;
-import com.arakelian.elastic.model.SearchResponse;
-import com.arakelian.elastic.model.query.ImmutableQuery;
-import com.arakelian.elastic.model.query.ImmutableQueryStringQuery;
-import com.arakelian.elastic.model.query.Query;
+import com.arakelian.elastic.model.search.ImmutableBoolQuery;
+import com.arakelian.elastic.model.search.ImmutableIdsQuery;
+import com.arakelian.elastic.model.search.ImmutableMatchQuery;
+import com.arakelian.elastic.model.search.ImmutablePrefixQuery;
+import com.arakelian.elastic.model.search.ImmutableQueryStringQuery;
+import com.arakelian.elastic.model.search.ImmutableSearch;
+import com.arakelian.elastic.model.search.ImmutableTermsQuery;
+import com.arakelian.elastic.model.search.ImmutableWildcardQuery;
+import com.arakelian.elastic.model.search.Operator;
+import com.arakelian.elastic.model.search.Search;
+import com.arakelian.elastic.model.search.SearchHits;
+import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.fake.model.Person;
 import com.arakelian.fake.model.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -104,24 +112,45 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         return updateMillis;
     }
 
-    private void assertIndexWithInternalVersion(
-            final Index index,
-            final Person person,
-            final long expectedVersion) throws IOException {
-        // test default versioning
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument(
-                        index.getName(), //
-                        DEFAULT_TYPE, //
-                        person.getId(), //
-                        JacksonUtils.toString(person, false)));
+    private void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
+        // make sure index has been refreshed
+        elasticClient.refreshIndex(index.getName());
 
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
+        // perform search
+        final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
+
+        // verify we have a match
+        final SearchHits hits = result.getHits();
+        assertEquals(1, hits.getTotal());
+
+        final Map<String, Object> hit = hits.getHit(0);
+        JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
+        JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
+        JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
+        JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
+    }
+
+    @Test
+    public void testBoolQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final Person person = people.get(0);
+
+            final ImmutableQueryStringQuery query = ImmutableQueryStringQuery.builder() //
+                    .defaultField("lastName") //
+                    .queryString(person.getLastName()) //
+                    .build();
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableBoolQuery.builder() //
+                                            .addMustClause(query) //
+                                            .addShouldClause(query, query, query) //
+                                            .minimumShouldMatch("1") // .
+                                            .build()) //
+                            .build(),
+                    person);
+        });
     }
 
     @Test
@@ -169,6 +198,21 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     }
 
     @Test
+    public void testIdsQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final Person person = people.get(0);
+            final Search search = ImmutableSearch.builder() //
+                    .query(
+                            ImmutableIdsQuery.builder() //
+                                    .addValue(person.getId()) //
+                                    .build()) //
+                    .build();
+
+            assertSearchFindsPerson(index, search, person);
+        });
+    }
+
+    @Test
     public void testIndexWithExternalVersion() throws IOException {
         withPersonIndex(index -> {
             final List<Person> people = RandomPerson.listOf(10);
@@ -190,6 +234,25 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
                 final long deleteVersion = assertDeleteWithExternalVersion(index, person.getId());
                 assertIndexWithInternalVersion(index, person, deleteVersion + 1);
             }
+        });
+    }
+
+    @Test
+    public void testMatchQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final Person person = people.get(0);
+
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableMatchQuery.builder() //
+                                            .fieldName("lastName") //
+                                            .value("find a person whose last name is " + person.getLastName()) //
+                                            .operator(Operator.OR) //
+                                            .build()) //
+                            .build(),
+                    person);
         });
     }
 
@@ -237,39 +300,108 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     }
 
     @Test
+    public void testPrefixQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final Person person = people.get(0);
+            final String lastname = person.getLastName().toLowerCase();
+            final Search search = ImmutableSearch.builder() //
+                    .query(
+                            ImmutablePrefixQuery.builder() //
+                                    .fieldName("lastName") //
+                                    .value(StringUtils.left(lastname, lastname.length() - 1)) //
+                                    .build()) //
+                    .build();
+
+            assertSearchFindsPerson(index, search, person);
+        });
+    }
+
+    @Test
+    public void testQueryStringQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final Person person = people.get(0);
+
+            // use default_field
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableQueryStringQuery.builder() //
+                                            .defaultField("lastName") //
+                                            .queryString(person.getLastName()) //
+                                            .build()) //
+                            .build(),
+                    person);
+
+            // use complex query
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableQueryStringQuery.builder() //
+                                            .queryString("lastName:" + person.getLastName()) //
+                                            .boost(2.0f) //
+                                            .name("name") //
+                                            .build()) //
+                            .build(),
+                    person);
+        });
+    }
+
+    @Test
     public void testRefreshAll() {
         final Refresh response = assertSuccessful(elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
     }
 
     @Test
-    public void testSearch() throws IOException {
-        withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.listOf(10);
-            for (final Person person : people) {
-                assertIndexWithInternalVersion(index, person, 1);
-            }
-
+    public void testTermsQuery() throws IOException {
+        withPeople(10, (index, people) -> {
             final Person person = people.get(0);
-            final Query query = ImmutableQuery.builder() //
+
+            // try simple search
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableTermsQuery.builder() //
+                                            .fieldName("lastName") //
+                                            .addValue(person.getLastName().toLowerCase()) //
+                                            .build()) //
+                            .build(),
+                    person);
+
+            // try again with boost and named query
+            assertSearchFindsPerson(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableTermsQuery.builder() //
+                                            .fieldName("lastName") //
+                                            .addValue(person.getLastName().toLowerCase()) //
+                                            .boost(2.0f) //
+                                            .name("last") //
+                                            .build()) //
+                            .build(),
+                    person);
+        });
+    }
+
+    @Test
+    public void testWildcardQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            // standard analyzer forces to lowercase
+            final Person person = people.get(0);
+            final String lastName = person.getLastName().toLowerCase();
+            final Search search = ImmutableSearch.builder() //
                     .query(
-                            ImmutableQueryStringQuery.builder() //
-                                    .defaultField("lastName") //
-                                    .queryString(person.getLastName()) //
+                            ImmutableWildcardQuery.builder() //
+                                    .fieldName("lastName") //
+                                    .value(StringUtils.left(lastName, lastName.length() - 1) + "?") //
                                     .build()) //
                     .build();
 
-            elasticClient.refreshIndex(index.getName());
-            final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), query));
-
-            final SearchHits hits = result.getHits();
-            assertEquals(1, hits.getTotal());
-
-            final Map<String, Object> hit = hits.getHit(0);
-            JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
-            JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
-            JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
-            JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
+            assertSearchFindsPerson(index, search, person);
         });
     }
 }

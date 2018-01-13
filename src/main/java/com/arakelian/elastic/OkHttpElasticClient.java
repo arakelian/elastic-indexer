@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,10 +36,10 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
-import com.arakelian.elastic.model.SearchResponse;
 import com.arakelian.elastic.model.VersionComponents;
-import com.arakelian.elastic.model.query.Query;
-import com.arakelian.elastic.model.query.QueryClause;
+import com.arakelian.elastic.model.search.Search;
+import com.arakelian.elastic.model.search.SearchResponse;
+import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 
@@ -305,16 +305,20 @@ public class OkHttpElasticClient implements ElasticClient {
     }
 
     @Override
-    public SearchResponse search(final String name, final Query query) {
-        final String dsl;
-        try {
-            dsl = QueryClause.toElasticQuery(query.getQuery(), mapper);
-        } catch (final IOException e) {
-            throw new ElasticException("Unable to generate Elastic query", e);
-        }
+    public SearchResponse search(final String name, final Search search) {
+        final String query = JacksonUtils.toString(writer -> {
+            Search.serialize(writer, search);
+        }, mapper, true);
 
         return execute(() -> {
-            return new DelegatingCall<>(SearchResponse.class, api.search(name, dsl));
+            return new DelegatingCall<>(SearchResponse.class,
+                    api.search(
+                            name,
+                            search.getPreference(),
+                            search.getScroll(),
+                            search.getSearchType(),
+                            search.isRequestCache(),
+                            query));
         });
     }
 }
