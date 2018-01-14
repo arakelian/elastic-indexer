@@ -50,6 +50,7 @@ public class SortTest {
             .mode(SortMode.MAX) //
             .build();
 
+    @SuppressWarnings("MutableConstantField")
     public static final List<Sort> COMPLEX_SORT = ImmutableList.of(
             FIELD_ONLY, //
             FIELD_ASCENDING,

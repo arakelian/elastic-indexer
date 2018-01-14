@@ -30,7 +30,9 @@ import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.Mapping.FieldDeserializer;
-import com.arakelian.elastic.model.Mapping.FieldSerializer;
+import com.arakelian.jackson.CompoundTokenFilter;
+import com.arakelian.jackson.ExcludeSerializer;
+import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -203,10 +205,21 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public abstract List<String> getCopyTo();
 
+    public static class SubfieldSerializer extends ExcludeSerializer<Field> {
+        private static final com.fasterxml.jackson.core.filter.TokenFilter FILTER = CompoundTokenFilter.of( //
+                new JsonPointerNotMatchedFilter("/name"), //
+                new JsonPointerNotMatchedFilter("/include_in_all") //
+        );
+
+        public SubfieldSerializer() {
+            super(Field.class, FILTER);
+        }
+    }
+
     @Value.Default
     @Value.Auxiliary
     @JsonProperty("fields")
-    @JsonSerialize(contentUsing = FieldSerializer.class)
+    @JsonSerialize(contentUsing = SubfieldSerializer.class)
     @JsonDeserialize(contentUsing = FieldDeserializer.class)
     public Map<String, Field> getFields() {
         return ImmutableMap.of();

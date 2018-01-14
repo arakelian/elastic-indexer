@@ -27,6 +27,7 @@ import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
+import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class IndexTest extends AbstractElasticModelTest {
@@ -50,7 +51,16 @@ public class IndexTest extends AbstractElasticModelTest {
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
             "          \"doc_values\" : false,\n" + //
-            "          \"include_in_all\" : true\n" + //
+            "          \"include_in_all\" : true,\n" + //
+            "          \"fields\" : {\n" + //
+            "            \"raw\" : {\n" + //
+            "              \"type\" : \"keyword\",\n" + //
+            "              \"store\" : false,\n" + //
+            "              \"index\" : true,\n" + //
+            "              \"doc_values\" : true,\n" + //
+            "              \"ignore_above\" : 256\n" + //
+            "            }\n" + //
+            "          }\n" + //
             "        },\n" + //
             "        \"street\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
@@ -83,7 +93,7 @@ public class IndexTest extends AbstractElasticModelTest {
             "      }\n" + //
             "    }\n" + //
             "  }\n" + //
-            "}\n" + //
+            "}" + //
             "";
 
     private static final String VERSION6 = "{\n" + //
@@ -101,7 +111,16 @@ public class IndexTest extends AbstractElasticModelTest {
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false\n" + //
+            "          \"doc_values\" : false,\n" + //
+            "          \"fields\" : {\n" + //
+            "            \"raw\" : {\n" + //
+            "              \"type\" : \"keyword\",\n" + //
+            "              \"store\" : false,\n" + //
+            "              \"index\" : true,\n" + //
+            "              \"doc_values\" : true,\n" + //
+            "              \"ignore_above\" : 256\n" + //
+            "            }\n" + //
+            "          }\n" + //
             "        },\n" + //
             "        \"street\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
@@ -130,7 +149,7 @@ public class IndexTest extends AbstractElasticModelTest {
             "      }\n" + //
             "    }\n" + //
             "  }\n" + //
-            "}\n" + //
+            "}" + // //
             "";
     public static final Index MINIMAL = ImmutableIndex.builder() //
             .name("index_name") //
@@ -156,7 +175,7 @@ public class IndexTest extends AbstractElasticModelTest {
         final ObjectMapper newMapper = JacksonUtils.getObjectMapper().copy();
         ElasticClientUtils.configureIndexSerialization(newMapper);
 
-        final String withoutName = newMapper.writeValueAsString(MINIMAL);
+        final String withoutName = JsonFilter.prettyify(newMapper.writeValueAsString(MINIMAL));
         switch (version.getMajor()) {
         case 5:
             assertJsonEquals(VERSION5, withoutName);
