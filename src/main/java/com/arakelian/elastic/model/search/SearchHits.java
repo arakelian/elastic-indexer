@@ -63,6 +63,7 @@ public abstract class SearchHits implements Serializable {
     }
 
     /** ObjectMapper that should be used for deserialization. **/
+    @SuppressWarnings("immutables")
     private transient ObjectMapper mapper;
 
     @JsonIgnore
