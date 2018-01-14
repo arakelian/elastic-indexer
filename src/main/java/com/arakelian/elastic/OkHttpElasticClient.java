@@ -310,7 +310,7 @@ public class OkHttpElasticClient implements ElasticClient {
             Search.serialize(writer, search);
         }, mapper, true);
 
-        return execute(() -> {
+        final SearchResponse response = execute(() -> {
             return new DelegatingCall<>(SearchResponse.class,
                     api.search(
                             name,
@@ -320,5 +320,8 @@ public class OkHttpElasticClient implements ElasticClient {
                             search.isRequestCache(),
                             query));
         });
+
+        response.getHits().setObjectMapper(mapper);
+        return response;
     }
 }

@@ -123,7 +123,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         final SearchHits hits = result.getHits();
         assertEquals(1, hits.getTotal());
 
-        final Map<String, Object> hit = hits.getHit(0);
+        final Map<String, Object> hit = JacksonUtils.convertValueToMap(hits.get(0));
         JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
         JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
         JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
