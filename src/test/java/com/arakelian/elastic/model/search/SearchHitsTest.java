@@ -32,6 +32,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.google.common.collect.ImmutableMap;
 
 public class SearchHitsTest extends AbstractElasticModelTest {
+    @SuppressWarnings("MutableConstantField")
     private static final Map<String, Object> SOURCE = ImmutableMap
             .of("int", 1, "double", 3.0d, "string", "hello", "geopoint", "drm3btev3e86");
 
