@@ -19,6 +19,7 @@ package com.arakelian.elastic.model.search;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -120,7 +121,7 @@ public interface Search extends Serializable {
         writer.writeEndObject();
     }
 
-    public static void writeArrayOf(final JsonGenerator writer, final List<String> values)
+    public static void writeArrayOf(final JsonGenerator writer, final Collection<String> values)
             throws IOException {
         writer.writeStartArray();
         for (final String value : values) {
@@ -148,7 +149,7 @@ public interface Search extends Serializable {
     public static void writeFieldWithValues(
             final JsonGenerator writer,
             final String field,
-            final List<String> values) throws IOException {
+            final Collection<String> values) throws IOException {
         if (values != null && values.size() != 0) {
             writer.writeFieldName(field);
             writeArrayOf(writer, values);

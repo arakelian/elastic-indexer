@@ -34,8 +34,8 @@ import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.bulk.AbstractBulkIndexerTest;
 import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkOperation.VersionType;
-import com.arakelian.fake.model.Person;
-import com.arakelian.fake.model.RandomPerson;
+import com.arakelian.faker.model.Person;
+import com.arakelian.faker.service.RandomPerson;
 import com.google.common.collect.Maps;
 
 public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
@@ -69,7 +69,7 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
         final CaptureIndexerEventHandler handler = new CaptureIndexerEventHandler();
 
         try (final IndexerEventPublisher listener = new IndexerEventPublisher(64, handler)) {
-            final List<Person> people = RandomPerson.listOf(10);
+            final List<Person> people = RandomPerson.get().listOf(10);
 
             withPersonIndex(index -> {
                 try (final BulkIndexer<Person> indexer = createIndexer(index, listener)) {

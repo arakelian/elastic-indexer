@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.base.Preconditions;
 
 /**
  * @see <a href=
@@ -49,6 +50,16 @@ public interface RangeQuery extends StandardQuery {
         } finally {
             visitor.leave(this);
         }
+    }
+
+    @Value.Check
+    public default void checkType() {
+        final Object lower = getLower();
+        final Object upper = getUpper();
+        if (lower == null || upper == null) {
+            return;
+        }
+        Preconditions.checkState(lower.getClass().isInstance(upper) || upper.getClass().isInstance(lower));
     }
 
     public String getFieldName();

@@ -21,18 +21,25 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.arakelian.elastic.model.search.BoolQuery;
+import com.arakelian.elastic.model.search.ExistsQuery;
+import com.arakelian.elastic.model.search.FuzzyQuery;
 import com.arakelian.elastic.model.search.IdsQuery;
 import com.arakelian.elastic.model.search.MatchQuery;
 import com.arakelian.elastic.model.search.PrefixQuery;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
+import com.arakelian.elastic.model.search.RangeQuery;
+import com.arakelian.elastic.model.search.RegexpFlag;
+import com.arakelian.elastic.model.search.RegexpQuery;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.StandardQuery;
 import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 public class ElasticQueryDslVisitor extends QueryVisitor {
@@ -63,6 +70,49 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
     }
 
     @Override
+    public boolean enterExistsQuery(final ExistsQuery exists) {
+        try {
+            writer.writeFieldName("exists");
+            writer.writeStartObject();
+            writeStandardFields(exists);
+            writer.writeFieldName("field");
+            writer.writeString(exists.getFieldName());
+            writer.writeEndObject(); // exists
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterFuzzyQuery(final FuzzyQuery fuzzy) {
+        try {
+            writer.writeFieldName("fuzzy");
+            writer.writeStartObject();
+            writer.writeFieldName(fuzzy.getFieldName());
+
+            final Object value = fuzzy.getValue();
+            if (value instanceof CharSequence && fuzzy.hasFuzzyDefaults()) {
+                writer.writeObject(value);
+            } else {
+                writer.writeStartObject();
+                writeStandardFields(fuzzy);
+                writeFieldValue("value", value);
+                writeFieldValue("fuzziness", fuzzy.getFuzziness());
+                writeFieldValue("prefix_length", fuzzy.getPrefixLength());
+                writeFieldValue("max_expansions", fuzzy.getMaxExpansions());
+                writeFieldValue("transpositions", fuzzy.getTranspositions());
+                writeFieldValue("rewrite", fuzzy.getRewrite());
+                writer.writeEndObject();
+            }
+            writer.writeEndObject(); // fuzzy
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
     public boolean enterIdsQuery(final IdsQuery ids) {
         try {
             writer.writeFieldName("ids");
@@ -85,7 +135,7 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
             writer.writeFieldName(match.getFieldName());
             writer.writeStartObject();
             final Object value = match.getValue();
-            if (match.hasMatchDefaults()) {
+            if (value instanceof CharSequence && match.hasMatchDefaults()) {
                 writer.writeObject(value);
             } else {
                 writeStandardFields(match);
@@ -161,6 +211,58 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
             writeFieldValue("time_zone", qs.getTimeZone());
 
             writer.writeEndObject(); // query_string
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterRangeQuery(final RangeQuery range) {
+        try {
+            writer.writeFieldName("range");
+            writer.writeStartObject();
+            writer.writeFieldName(range.getFieldName());
+            writer.writeStartObject(); // field
+            writeStandardFields(range);
+
+            final Object lower = range.getLower();
+            if (lower != null) {
+                writer.writeFieldName(range.isIncludeLower() ? "gte" : "gt");
+                writer.writeObject(lower);
+            }
+
+            final Object upper = range.getUpper();
+            if (upper != null) {
+                writer.writeFieldName(range.isIncludeUpper() ? "lte" : "lt");
+                writer.writeObject(upper);
+            }
+
+            writer.writeEndObject(); // field
+            writer.writeEndObject(); // range
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterRegexpQuery(final RegexpQuery regexp) {
+        try {
+            writer.writeFieldName("regexp");
+            writer.writeStartObject();
+            writer.writeFieldName(regexp.getFieldName());
+            writer.writeStartObject(); // field
+            writeStandardFields(regexp);
+            writeFieldValue("value", regexp.getValue());
+            writeFieldValue("max_determinized_states", regexp.getMaxDeterminizedStates());
+            writeFieldValue("rewrite", regexp.getRewrite());
+            final Set<RegexpFlag> flags = regexp.getFlags();
+            if (flags.size() != 0) {
+                writeFieldValue("flags", Joiner.on('|').join(flags));
+            }
+            writer.writeEndObject(); // field
+            writer.writeEndObject(); // regexp
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -265,7 +367,8 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
         Search.writeFieldValue(writer, field, value);
     }
 
-    private void writeFieldWithValues(final String field, final List<String> values) throws IOException {
+    private void writeFieldWithValues(final String field, final Collection<String> values)
+            throws IOException {
         Search.writeFieldWithValues(writer, field, values);
     }
 

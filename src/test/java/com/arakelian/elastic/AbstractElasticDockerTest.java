@@ -53,8 +53,8 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.utils.ElasticClientUtils;
-import com.arakelian.fake.model.Person;
-import com.arakelian.fake.model.RandomPerson;
+import com.arakelian.faker.model.Person;
+import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
 
@@ -69,6 +69,13 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         public void accept(Index index, List<Person> people) throws IOException;
     }
 
+    /**
+     * Field in Elastic index that should not contain any value so that we can test the 'empty'
+     * query
+     **/
+    protected static final String ALWAYS_EMPTY_FIELD = "alwaysEmptyField";
+
+    /** Logger **/
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticDockerTest.class);
 
     @ClassRule
@@ -79,11 +86,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
-                "5.2.1", //
+                // "5.2.1", //
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
-                // "5.6.5", //
+                // "5.6.6", //
                 // "6.0.1", //
                 "6.1.0" //
         };
@@ -241,6 +248,16 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                                 .build())
                 .addField(
                         ImmutableField.builder() //
+                                .name("birthdate") //
+                                .type(Type.DATE) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("age") //
+                                .type(Type.INTEGER) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
                                 .name("gender") //
                                 .type(Type.KEYWORD) //
                                 .build())
@@ -248,6 +265,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                         ImmutableField.builder() //
                                 .name("comments") //
                                 .type(Type.TEXT) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name(ALWAYS_EMPTY_FIELD) //
+                                .type(Type.KEYWORD) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
@@ -281,7 +303,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)
             throws IOException {
         withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.listOf(numberOfPeople);
+            final List<Person> people = RandomPerson.get().listOf(numberOfPeople);
             for (final Person person : people) {
                 assertIndexWithInternalVersion(index, person, 1);
             }

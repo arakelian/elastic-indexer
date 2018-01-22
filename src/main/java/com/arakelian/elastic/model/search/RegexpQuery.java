@@ -40,6 +40,54 @@ import com.google.common.collect.ImmutableSet;
 @JsonDeserialize(builder = ImmutableRegexpQuery.Builder.class)
 @JsonTypeName(Query.REGEXP_QUERY)
 public interface RegexpQuery extends StandardQuery {
+    /**
+     * Returns a literal pattern <code>String</code> for the specified <code>String</code>.
+     *
+     * @param value
+     *            The string to be literalized
+     * @return A literal string replacement
+     *
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-regexp-query.html#regexp-syntax">Elastic
+     *      documentation</a>
+     */
+    public static String quote(final CharSequence value) {
+        if (StringUtils.isEmpty(value)) {
+            return StringUtils.EMPTY;
+        }
+
+        final StringBuilder buf = new StringBuilder();
+        for (int i = 0, length = value.length(); i < length; i++) {
+            final char ch = value.charAt(length);
+            switch (ch) {
+            case '.':
+            case '?':
+            case '+':
+            case '*':
+            case '|':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+            case '(':
+            case ')':
+            case '"':
+            case '\\':
+            case '#':
+            case '@':
+            case '&':
+            case '<':
+            case '>':
+            case '~':
+                buf.append('\\');
+                // fall through
+            default:
+                buf.append(ch);
+            }
+        }
+        return buf.toString();
+    }
+
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -57,6 +105,14 @@ public interface RegexpQuery extends StandardQuery {
     @JsonProperty("field")
     public String getFieldName();
 
+    /**
+     * Returns the set of regular expression flags to be applied.
+     *
+     * @return the set of regular expression flags to be applied.
+     * @see <a href=
+     *      "http://lucene.apache.org/core/4_9_0/core/org/apache/lucene/util/automaton/RegExp.html">Lucene
+     *      documentation</a>
+     */
     @Value.Default
     public default Set<RegexpFlag> getFlags() {
         return ImmutableSet.of();
@@ -68,6 +124,17 @@ public interface RegexpQuery extends StandardQuery {
     @Nullable
     public Rewrite getRewrite();
 
+    /**
+     * Returns the regular expression that will be matched.
+     *
+     * @return the regular expression that will be matched.
+     * @see <a href=
+     *      "http://lucene.apache.org/core/4_9_0/core/org/apache/lucene/util/automaton/RegExp.html">Lucene
+     *      documentation</a>
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-regexp-query.html#regexp-syntax">Elastic
+     *      documentation</a>
+     */
     public String getValue();
 
     @Override

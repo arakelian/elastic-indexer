@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic.model.search;
 
-import java.util.List;
+import java.util.SortedSet;
 
 import org.immutables.value.Value;
 
@@ -25,7 +25,7 @@ import com.arakelian.elastic.search.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableIdsQuery.class)
@@ -47,13 +47,15 @@ public interface IdsQuery extends StandardQuery {
     }
 
     @Value.Default
-    public default List<String> getTypes() {
-        return ImmutableList.of();
+    @Value.NaturalOrder
+    public default SortedSet<String> getTypes() {
+        return ImmutableSortedSet.of();
     }
 
     @Value.Default
-    public default List<String> getValues() {
-        return ImmutableList.of();
+    @Value.NaturalOrder
+    public default SortedSet<String> getValues() {
+        return ImmutableSortedSet.of();
     }
 
     @Override

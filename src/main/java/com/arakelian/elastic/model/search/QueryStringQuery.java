@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic.model.search;
 
-import java.util.List;
+import java.util.SortedSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
@@ -27,7 +27,7 @@ import com.arakelian.elastic.search.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableQueryStringQuery.class)
@@ -59,8 +59,9 @@ public interface QueryStringQuery extends StandardQuery {
     public Operator getDefaultOperator();
 
     @Value.Default
-    public default List<String> getFields() {
-        return ImmutableList.of();
+    @Value.NaturalOrder
+    public default SortedSet<String> getFields() {
+        return ImmutableSortedSet.of();
     }
 
     @Nullable

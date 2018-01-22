@@ -84,6 +84,12 @@ public abstract class SearchHits implements Serializable {
         return ImmutableList.of();
     }
 
+    @JsonIgnore
+    @Value.Derived
+    public int getSize() {
+        return getHits().size();
+    }
+
     @Nullable
     @JsonProperty("max_score")
     public abstract Float getMaxScore();

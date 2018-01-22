@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.search.QueryVisitor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -71,6 +72,18 @@ public interface FuzzyQuery extends StandardQuery {
 
     @Nullable
     public Object getValue();
+
+    @Value.Derived
+    @JsonIgnore
+    @Value.Auxiliary
+    public default boolean hasFuzzyDefaults() {
+        return hasStandardDefaults() && //
+                getFuzziness() == null && //
+                getMaxExpansions() == null && //
+                getPrefixLength() == null && //
+                getRewrite() == null && //
+                getTranspositions() == null;
+    }
 
     @Override
     default boolean isEmpty() {

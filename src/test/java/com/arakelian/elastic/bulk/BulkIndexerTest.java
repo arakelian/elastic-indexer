@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.arakelian.fake.model.Person;
-import com.arakelian.fake.model.RandomPerson;
+import com.arakelian.faker.model.Person;
+import com.arakelian.faker.service.RandomPerson;
 
 public class BulkIndexerTest extends AbstractBulkIndexerTest {
     public BulkIndexerTest(final String version) throws Exception {
@@ -34,7 +34,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     @Test
     public void testAddBatch() throws IOException {
         withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.listOf(10);
+            final List<Person> people = RandomPerson.get().listOf(10);
 
             try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 indexer.index(people);
@@ -50,7 +50,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     @Test
     public void testAddIndividually() throws IOException {
         withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.listOf(10);
+            final List<Person> people = RandomPerson.get().listOf(10);
 
             try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 for (final Person person : people) {
@@ -67,7 +67,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     @Test
     public void testDeleteBatch() throws IOException {
         withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.listOf(10);
+            final List<Person> people = RandomPerson.get().listOf(10);
             try (final BulkIndexer<Person> indexer = createIndexer(index)) {
                 // when indexing, the Elastic documents will receive a version timestamp that
                 // corresponds to the update date of the person
@@ -83,9 +83,9 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     @Test
     public void testDeleteIndividually() throws IOException {
         withPersonIndex(index -> {
-            final Iterator<Person> people = RandomPerson.iteratorOf(10);
+            final Iterator<Person> people = RandomPerson.get().iteratorOf(10);
             try (final BulkIndexer<Person> indexer = createIndexer(index)) {
-                indexer.index(RandomPerson.listOf(10));
+                indexer.index(RandomPerson.get().listOf(10));
                 while (people.hasNext()) {
                     indexer.delete(people.next());
                 }

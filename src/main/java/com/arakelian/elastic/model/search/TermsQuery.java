@@ -17,7 +17,7 @@
 
 package com.arakelian.elastic.model.search;
 
-import java.util.List;
+import java.util.SortedSet;
 
 import org.immutables.value.Value;
 
@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 
 /**
  *
@@ -58,8 +58,9 @@ public interface TermsQuery extends StandardQuery {
     public String getFieldName();
 
     @Value.Default
-    public default List<String> getValues() {
-        return ImmutableList.of();
+    @Value.NaturalOrder
+    public default SortedSet<String> getValues() {
+        return ImmutableSortedSet.of();
     }
 
     @Override
