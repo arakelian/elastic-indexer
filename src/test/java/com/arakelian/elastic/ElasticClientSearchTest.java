@@ -115,7 +115,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
             int fuzziness = 0;
             final String lastname = person.getLastName().toLowerCase();
             final StringBuilder fuzzy = new StringBuilder(lastname);
-            for (int i = 0, length = lastname.length(); i + 1 < length; i += 2) {
+            for (int i = 0, length = lastname.length(); i + 1 < length && fuzziness < 2; i += 2) {
                 // swap letters
                 final char ch = lastname.charAt(i);
                 final char ch2 = lastname.charAt(i + 1);

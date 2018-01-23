@@ -38,11 +38,16 @@ multitool {
         'com.google.common'           : 'repackaged.com.arakelian.elastic.${prefix}com.google.common',
         'com.google.thirdparty'       : 'repackaged.com.arakelian.elastic.${prefix}com.google.thirdparty',
         'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
-        'com.github.rholder.retry'    : 'repackaged.com.arakelian.docker.junit.${prefix}com.github.rholder.retry',
+        'com.github.rholder.retry'    : 'repackaged.com.arakelian.elastic.${prefix}com.github.rholder.retry',
+        'com.fasterxml.jackson.datatype.guava' : 'repackaged.com.arakelian.elastic.${prefix}com.fasterxml.jackson.datatype.guava'
     ]
-    proguardOptions += [
-        'keepattributes' : 'Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod'
+    
+    proguardOptions.keep += [
+        'class com.arakelian.** { *; }',
+        'class **.fasterxml.jackson.datatype.guava.** { *; }',
     ]
+
+    proguardOptions.optimizationpasses = 2
 }
 
 dependencies {
@@ -56,16 +61,22 @@ dependencies {
     // shadow Guava due to frequent downstream incompatibility issues
     shadow  'com.google.guava:guava:23.6-jre'
 
+    // we use Multimap in ElasticDocConfig; we shadow jackson's guava library 
+    // so we don't add downstream guava dependency
+    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.8.10') {
+        exclude module: 'jackson-databind' 
+        exclude module: 'jackson-core' 
+    }
+    
     // shadow stuff we use very little of, to reduce dependencies
     shadow  'org.apache.commons:commons-lang3:3.7'
     shadow  'com.github.rholder:guava-retrying:2.0.0'
-
+    
     // third party
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
     compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
     compile 'com.squareup.retrofit2:converter-jackson:2.3.0'
     compile 'com.squareup.retrofit2:adapter-java8:2.3.0'
-    compile 'com.squareup.retrofit2:adapter-guava:2.3.0'
     compile 'com.squareup.okhttp3:okhttp:3.9.1'
     compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
     compile 'com.lmax:disruptor:3.3.7'
@@ -84,6 +95,6 @@ dependencies {
     testCompile 'com.arakelian:more-commons:1.7.2:tests'
     testCompile 'com.arakelian:jackson-utils:1.7.5:tests'
     testCompile 'com.arakelian:docker-junit-rule:1.7.3'
-    testCompile 'com.arakelian:faker:1.5.1'
+    testCompile 'com.arakelian:faker:2.0.2'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
 }

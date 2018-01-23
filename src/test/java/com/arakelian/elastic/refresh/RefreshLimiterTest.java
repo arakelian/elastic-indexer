@@ -37,7 +37,6 @@ import com.arakelian.jackson.utils.JacksonUtils;
 
 import retrofit2.Call;
 import retrofit2.Retrofit;
-import retrofit2.adapter.guava.GuavaCallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 import retrofit2.mock.BehaviorDelegate;
@@ -57,7 +56,6 @@ public class RefreshLimiterTest {
                 .baseUrl("http://localhost") //
                 .addConverterFactory(ScalarsConverterFactory.create()) //
                 .addConverterFactory(JacksonConverterFactory.create(JacksonUtils.getObjectMapper())) //
-                .addCallAdapterFactory(GuavaCallAdapterFactory.create()) //
                 .build();
 
         // configure Mock delegate

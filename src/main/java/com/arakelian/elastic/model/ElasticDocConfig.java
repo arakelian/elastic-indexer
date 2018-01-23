@@ -127,7 +127,6 @@ public abstract class ElasticDocConfig {
      */
     @JsonIgnore
     @Value.Lazy
-    @JsonDeserialize(as = LinkedHashMultimap.class)
     protected Multimap<JsonPointer, Field> getSourcePathsMapping() {
         final Multimap<JsonPointer, Field> result = LinkedHashMultimap.create();
         final Mapping mapping = getMapping();

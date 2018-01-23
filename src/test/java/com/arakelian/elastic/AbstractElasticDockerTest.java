@@ -86,7 +86,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
-                // "5.2.1", //
+                "5.2.1", //
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
@@ -245,6 +245,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                                                 .name("raw") //
                                                 .type(Type.KEYWORD) //
                                                 .build()) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("title") //
+                                .type(Type.TEXT) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //

@@ -63,11 +63,11 @@ public class ElasticQueryDslVisitorTest {
                         "    \"bool\" : {\n" + //
                         "      \"must\" : [ {\n" + //
                         "        \"terms\" : {\n" + //
-                        "          \"field\" : [ \"the\", \"quick\", \"brown\", \"fox\" ]\n" + //
+                        "          \"field\" : [ \"brown\", \"fox\", \"quick\", \"the\" ]\n" + //
                         "        }\n" + //
                         "      }, {\n" + //
                         "        \"terms\" : {\n" + //
-                        "          \"field\" : [ \"the\", \"quick\", \"brown\", \"fox\" ]\n" + //
+                        "          \"field\" : [ \"brown\", \"fox\", \"quick\", \"the\" ]\n" + //
                         "        }\n" + //
                         "      } ],\n" + //
                         "      \"should\" : {\n" + //
@@ -102,7 +102,7 @@ public class ElasticQueryDslVisitorTest {
                         "{\n" + //
                         "  \"query\" : {\n" + //
                         "    \"terms\" : {\n" + //
-                        "      \"field\" : [ \"the\", \"quick\", \"brown\", \"fox\" ]\n" + //
+                        "      \"field\" : [ \"brown\", \"fox\", \"quick\", \"the\" ]\n" + //
                         "    }\n" + //
                         "  }\n" + //
                         "}");

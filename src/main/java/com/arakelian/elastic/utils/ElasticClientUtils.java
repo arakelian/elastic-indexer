@@ -58,7 +58,6 @@ import com.google.common.base.Predicate;
 import okhttp3.OkHttpClient;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.adapter.guava.GuavaCallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
@@ -128,7 +127,6 @@ public class ElasticClientUtils {
                 .baseUrl(elasticUrl) //
                 .addConverterFactory(ScalarsConverterFactory.create()) //
                 .addConverterFactory(JacksonConverterFactory.create(mapper)) //
-                .addCallAdapterFactory(GuavaCallAdapterFactory.create()) //
                 .build();
         final OkHttpElasticApi api = retrofit.create(OkHttpElasticApi.class);
         final ElasticClient elasticClient = new OkHttpElasticClient(api, mapper, version);
