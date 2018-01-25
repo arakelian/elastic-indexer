@@ -133,11 +133,12 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
             writer.writeFieldName("match");
             writer.writeStartObject();
             writer.writeFieldName(match.getFieldName());
-            writer.writeStartObject();
+            
             final Object value = match.getValue();
             if (value instanceof CharSequence && match.hasMatchDefaults()) {
                 writer.writeObject(value);
             } else {
+                writer.writeStartObject();
                 writeStandardFields(match);
                 writeFieldValue("query", value);
                 writeFieldValue("operator", match.getOperator());
@@ -150,8 +151,8 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
                 writeFieldValue(
                         "auto_generate_synonyms_phrase_query",
                         match.isAutoGenerateSynonymsPhraseQuery());
+                writer.writeEndObject(); // field
             }
-            writer.writeEndObject(); // field
             writer.writeEndObject(); // prefix
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
