@@ -22,10 +22,10 @@ import java.util.List;
 
 import org.immutables.value.Value;
 
-import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.bucket.AdjacencyMatrixAggregation;
 import com.arakelian.elastic.model.aggs.bucket.DateHistogramAggregation;
 import com.arakelian.elastic.model.aggs.bucket.DateRangeAggregation;
+import com.arakelian.elastic.model.aggs.bucket.FilterAggregation;
 import com.arakelian.elastic.model.aggs.bucket.FiltersAggregation;
 import com.arakelian.elastic.model.aggs.bucket.GeoDistanceAggregation;
 import com.arakelian.elastic.model.aggs.bucket.GeoHashGridAggregation;
@@ -77,6 +77,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(name = Aggregation.ADJACENCY_MATRIX_AGGREGATION, value = AdjacencyMatrixAggregation.class),
         @JsonSubTypes.Type(name = Aggregation.DATE_HISTOGRAM_AGGREGATION, value = DateHistogramAggregation.class),
         @JsonSubTypes.Type(name = Aggregation.DATE_RANGE_AGGREGATION, value = DateRangeAggregation.class),
+        @JsonSubTypes.Type(name = Aggregation.FILTER_AGGREGATION, value = FilterAggregation.class),
         @JsonSubTypes.Type(name = Aggregation.FILTERS_AGGREGATION, value = FiltersAggregation.class),
         @JsonSubTypes.Type(name = Aggregation.GEOHASH_GRID_AGGREGATION, value = GeoHashGridAggregation.class),
         @JsonSubTypes.Type(name = Aggregation.GEO_DISTANCE_AGGREGATION, value = GeoDistanceAggregation.class),
@@ -111,6 +112,7 @@ public interface Aggregation extends Serializable {
     public static final String ADJACENCY_MATRIX_AGGREGATION = "adjacency_matrix";
     public static final String DATE_HISTOGRAM_AGGREGATION = "date_histogram";
     public static final String DATE_RANGE_AGGREGATION = "date_range";
+    public static final String FILTER_AGGREGATION = "filter";
     public static final String FILTERS_AGGREGATION = "filters";
     public static final String GEOHASH_GRID_AGGREGATION = "geohash_grid";
     public static final String GEO_DISTANCE_AGGREGATION = "geo_distance";
@@ -152,7 +154,6 @@ public interface Aggregation extends Serializable {
      *
      * @return name of the aggregation
      */
-    @Nullable
     public String getName();
 
     @JsonIgnore

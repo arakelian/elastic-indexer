@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class ReverseNestedAggregationTest {
     public static final ReverseNestedAggregation MINIMAL = ImmutableReverseNestedAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

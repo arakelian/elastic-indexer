@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SignificantTextAggregationTest {
     public static final SignificantTextAggregation MINIMAL = ImmutableSignificantTextAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

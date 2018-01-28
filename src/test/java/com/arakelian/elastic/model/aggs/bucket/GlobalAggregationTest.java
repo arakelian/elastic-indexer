@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GlobalAggregationTest {
     public static final GlobalAggregation MINIMAL = ImmutableGlobalAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

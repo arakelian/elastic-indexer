@@ -19,8 +19,10 @@ package com.arakelian.elastic.model.aggs.metrics;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.MetricAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,11 +31,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html">Extended
  *      Stats Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/stats/extended/ExtendedStatsAggregationBuilder.java">ExtendedStatsAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableExtendedStatsAggregation.class)
 @JsonDeserialize(builder = ImmutableExtendedStatsAggregation.Builder.class)
 @JsonTypeName(Aggregation.EXTENDED_STATS_AGGREGATION)
-public interface ExtendedStatsAggregation extends MetricAggregation {
-
+public interface ExtendedStatsAggregation extends MetricAggregation, ValuesSourceAggregation {
+    @Nullable
+    public Double getSigma();
 }

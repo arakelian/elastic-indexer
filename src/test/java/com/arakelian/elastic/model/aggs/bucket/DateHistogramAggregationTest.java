@@ -26,6 +26,8 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class DateHistogramAggregationTest {
     public static final DateHistogramAggregation MINIMAL = ImmutableDateHistogramAggregation.builder() //
+            .name("my_aggregation") //
+            .name("my_aggregation") //
             .build();
 
     @Test

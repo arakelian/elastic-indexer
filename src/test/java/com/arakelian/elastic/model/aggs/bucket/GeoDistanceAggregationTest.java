@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GeoDistanceAggregationTest {
     public static final GeoDistanceAggregation MINIMAL = ImmutableGeoDistanceAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

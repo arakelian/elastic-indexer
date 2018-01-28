@@ -17,23 +17,46 @@
 
 package com.arakelian.elastic.model.aggs.bucket;
 
+import java.util.Map;
+
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.search.Query;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableMap;
 
 /**
+ * A bucket aggregation returning a form of adjacency matrix. The request provides a collection of
+ * named filter expressions, similar to the {@link FiltersAggregation} request. Each bucket in the
+ * response represents a non-empty cell in the matrix of intersecting filters.
+ * 
+ * <p>
+ * Note: For N filters the matrix of buckets produced can be N²/2 and so there is a default maximum
+ * imposed of 100 filters . This setting can be changed using the index.max_adjacency_matrix_filters
+ * index-level setting.
+ * </p>
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-adjacency-matrix-aggregation.html">Adjacency
  *      Matrix Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/adjacency/AdjacencyMatrixAggregationBuilder.java">AdjacencyMatrixAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableAdjacencyMatrixAggregation.class)
 @JsonDeserialize(builder = ImmutableAdjacencyMatrixAggregation.Builder.class)
 @JsonTypeName(Aggregation.ADJACENCY_MATRIX_AGGREGATION)
 public interface AdjacencyMatrixAggregation extends BucketAggregation {
+    @Nullable
+    public String getSeparator();
 
+    @Value.Default
+    public default Map<String, Query> getFilters() {
+        return ImmutableMap.of();
+    }
 }

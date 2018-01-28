@@ -17,23 +17,45 @@
 
 package com.arakelian.elastic.model.aggs.bucket;
 
+import java.util.Map;
+
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.search.Query;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableMap;
 
 /**
+ * Defines a multi bucket aggregation where each bucket is associated with a filter. Each bucket
+ * will collect all documents that match its associated filter.
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filters-aggregation.html">Filters
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/filter/FiltersAggregationBuilder.java">FiltersAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableFiltersAggregation.class)
 @JsonDeserialize(builder = ImmutableFiltersAggregation.Builder.class)
 @JsonTypeName(Aggregation.FILTERS_AGGREGATION)
 public interface FiltersAggregation extends BucketAggregation {
+    @Value.Default
+    public default Map<String, Query> getFilters() {
+        return ImmutableMap.of();
+    }
 
+    @Nullable
+    public Boolean isKeyed();
+
+    @Nullable
+    public Boolean isOtherBucket();
+
+    @Nullable
+    public String getOtherBucketKey();
 }

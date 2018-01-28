@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class RangeAggregationTest {
     public static final RangeAggregation MINIMAL = ImmutableRangeAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

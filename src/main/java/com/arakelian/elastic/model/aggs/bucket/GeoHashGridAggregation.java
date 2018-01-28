@@ -19,6 +19,7 @@ package com.arakelian.elastic.model.aggs.bucket;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -26,14 +27,38 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
+ * A multi-bucket aggregation that works on geo_point fields and groups points into buckets that
+ * represent cells in a grid. The resulting grid can be sparse and only contains cells that have
+ * matching data. Each cell is labeled using a geohash which is of user-definable precision.
+ * 
+ * <ul>
+ * <li>High precision geohashes have a long string length and represent cells that cover only a
+ * small area.</li>
+ * <li>Low precision geohashes have a short string length and represent cells that each cover a
+ * large area.</li>
+ * </ul>
+ * 
+ * <p>
+ * Geohashes used in this aggregation can have a choice of precision between 1 and 12.
+ * </p>
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html">GeoHash
  *      Grid Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/geogrid/GeoGridAggregationBuilder.java">GeoGridAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableGeoHashGridAggregation.class)
 @JsonDeserialize(builder = ImmutableGeoHashGridAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEOHASH_GRID_AGGREGATION)
 public interface GeoHashGridAggregation extends BucketAggregation {
+    @Nullable
+    public Integer getPrecision();
 
+    @Nullable
+    public Integer getRequiredSize();
+
+    @Nullable
+    public Integer getShardSize();
 }

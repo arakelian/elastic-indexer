@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.MetricAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,11 +30,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-max-aggregation.html">Max
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/max/MaxAggregationBuilder.java">MaxAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableMaxAggregation.class)
 @JsonDeserialize(builder = ImmutableMaxAggregation.Builder.class)
 @JsonTypeName(Aggregation.MAX_AGGREGATION)
-public interface MaxAggregation extends MetricAggregation {
+public interface MaxAggregation extends MetricAggregation, ValuesSourceAggregation {
 
 }

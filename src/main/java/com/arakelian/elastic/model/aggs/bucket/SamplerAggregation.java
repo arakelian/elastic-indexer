@@ -19,8 +19,10 @@ package com.arakelian.elastic.model.aggs.bucket;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,11 +31,22 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-sampler-aggregation.html">Sampler
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/sampler/SamplerAggregationBuilder.java">SamplerAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableSamplerAggregation.class)
 @JsonDeserialize(builder = ImmutableSamplerAggregation.Builder.class)
 @JsonTypeName(Aggregation.SAMPLER_AGGREGATION)
-public interface SamplerAggregation extends BucketAggregation {
-
+public interface SamplerAggregation extends BucketAggregation, ValuesSourceAggregation {
+    /**
+     * Returns how many terms the coordinating node will request from each shard. Once all the
+     * shards responded, the coordinating node will then reduce them to a final result which will be
+     * based on the size parameter - this way, one can increase the accuracy of the returned terms
+     * and avoid the overhead of streaming a big list of buckets back to the client.
+     *
+     * @return the number of terms the coordinating node will request from each shard.
+     */
+    @Nullable
+    public Long getShardSize();
 }

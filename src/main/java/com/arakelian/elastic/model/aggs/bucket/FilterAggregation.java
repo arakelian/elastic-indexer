@@ -15,28 +15,32 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.aggs.metrics;
+package com.arakelian.elastic.model.aggs.bucket;
 
 import org.immutables.value.Value;
 
 import com.arakelian.elastic.model.aggs.Aggregation;
-import com.arakelian.elastic.model.aggs.MetricAggregation;
-import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
+import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.search.Query;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
+ * Defines a single bucket of all the documents in the current document set context that match a
+ * specified filter. Often this will be used to narrow down the current aggregation context to a
+ * specific set of documents.
+ * 
  * @see <a href=
- *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html">Sum
+ *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filters-aggregation.html">Filters
  *      Aggregation</a>
  * @see <a href=
- *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/sum/SumAggregationBuilder.java">SumAggregationBuilder.java</a>
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/filter/FilterAggregationBuilder.java">FilterAggregationBuilder.java</a>
  */
 @Value.Immutable
-@JsonSerialize(as = ImmutableSumAggregation.class)
-@JsonDeserialize(builder = ImmutableSumAggregation.Builder.class)
-@JsonTypeName(Aggregation.SUM_AGGREGATION)
-public interface SumAggregation extends MetricAggregation, ValuesSourceAggregation {
-
+@JsonSerialize(as = ImmutableFiltersAggregation.class)
+@JsonDeserialize(builder = ImmutableFiltersAggregation.Builder.class)
+@JsonTypeName(Aggregation.FILTER_AGGREGATION)
+public interface FilterAggregation extends BucketAggregation {
+    public Query getFilter();
 }

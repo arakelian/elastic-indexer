@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SumAggregationTest {
     public static final SumAggregation MINIMAL = ImmutableSumAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class StatsAggregationTest {
     public static final StatsAggregation MINIMAL = ImmutableStatsAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

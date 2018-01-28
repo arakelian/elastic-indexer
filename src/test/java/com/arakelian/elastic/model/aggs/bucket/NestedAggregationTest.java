@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class NestedAggregationTest {
     public static final NestedAggregation MINIMAL = ImmutableNestedAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

@@ -17,23 +17,61 @@
 
 package com.arakelian.elastic.model.aggs.metrics;
 
+import java.util.List;
+
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.MetricAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-rank-aggregation.html">Percentile
  *      Rank Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/percentiles/PercentileRanksAggregationBuilder.java">PercentileRanksAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutablePercentileRanksAggregation.class)
 @JsonDeserialize(builder = ImmutablePercentileRanksAggregation.Builder.class)
 @JsonTypeName(Aggregation.PERCENTILE_RANKS_AGGREGATION)
-public interface PercentileRanksAggregation extends MetricAggregation {
+public interface PercentileRanksAggregation extends MetricAggregation, ValuesSourceAggregation {
+    public enum Method {
+        TDIGEST, HDR;
+    }
 
+    /**
+     * Returns the compression. Higher values improve accuracy but also memory usage. Only relevant
+     * when using {@link Method#TDIGEST}.
+     *
+     * @return the compression
+     */
+    @Nullable
+    public Double getCompression();
+
+    @Nullable
+    public Method getMethod();
+
+    /**
+     * Returns the number of significant digits in the values. Only relevant when using
+     * {@link Method#HDR}.
+     *
+     * @return the number of significant digits in the values
+     */
+    @Nullable
+    public Integer getNumberOfSignificantValueDigits();
+
+    @Value.Default
+    public default List<Double> getValues() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    public Boolean isKeyed();
 }

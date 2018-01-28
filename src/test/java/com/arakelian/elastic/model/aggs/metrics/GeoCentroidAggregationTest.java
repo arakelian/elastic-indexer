@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GeoCentroidAggregationTest {
     public static final GeoCentroidAggregation MINIMAL = ImmutableGeoCentroidAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

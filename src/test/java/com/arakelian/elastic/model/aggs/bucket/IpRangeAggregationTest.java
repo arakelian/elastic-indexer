@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class IpRangeAggregationTest {
     public static final IpRangeAggregation MINIMAL = ImmutableIpRangeAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

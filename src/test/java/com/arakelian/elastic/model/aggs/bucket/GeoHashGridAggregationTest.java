@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GeoHashGridAggregationTest {
     public static final GeoHashGridAggregation MINIMAL = ImmutableGeoHashGridAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

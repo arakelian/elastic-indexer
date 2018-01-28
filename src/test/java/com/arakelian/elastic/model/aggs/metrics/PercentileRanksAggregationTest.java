@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class PercentileRanksAggregationTest {
     public static final PercentileRanksAggregation MINIMAL = ImmutablePercentileRanksAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

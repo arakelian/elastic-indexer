@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class ValueCountAggregationTest {
     public static final ValueCountAggregation MINIMAL = ImmutableValueCountAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

@@ -26,14 +26,18 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
+ * A special single bucket aggregation that enables aggregating nested documents.
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html">Nested
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/nested/NestedAggregationBuilder.java">NestedAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableNestedAggregation.class)
 @JsonDeserialize(builder = ImmutableNestedAggregation.Builder.class)
 @JsonTypeName(Aggregation.NESTED_AGGREGATION)
 public interface NestedAggregation extends BucketAggregation {
-
+    public String getPath();
 }

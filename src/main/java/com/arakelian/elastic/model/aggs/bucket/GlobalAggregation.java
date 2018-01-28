@@ -26,9 +26,20 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
+ * Defines a single bucket of all the documents within the search execution context. This context is
+ * defined by the indices and the document types you’re searching on, but is not influenced by the
+ * search query itself.
+ * 
+ * <p>
+ * Note: Global aggregators can only be placed as top level aggregators because it doesn’t make
+ * sense to embed a global aggregator within another bucket aggregator.
+ * </p>
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-global-aggregation.html">Global
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/global/GlobalAggregationBuilder.java">GlobalAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableGlobalAggregation.class)

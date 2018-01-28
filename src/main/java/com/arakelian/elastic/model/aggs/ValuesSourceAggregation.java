@@ -17,5 +17,17 @@
 
 package com.arakelian.elastic.model.aggs;
 
-public interface BucketAggregation extends Aggregation {
+import com.arakelian.core.feature.Nullable;
+
+public interface ValuesSourceAggregation {
+    public String getField();
+
+    @Nullable
+    public String getFormat();
+
+    @Nullable
+    public Object getMissing();
+
+    @Nullable
+    public String getTimeZone();
 }

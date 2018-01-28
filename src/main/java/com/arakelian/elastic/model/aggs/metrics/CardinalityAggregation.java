@@ -19,8 +19,10 @@ package com.arakelian.elastic.model.aggs.metrics;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.MetricAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,11 +31,24 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html">Cardinality
  *      Aggregation</a>
+ * @see <a href=
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/cardinality/CardinalityAggregationBuilder.java">CardinalityAggregationBuilder.java</a>
  */
 @Value.Immutable
 @JsonSerialize(as = ImmutableCardinalityAggregation.class)
 @JsonDeserialize(builder = ImmutableCardinalityAggregation.Builder.class)
 @JsonTypeName(Aggregation.CARDINALITY_AGGREGATION)
-public interface CardinalityAggregation extends MetricAggregation {
-
+public interface CardinalityAggregation extends MetricAggregation, ValuesSourceAggregation {
+    /**
+     * Returns the precision threshold.
+     *
+     * The precision threshold allows you to trade memory for accuracy, and defines a unique count
+     * below which counts are expected to be close to accurate. Above this value, counts might
+     * become a bit more fuzzy. The maximum supported value is 40000, thresholds above this number
+     * will have the same effect as a threshold of 40000. The default values in Elastic is 3000.
+     *
+     * @return the precision threshold.
+     */
+    @Nullable
+    public Long getPrecisionThreshold();
 }

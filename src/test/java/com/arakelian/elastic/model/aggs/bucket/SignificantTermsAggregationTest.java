@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SignificantTermsAggregationTest {
     public static final SignificantTermsAggregation MINIMAL = ImmutableSignificantTermsAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

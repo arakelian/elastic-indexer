@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class MissingAggregationTest {
     public static final MissingAggregation MINIMAL = ImmutableMissingAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test

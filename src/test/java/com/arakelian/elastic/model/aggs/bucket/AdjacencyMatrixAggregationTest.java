@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class AdjacencyMatrixAggregationTest {
     public static final AdjacencyMatrixAggregation MINIMAL = ImmutableAdjacencyMatrixAggregation.builder() //
+            .name("my_aggregation") //
             .build();
 
     @Test
