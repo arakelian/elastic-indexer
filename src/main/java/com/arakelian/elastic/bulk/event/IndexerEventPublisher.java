@@ -77,29 +77,6 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
     public void closed(final BulkIndexerStats stats) {
     }
 
-    private void failed(final BulkOperation op) {
-        Preconditions.checkArgument(op != null, "op must be non-null");
-        final long sequence = ringBuffer.next();
-        try {
-            final IndexerEvent event = ringBuffer.get(sequence);
-            initialize(event, op, Status.FAILED);
-        } finally {
-            ringBuffer.publish(sequence);
-        }
-    }
-
-    private void initialize(final IndexerEvent event, final BulkOperation op, final Status status) {
-        // status will get set by caller
-        event.reset();
-        event.setStatus(status);
-        event.setAction(op.getAction());
-        event.setId(op.getId());
-        event.setIndex(op.getIndex());
-        event.setType(op.getType());
-        event.setVersion(op.getVersion());
-        event.setVersionType(op.getVersionType());
-    }
-
     @Override
     public void onFailure(final BulkOperation op, final BulkOperationResponse response) {
         failed(op);
@@ -125,5 +102,28 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
         } finally {
             ringBuffer.publish(sequence);
         }
+    }
+
+    private void failed(final BulkOperation op) {
+        Preconditions.checkArgument(op != null, "op must be non-null");
+        final long sequence = ringBuffer.next();
+        try {
+            final IndexerEvent event = ringBuffer.get(sequence);
+            initialize(event, op, Status.FAILED);
+        } finally {
+            ringBuffer.publish(sequence);
+        }
+    }
+
+    private void initialize(final IndexerEvent event, final BulkOperation op, final Status status) {
+        // status will get set by caller
+        event.reset();
+        event.setStatus(status);
+        event.setAction(op.getAction());
+        event.setId(op.getId());
+        event.setIndex(op.getIndex());
+        event.setType(op.getType());
+        event.setVersion(op.getVersion());
+        event.setVersionType(op.getVersionType());
     }
 }

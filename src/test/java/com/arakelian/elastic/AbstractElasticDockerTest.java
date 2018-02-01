@@ -184,26 +184,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         assertTrue(document.isFound());
     }
 
-    protected void assertIndexWithInternalVersion(
-            final Index index,
-            final Person person,
-            final long expectedVersion) throws IOException {
-        // test default versioning
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument(
-                        index.getName(), //
-                        DEFAULT_TYPE, //
-                        person.getId(), //
-                        JacksonUtils.toString(person, false)));
-
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
-    }
-
     public BulkIndexer<Person> createIndexer(final Index index) {
         return createIndexer(index, LoggingIndexerListener.SINGLETON);
     }
@@ -297,39 +277,28 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return mapping;
     }
 
-    @Override
-    protected ElasticClient getElasticClient() {
-        return elasticClient;
+    public void withPersonIndex(final WithIndexCallback test) throws IOException {
+        withIndex(createPersonMapping(), test);
     }
 
-    @Override
-    protected ElasticClientWithRetry getElasticClientWithRetry() {
-        return elasticClientWithRetry;
-    }
+    protected void assertIndexWithInternalVersion(
+            final Index index,
+            final Person person,
+            final long expectedVersion) throws IOException {
+        // test default versioning
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument(
+                        index.getName(), //
+                        DEFAULT_TYPE, //
+                        person.getId(), //
+                        JacksonUtils.toString(person, false)));
 
-    @Override
-    protected String getElasticUrl() {
-        return elasticUrl;
-    }
-
-    protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)
-            throws IOException {
-        withPersonIndex(index -> {
-            final List<Person> people = RandomPerson.get().listOf(numberOfPeople);
-            for (final Person person : people) {
-                assertIndexWithInternalVersion(index, person, 1);
-            }
-            callback.accept(index, people);
-        });
-    }
-
-    protected SearchResponse search(final Index index, final Search search) {
-        // make sure index has been refreshed
-        elasticClient.refreshIndex(index.getName());
-
-        // perform search
-        final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
-        return result;
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
     }
 
     protected SearchResponse assertSearchFinds(
@@ -394,7 +363,38 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 "_source.birthdate");
     }
 
-    public void withPersonIndex(final WithIndexCallback test) throws IOException {
-        withIndex(createPersonMapping(), test);
+    @Override
+    protected ElasticClient getElasticClient() {
+        return elasticClient;
+    }
+
+    @Override
+    protected ElasticClientWithRetry getElasticClientWithRetry() {
+        return elasticClientWithRetry;
+    }
+
+    @Override
+    protected String getElasticUrl() {
+        return elasticUrl;
+    }
+
+    protected SearchResponse search(final Index index, final Search search) {
+        // make sure index has been refreshed
+        elasticClient.refreshIndex(index.getName());
+
+        // perform search
+        final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
+        return result;
+    }
+
+    protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)
+            throws IOException {
+        withPersonIndex(index -> {
+            final List<Person> people = RandomPerson.get().listOf(numberOfPeople);
+            for (final Person person : people) {
+                assertIndexWithInternalVersion(index, person, 1);
+            }
+            callback.accept(index, people);
+        });
     }
 }

@@ -38,20 +38,6 @@ import com.google.common.base.Preconditions;
 @JsonTypeName(Query.RANGE_QUERY)
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
 public interface RangeQuery extends StandardQuery {
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterRangeQuery(this)) {
-                visitor.leaveRangeQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
-
     @Value.Check
     public default void checkType() {
         final Object lower = getLower();
@@ -75,11 +61,6 @@ public interface RangeQuery extends StandardQuery {
     @Nullable
     public Object getUpper();
 
-    @Override
-    default boolean isEmpty() {
-        return getLower() == null && getUpper() == null;
-    }
-
     @Value.Default
     public default boolean isIncludeLower() {
         return true;
@@ -88,5 +69,24 @@ public interface RangeQuery extends StandardQuery {
     @Value.Default
     public default boolean isIncludeUpper() {
         return true;
+    }
+
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterRangeQuery(this)) {
+                visitor.leaveRangeQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
+    @Override
+    default boolean isEmpty() {
+        return getLower() == null && getUpper() == null;
     }
 }

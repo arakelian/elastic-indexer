@@ -48,6 +48,10 @@ import com.google.common.collect.ImmutableMap;
 public abstract class SearchHits implements Serializable {
     public static final char PATH_SEPARATOR = '/';
 
+    /** ObjectMapper that should be used for deserialization. **/
+    @SuppressWarnings("immutables")
+    private transient ObjectMapper mapper;
+
     public Map<String, Object> get(final int index) {
         final List<Map<String, Object>> hits = getHits();
         if (index < 0 || index > hits.size()) {
@@ -60,62 +64,6 @@ public abstract class SearchHits implements Serializable {
         }
 
         return hit;
-    }
-
-    /** ObjectMapper that should be used for deserialization. **/
-    @SuppressWarnings("immutables")
-    private transient ObjectMapper mapper;
-
-    @JsonIgnore
-    public ObjectMapper getObjectMapper() {
-        if (mapper == null) {
-            mapper = JacksonUtils.getObjectMapper();
-        }
-        return mapper;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        this.mapper = objectMapper;
-    }
-
-    @Value.Default
-    @JsonProperty("hits")
-    public List<Map<String, Object>> getHits() {
-        return ImmutableList.of();
-    }
-
-    @JsonIgnore
-    @Value.Derived
-    public int getSize() {
-        return getHits().size();
-    }
-
-    @Nullable
-    @JsonProperty("max_score")
-    public abstract Float getMaxScore();
-
-    public String getString(final int index, final String path) {
-        return get(index, path, String.class);
-    }
-
-    public Object getObject(final int index, final String path) {
-        return get(index, path, Object.class);
-    }
-
-    public Integer getInt(final int index, final String path) {
-        return get(index, path, Integer.class);
-    }
-
-    public Float getFloat(final int index, final String path) {
-        return get(index, path, Float.class);
-    }
-
-    public Double getDouble(final int index, final String path) {
-        return get(index, path, Double.class);
-    }
-
-    public GeoPoint getGeoPoint(final int index, final String path) {
-        return get(index, path, GeoPoint.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -149,8 +97,60 @@ public abstract class SearchHits implements Serializable {
         return null;
     }
 
+    public Double getDouble(final int index, final String path) {
+        return get(index, path, Double.class);
+    }
+
+    public Float getFloat(final int index, final String path) {
+        return get(index, path, Float.class);
+    }
+
+    public GeoPoint getGeoPoint(final int index, final String path) {
+        return get(index, path, GeoPoint.class);
+    }
+
+    @Value.Default
+    @JsonProperty("hits")
+    public List<Map<String, Object>> getHits() {
+        return ImmutableList.of();
+    }
+
+    public Integer getInt(final int index, final String path) {
+        return get(index, path, Integer.class);
+    }
+
+    @Nullable
+    @JsonProperty("max_score")
+    public abstract Float getMaxScore();
+
+    public Object getObject(final int index, final String path) {
+        return get(index, path, Object.class);
+    }
+
+    @JsonIgnore
+    public ObjectMapper getObjectMapper() {
+        if (mapper == null) {
+            mapper = JacksonUtils.getObjectMapper();
+        }
+        return mapper;
+    }
+
+    @JsonIgnore
+    @Value.Derived
+    public int getSize() {
+        return getHits().size();
+    }
+
+    public String getString(final int index, final String path) {
+        return get(index, path, String.class);
+    }
+
     @Value.Default
     public int getTotal() {
         return 0;
+    }
+
+    public void setObjectMapper(final ObjectMapper objectMapper) {
+        this.mapper = objectMapper;
     }
 }

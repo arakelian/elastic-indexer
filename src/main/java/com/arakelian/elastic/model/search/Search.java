@@ -138,7 +138,7 @@ public interface Search extends Serializable {
         final JsonGenerator writer = visitor.getWriter();
         writer.writeFieldName("aggregations");
         writer.writeStartObject();
-        for (Aggregation agg : aggregations) {
+        for (final Aggregation agg : aggregations) {
             writer.writeFieldName(agg.getName());
             writer.writeStartObject();
             agg.accept(visitor);
@@ -155,24 +155,6 @@ public interface Search extends Serializable {
             writer.writeString(value);
         }
         writer.writeEndArray();
-    }
-
-    public static void writeFieldValue(final JsonGenerator writer, final String field, final String value)
-            throws IOException {
-        if (!StringUtils.isEmpty(value)) {
-            writer.writeFieldName(field);
-            writer.writeString(value);
-        }
-    }
-
-    public static void writeFieldWithValues(
-            final JsonGenerator writer,
-            final String field,
-            final Collection<String> values) throws IOException {
-        if (values != null && values.size() != 0) {
-            writer.writeFieldName(field);
-            writeArrayOf(writer, values);
-        }
     }
 
     public static void writeFieldValue(final JsonGenerator writer, final String field, final Object value)
@@ -210,6 +192,29 @@ public interface Search extends Serializable {
         writer.writeObject(value);
     }
 
+    public static void writeFieldValue(final JsonGenerator writer, final String field, final String value)
+            throws IOException {
+        if (!StringUtils.isEmpty(value)) {
+            writer.writeFieldName(field);
+            writer.writeString(value);
+        }
+    }
+
+    public static void writeFieldWithValues(
+            final JsonGenerator writer,
+            final String field,
+            final Collection<String> values) throws IOException {
+        if (values != null && values.size() != 0) {
+            writer.writeFieldName(field);
+            writeArrayOf(writer, values);
+        }
+    }
+
+    @Value.Default
+    public default List<Aggregation> getAggregations() {
+        return ImmutableList.of();
+    }
+
     @Nullable
     public Integer getBatchedReduceSize();
 
@@ -221,11 +226,6 @@ public interface Search extends Serializable {
 
     @Nullable
     public Query getQuery();
-
-    @Value.Default
-    public default List<Aggregation> getAggregations() {
-        return ImmutableList.of();
-    }
 
     @Nullable
     public String getScroll();

@@ -137,23 +137,6 @@ public abstract class GeoPoint implements Serializable {
     private static final double LON_DECODE = 1 / ((0x1L << 32) / 360.0D);
 
     /**
-     * Returns one of two 32-bit values that were previously interleaved to produce a 64-bit value.
-     *
-     * @param value
-     *            64-bit value that was created by interleaving two 32-bit values
-     * @return one of two previously interleaved values
-     */
-    protected static long deinterleave(long value) {
-        value &= MAGIC[0];
-        value = (value ^ value >>> SHIFT[0]) & MAGIC[1];
-        value = (value ^ value >>> SHIFT[1]) & MAGIC[2];
-        value = (value ^ value >>> SHIFT[2]) & MAGIC[3];
-        value = (value ^ value >>> SHIFT[3]) & MAGIC[4];
-        value = (value ^ value >>> SHIFT[4]) & MAGIC[5];
-        return value;
-    }
-
-    /**
      * Returns a value with the even and odd bits flipped.
      *
      * @param val
@@ -191,6 +174,23 @@ public abstract class GeoPoint implements Serializable {
                 .lat(lat) //
                 .lon(lon) //
                 .build();
+    }
+
+    /**
+     * Returns one of two 32-bit values that were previously interleaved to produce a 64-bit value.
+     *
+     * @param value
+     *            64-bit value that was created by interleaving two 32-bit values
+     * @return one of two previously interleaved values
+     */
+    protected static long deinterleave(long value) {
+        value &= MAGIC[0];
+        value = (value ^ value >>> SHIFT[0]) & MAGIC[1];
+        value = (value ^ value >>> SHIFT[1]) & MAGIC[2];
+        value = (value ^ value >>> SHIFT[2]) & MAGIC[3];
+        value = (value ^ value >>> SHIFT[3]) & MAGIC[4];
+        value = (value ^ value >>> SHIFT[4]) & MAGIC[5];
+        return value;
     }
 
     @JsonIgnore
@@ -253,29 +253,6 @@ public abstract class GeoPoint implements Serializable {
 
     public abstract double getLon();
 
-    @Value.Check
-    protected GeoPoint normalize() {
-        // validates latitude is within standard +/-90 coordinate bounds
-        final double lat = getLat();
-        if (Double.isNaN(lat) || lat < MIN_LAT_INCL || lat > MAX_LAT_INCL) {
-            throw new IllegalArgumentException(
-                    "invalid latitude " + lat + "; must be between " + MIN_LAT_INCL + " and " + MAX_LAT_INCL);
-        }
-
-        // validates longitude is within standard +/-180 coordinate bounds
-        final double lon = getLon();
-        if (Double.isNaN(lon) || lon < MIN_LON_INCL || lon > MAX_LON_INCL) {
-            throw new IllegalArgumentException("invalid longitude " + lon + "; must be between "
-                    + MIN_LON_INCL + " and " + MAX_LON_INCL);
-        }
-
-        // 7 decimal places is worth 1.1 millimiters of accuracy; this is good for charting motions
-        // of tectonic plates and movements of volcanoes. Permanent, corrected, constantly-running
-        // GPS base stations might be able to achieve this level of accuracy
-        final int places = 7;
-        return round(places);
-    }
-
     public GeoPoint round(final int places) {
         Preconditions.checkArgument(places >= 0, "places must be >=0");
 
@@ -298,5 +275,28 @@ public abstract class GeoPoint implements Serializable {
                 .lat(newLat) //
                 .lon(newLon) //
                 .build();
+    }
+
+    @Value.Check
+    protected GeoPoint normalize() {
+        // validates latitude is within standard +/-90 coordinate bounds
+        final double lat = getLat();
+        if (Double.isNaN(lat) || lat < MIN_LAT_INCL || lat > MAX_LAT_INCL) {
+            throw new IllegalArgumentException(
+                    "invalid latitude " + lat + "; must be between " + MIN_LAT_INCL + " and " + MAX_LAT_INCL);
+        }
+
+        // validates longitude is within standard +/-180 coordinate bounds
+        final double lon = getLon();
+        if (Double.isNaN(lon) || lon < MIN_LON_INCL || lon > MAX_LON_INCL) {
+            throw new IllegalArgumentException("invalid longitude " + lon + "; must be between "
+                    + MIN_LON_INCL + " and " + MAX_LON_INCL);
+        }
+
+        // 7 decimal places is worth 1.1 millimiters of accuracy; this is good for charting motions
+        // of tectonic plates and movements of volcanoes. Permanent, corrected, constantly-running
+        // GPS base stations might be able to achieve this level of accuracy
+        final int places = 7;
+        return round(places);
     }
 }

@@ -35,8 +35,6 @@ import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.model.ClusterHealth;
 import com.arakelian.elastic.model.ClusterHealth.Status;
-import com.arakelian.faker.model.Person;
-import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.elastic.model.DeletedDocument;
 import com.arakelian.elastic.model.Documents;
 import com.arakelian.elastic.model.ImmutableMget;
@@ -46,6 +44,8 @@ import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.faker.model.Person;
+import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 public class ElasticClientTest extends AbstractElasticDockerTest {
@@ -53,47 +53,6 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
     public ElasticClientTest(final String version) throws Exception {
         super(version);
-    }
-
-    private long assertDeleteWithExternalVersion(final Index index, final String id) {
-        // delete document with external version
-        final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final DeletedDocument deleted = assertSuccessful( //
-                elasticClient.deleteDocument( //
-                        index.getName(), //
-                        DEFAULT_TYPE, //
-                        id, //
-                        deleteMillis));
-        assertEquals(index.getName(), deleted.getIndex());
-        assertEquals(DEFAULT_TYPE, deleted.getType());
-        assertEquals(id, deleted.getId());
-        assertEquals(id, deleted.getId());
-        assertEquals("deleted", deleted.getResult());
-        assertEquals(Long.valueOf(deleteMillis), deleted.getVersion());
-        assertNotNull(deleted.isFound());
-        assertTrue(deleted.isFound().booleanValue());
-        return deleteMillis;
-    }
-
-    private long assertIndexWithExternalVersion(final Index index, final Person person) throws IOException {
-        // index document
-        final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument( //
-                        index.getName(), //
-                        DEFAULT_TYPE, //
-                        person.getId(), //
-                        JacksonUtils.toString(person, false), //
-                        updateMillis));
-
-        // verify response
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(updateMillis), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
-        return updateMillis;
     }
 
     @Test
@@ -212,5 +171,46 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     public void testRefreshAll() {
         final Refresh response = assertSuccessful(elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
+    }
+
+    private long assertDeleteWithExternalVersion(final Index index, final String id) {
+        // delete document with external version
+        final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
+        final DeletedDocument deleted = assertSuccessful( //
+                elasticClient.deleteDocument( //
+                        index.getName(), //
+                        DEFAULT_TYPE, //
+                        id, //
+                        deleteMillis));
+        assertEquals(index.getName(), deleted.getIndex());
+        assertEquals(DEFAULT_TYPE, deleted.getType());
+        assertEquals(id, deleted.getId());
+        assertEquals(id, deleted.getId());
+        assertEquals("deleted", deleted.getResult());
+        assertEquals(Long.valueOf(deleteMillis), deleted.getVersion());
+        assertNotNull(deleted.isFound());
+        assertTrue(deleted.isFound().booleanValue());
+        return deleteMillis;
+    }
+
+    private long assertIndexWithExternalVersion(final Index index, final Person person) throws IOException {
+        // index document
+        final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument( //
+                        index.getName(), //
+                        DEFAULT_TYPE, //
+                        person.getId(), //
+                        JacksonUtils.toString(person, false), //
+                        updateMillis));
+
+        // verify response
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(updateMillis), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
+        return updateMillis;
     }
 }

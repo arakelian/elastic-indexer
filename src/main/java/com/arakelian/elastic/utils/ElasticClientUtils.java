@@ -141,35 +141,6 @@ public class ElasticClientUtils {
                 .build();
     }
 
-    private static Class<?> getJsonView(final VersionComponents version) {
-        switch (version.getMajor()) {
-        case 5:
-            switch (version.getMinor()) {
-            case 2:
-                return Version52.class;
-            case 3:
-                return Version53.class;
-            case 4:
-                return Version54.class;
-            case 5:
-                return Version55.class;
-            case 6:
-                return Version56.class;
-            default:
-                return Version5.class;
-            }
-        case 6:
-            switch (version.getMinor()) {
-            case 1:
-                return Version61.class;
-            default:
-                return Version6.class;
-            }
-        default:
-            throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);
-        }
-    }
-
     /**
      * Returns true if call to Elastic should be retried.
      *
@@ -223,6 +194,35 @@ public class ElasticClientUtils {
         } catch (final RetryException e) {
             LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
             return null;
+        }
+    }
+
+    private static Class<?> getJsonView(final VersionComponents version) {
+        switch (version.getMajor()) {
+        case 5:
+            switch (version.getMinor()) {
+            case 2:
+                return Version52.class;
+            case 3:
+                return Version53.class;
+            case 4:
+                return Version54.class;
+            case 5:
+                return Version55.class;
+            case 6:
+                return Version56.class;
+            default:
+                return Version5.class;
+            }
+        case 6:
+            switch (version.getMinor()) {
+            case 1:
+                return Version61.class;
+            default:
+                return Version6.class;
+            }
+        default:
+            throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);
         }
     }
 

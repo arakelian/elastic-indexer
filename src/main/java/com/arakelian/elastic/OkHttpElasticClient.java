@@ -210,24 +210,6 @@ public class OkHttpElasticClient implements ElasticClient {
         });
     }
 
-    protected <T> T execute(final Callable<DelegatingCall<T>> request) throws ElasticException {
-        try {
-            final DelegatingCall<T> call = request.call();
-            final Response<T> response = call.execute();
-            if (response.isSuccessful()) {
-                final T body = response.body();
-                return body;
-            }
-            return call.failure(response);
-        } catch (final ElasticException e) {
-            // pass through
-            throw e;
-        } catch (final Exception e) {
-            // wrap exception
-            throw new ElasticException(e.getMessage(), e);
-        }
-    }
-
     @Override
     public Document getDocument(
             final String name,
@@ -323,5 +305,23 @@ public class OkHttpElasticClient implements ElasticClient {
 
         response.getHits().setObjectMapper(mapper);
         return response;
+    }
+
+    protected <T> T execute(final Callable<DelegatingCall<T>> request) throws ElasticException {
+        try {
+            final DelegatingCall<T> call = request.call();
+            final Response<T> response = call.execute();
+            if (response.isSuccessful()) {
+                final T body = response.body();
+                return body;
+            }
+            return call.failure(response);
+        } catch (final ElasticException e) {
+            // pass through
+            throw e;
+        } catch (final Exception e) {
+            // wrap exception
+            throw new ElasticException(e.getMessage(), e);
+        }
     }
 }

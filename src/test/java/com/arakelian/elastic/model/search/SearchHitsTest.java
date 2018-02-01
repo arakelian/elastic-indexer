@@ -48,6 +48,26 @@ public class SearchHitsTest extends AbstractElasticModelTest {
         super(number);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidPath() {
+        assertNull(SAMPLE.get(0, "_source/geopoint/property", Object.class));
+    }
+
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(objectMapper, SAMPLE, SearchHits.class);
+    }
+
+    @Test
+    public void testMissingPath() {
+        // path one-two-three-four doesn't exist
+        assertNull(SAMPLE.get(0, "_source/one/two/three/four", Object.class));
+
+        // hit index is out of range
+        assertNull(SAMPLE.get(Integer.MAX_VALUE, "index/not/valid", Object.class));
+        assertNull(SAMPLE.get(Integer.MIN_VALUE, "index/not/valid", Object.class));
+    }
+
     @Test
     public void testPath() {
         // retrieve Integer
@@ -64,26 +84,6 @@ public class SearchHitsTest extends AbstractElasticModelTest {
 
         // retrieve GeoPoint
         assertEquals(GeoPoint.of("drm3btev3e86"), SAMPLE.getGeoPoint(0, "_source/geopoint"));
-    }
-
-    @Test
-    public void testMissingPath() {
-        // path one-two-three-four doesn't exist
-        assertNull(SAMPLE.get(0, "_source/one/two/three/four", Object.class));
-
-        // hit index is out of range
-        assertNull(SAMPLE.get(Integer.MAX_VALUE, "index/not/valid", Object.class));
-        assertNull(SAMPLE.get(Integer.MIN_VALUE, "index/not/valid", Object.class));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidPath() {
-        assertNull(SAMPLE.get(0, "_source/geopoint/property", Object.class));
-    }
-
-    @Test
-    public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(objectMapper, SAMPLE, SearchHits.class);
     }
 
     @Test

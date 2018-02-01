@@ -98,23 +98,6 @@ public class BulkIndexer<T> implements Closeable {
             BulkIndexer.this.totalBytes.addAndGet(totalBytes);
         }
 
-        /**
-         * Returns the payload for the Elastic bulk API endpoint.
-         *
-         * We compute this by concatenating all of the individual operations being performed on each
-         * document.
-         *
-         * @return payload for the Elastic bulk API endpoint.
-         */
-        private String buildPayload() {
-            final StringBuilder buf = new StringBuilder(totalBytes);
-            for (final BulkOperation op : operations) {
-                buf.append(op.getOperation());
-            }
-            final String ops = buf.toString();
-            return ops;
-        }
-
         @Override
         public BulkResponse call() throws IOException, InterruptedException {
             if (delayMillis != 0) {
@@ -143,6 +126,33 @@ public class BulkIndexer<T> implements Closeable {
             }
         }
 
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this) //
+                    .omitNullValues() //
+                    .add("id", id) //
+                    .add("operations", operations.size()) //
+                    .add("totalBytes", totalBytes) //
+                    .toString();
+        }
+
+        /**
+         * Returns the payload for the Elastic bulk API endpoint.
+         *
+         * We compute this by concatenating all of the individual operations being performed on each
+         * document.
+         *
+         * @return payload for the Elastic bulk API endpoint.
+         */
+        private String buildPayload() {
+            final StringBuilder buf = new StringBuilder(totalBytes);
+            for (final BulkOperation op : operations) {
+                buf.append(op.getOperation());
+            }
+            final String ops = buf.toString();
+            return ops;
+        }
+
         private void failed(final Throwable t) {
             final IndexerListener listener = config.getListener();
             for (final BulkOperation op : operations) {
@@ -163,16 +173,6 @@ public class BulkIndexer<T> implements Closeable {
                     LOGGER.warn("Unable to queue refresh of index \"{}\"", name, e);
                 }
             }
-        }
-
-        @Override
-        public String toString() {
-            return MoreObjects.toStringHelper(this) //
-                    .omitNullValues() //
-                    .add("id", id) //
-                    .add("operations", operations.size()) //
-                    .add("totalBytes", totalBytes) //
-                    .toString();
         }
     }
 
@@ -436,6 +436,177 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
+     * Called during shutdown to terminate the scheduled executor thread.
+     *
+     * @throws BulkIndexerFailed
+     *             if exception occurs while closing indexer
+     */
+    @Override
+    public void close() throws BulkIndexerFailed {
+        final boolean shutdown;
+
+        // we only hold the lock long enough to signal to other threads that we're shutting down and
+        // will not take any more business
+        batchLock.lock();
+        try {
+            // once we are closed, we will not flush any more data; everything has to be
+            // in queue for processing
+            LOGGER.info("Closing {}", this);
+            flushQuietly();
+
+            // we only shutdown once
+            shutdown = closed.compareAndSet(false, true);
+        } finally {
+            batchLock.unlock();
+        }
+
+        if (shutdown) {
+            // no more flushes allowed
+            final int timeout = config.getShutdownTimeout();
+            final TimeUnit unit = config.getShutdownTimeoutUnit();
+            if (flushExecutor != null) {
+                ExecutorUtils.shutdown(flushExecutor, timeout, unit, true);
+            }
+
+            // shutdown batch executor first; we want to ensure that bulk executor queue is
+            // emptied before we shutdown the response executor
+            ExecutorUtils.shutdown(batchExecutor, timeout, unit, true);
+
+            // make sure we process any responses
+            ExecutorUtils.shutdown(bulkResponseExecutor, timeout, unit, true);
+
+            // shutdown hook is last thing to go
+            ExecutorUtils.removeShutdownHook(shutdownHook);
+
+            // compute final statistics and do notification
+            final BulkIndexerStats stats = getStats();
+            final IndexerListener listener = config.getListener();
+            listener.closed(stats);
+
+            // throw exception if indexer failed
+            final int expected = stats.getSubmitted() + stats.getRetries();
+            if (stats.getSuccessful() != expected) {
+                throw new BulkIndexerFailed(stats);
+            }
+        }
+    }
+
+    /**
+     * Deletes a list of documents from their respective Elastic indexes.
+     *
+     * @param documents
+     *            list of documents to be removed
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public void delete(final Collection<T> documents) throws RejectedExecutionException, IOException {
+        if (documents != null && documents.size() != 0) {
+            // we do not acquire lock here because we might flush, which might cause us to block if
+            // the queue is full
+            for (final T document : documents) {
+                delete(document);
+            }
+        }
+    }
+
+    /**
+     * Delete specified document from Elastic index.
+     *
+     * @param document
+     *            document to be deleted
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public void delete(final T document) throws RejectedExecutionException, IOException {
+        add(document, DELETE);
+    }
+
+    /**
+     * Flushes any pending bulk operations to Elastic asynchronously.
+     *
+     * @throws RejectedExecutionException
+     *             if indexer is closed (and we have pending operations) or background queue is full
+     */
+    public void flush() throws RejectedExecutionException {
+        final Batch batch = createBatch(true);
+        if (batch != null) {
+            // we submit to executor outside a lock, since this thread could block if the
+            // batch executor's queue is full
+            submitBatch(batch);
+        }
+    }
+
+    public final BulkIndexerConfig<T> getConfig() {
+        return config;
+    }
+
+    public BulkIndexerStats getStats() {
+        return ImmutableBulkIndexerStats.builder() //
+                .submitted(submitted.get()) //
+                .retries(retries.get()) //
+                .totalBytes(totalBytes.get()) //
+                .successful(successful.get()) //
+                .failed(failed.get()) //
+                .build();
+    }
+
+    /**
+     * Adds a list of documents to the Elastic index without immediate index refresh and optional
+     * flush.
+     *
+     * @param documents
+     *            list of documents to index
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public void index(final Collection<T> documents) throws RejectedExecutionException, IOException {
+        if (documents != null && documents.size() != 0) {
+            // we do not acquire lock here because we might flush, which might cause us to block if
+            // the queue is full
+            for (final T document : documents) {
+                index(document);
+            }
+        }
+    }
+
+    /**
+     * Adds a document to the Elastic index.
+     *
+     * @param document
+     *            document to be indexed
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public void index(final T document) throws RejectedExecutionException, IOException {
+        add(document, INDEX);
+    }
+
+    /**
+     * Returns true if indexer has closed
+     *
+     * @return true if indexer has closed
+     */
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this) //
+                .omitNullValues() //
+                .add("config", config) //
+                .toString();
+    }
+
+    /**
      * Adds a bulk operation to the pending {@link Batch}.
      *
      * @param op
@@ -519,62 +690,6 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
-     * Called during shutdown to terminate the scheduled executor thread.
-     *
-     * @throws BulkIndexerFailed
-     *             if exception occurs while closing indexer
-     */
-    @Override
-    public void close() throws BulkIndexerFailed {
-        final boolean shutdown;
-
-        // we only hold the lock long enough to signal to other threads that we're shutting down and
-        // will not take any more business
-        batchLock.lock();
-        try {
-            // once we are closed, we will not flush any more data; everything has to be
-            // in queue for processing
-            LOGGER.info("Closing {}", this);
-            flushQuietly();
-
-            // we only shutdown once
-            shutdown = closed.compareAndSet(false, true);
-        } finally {
-            batchLock.unlock();
-        }
-
-        if (shutdown) {
-            // no more flushes allowed
-            final int timeout = config.getShutdownTimeout();
-            final TimeUnit unit = config.getShutdownTimeoutUnit();
-            if (flushExecutor != null) {
-                ExecutorUtils.shutdown(flushExecutor, timeout, unit, true);
-            }
-
-            // shutdown batch executor first; we want to ensure that bulk executor queue is
-            // emptied before we shutdown the response executor
-            ExecutorUtils.shutdown(batchExecutor, timeout, unit, true);
-
-            // make sure we process any responses
-            ExecutorUtils.shutdown(bulkResponseExecutor, timeout, unit, true);
-
-            // shutdown hook is last thing to go
-            ExecutorUtils.removeShutdownHook(shutdownHook);
-
-            // compute final statistics and do notification
-            final BulkIndexerStats stats = getStats();
-            final IndexerListener listener = config.getListener();
-            listener.closed(stats);
-
-            // throw exception if indexer failed
-            final int expected = stats.getSubmitted() + stats.getRetries();
-            if (stats.getSuccessful() != expected) {
-                throw new BulkIndexerFailed(stats);
-            }
-        }
-    }
-
-    /**
      * Return a new {@link Batch} from the list of queued bulk operations.
      *
      * If there are no pending operations that need to be flushed, or the batch size thresholds have
@@ -612,40 +727,6 @@ public class BulkIndexer<T> implements Closeable {
     }
 
     /**
-     * Deletes a list of documents from their respective Elastic indexes.
-     *
-     * @param documents
-     *            list of documents to be removed
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public void delete(final Collection<T> documents) throws RejectedExecutionException, IOException {
-        if (documents != null && documents.size() != 0) {
-            // we do not acquire lock here because we might flush, which might cause us to block if
-            // the queue is full
-            for (final T document : documents) {
-                delete(document);
-            }
-        }
-    }
-
-    /**
-     * Delete specified document from Elastic index.
-     *
-     * @param document
-     *            document to be deleted
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public void delete(final T document) throws RejectedExecutionException, IOException {
-        add(document, DELETE);
-    }
-
-    /**
      * Throws exception if indexer has been closed.
      *
      * @throws RejectedExecutionException
@@ -654,21 +735,6 @@ public class BulkIndexer<T> implements Closeable {
     private void ensureOpen() throws RejectedExecutionException {
         if (isClosed()) {
             throw new AlreadyClosedException("Bulk indexer is closed");
-        }
-    }
-
-    /**
-     * Flushes any pending bulk operations to Elastic asynchronously.
-     *
-     * @throws RejectedExecutionException
-     *             if indexer is closed (and we have pending operations) or background queue is full
-     */
-    public void flush() throws RejectedExecutionException {
-        final Batch batch = createBatch(true);
-        if (batch != null) {
-            // we submit to executor outside a lock, since this thread could block if the
-            // batch executor's queue is full
-            submitBatch(batch);
         }
     }
 
@@ -682,64 +748,6 @@ public class BulkIndexer<T> implements Closeable {
         } catch (final Exception e) {
             LOGGER.warn("Unable to flush {}", this, e);
         }
-    }
-
-    public final BulkIndexerConfig<T> getConfig() {
-        return config;
-    }
-
-    public BulkIndexerStats getStats() {
-        return ImmutableBulkIndexerStats.builder() //
-                .submitted(submitted.get()) //
-                .retries(retries.get()) //
-                .totalBytes(totalBytes.get()) //
-                .successful(successful.get()) //
-                .failed(failed.get()) //
-                .build();
-    }
-
-    /**
-     * Adds a list of documents to the Elastic index without immediate index refresh and optional
-     * flush.
-     *
-     * @param documents
-     *            list of documents to index
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public void index(final Collection<T> documents) throws RejectedExecutionException, IOException {
-        if (documents != null && documents.size() != 0) {
-            // we do not acquire lock here because we might flush, which might cause us to block if
-            // the queue is full
-            for (final T document : documents) {
-                index(document);
-            }
-        }
-    }
-
-    /**
-     * Adds a document to the Elastic index.
-     *
-     * @param document
-     *            document to be indexed
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public void index(final T document) throws RejectedExecutionException, IOException {
-        add(document, INDEX);
-    }
-
-    /**
-     * Returns true if indexer has closed
-     *
-     * @return true if indexer has closed
-     */
-    public boolean isClosed() {
-        return closed.get();
     }
 
     /**
@@ -765,13 +773,5 @@ public class BulkIndexer<T> implements Closeable {
 
         // process responses asynchronously too
         future.addListener(new BatchListener(future, batch, queued), bulkResponseExecutor);
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this) //
-                .omitNullValues() //
-                .add("config", config) //
-                .toString();
     }
 }

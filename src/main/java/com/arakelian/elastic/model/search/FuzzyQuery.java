@@ -38,20 +38,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableFuzzyQuery.Builder.class)
 @JsonTypeName(Query.FUZZY_QUERY)
 public interface FuzzyQuery extends StandardQuery {
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterFuzzyQuery(this)) {
-                visitor.leaveFuzzyQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
-
     @JsonProperty("field")
     public String getFieldName();
 
@@ -83,6 +69,20 @@ public interface FuzzyQuery extends StandardQuery {
                 getPrefixLength() == null && //
                 getRewrite() == null && //
                 getTranspositions() == null;
+    }
+
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterFuzzyQuery(this)) {
+                visitor.leaveFuzzyQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
     }
 
     @Override

@@ -56,6 +56,21 @@ public abstract class AbstractElasticTest {
 
     private RefreshLimiter refreshLimiter;
 
+    @Before
+    public final void createRefreshLimiter() {
+        refreshLimiter = new RefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
+                .coreThreads(1) //
+                .maximumThreads(1) //
+                .defaultPermitsPerSecond(1.0) //
+                .build(), //
+                getElasticClient());
+    }
+
+    @After
+    public final void destroyRefreshLimiter() {
+        refreshLimiter.close();
+    }
+
     protected final void assertCreateIndex(final Index index) {
         // verify it does not already exist
         assertIndexNotExists(index);
@@ -94,21 +109,6 @@ public abstract class AbstractElasticTest {
     protected final <T> T assertSuccessful(final T response) {
         assertNotNull(response);
         return response;
-    }
-
-    @Before
-    public final void createRefreshLimiter() {
-        refreshLimiter = new RefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
-                .coreThreads(1) //
-                .maximumThreads(1) //
-                .defaultPermitsPerSecond(1.0) //
-                .build(), //
-                getElasticClient());
-    }
-
-    @After
-    public final void destroyRefreshLimiter() {
-        refreshLimiter.close();
     }
 
     protected abstract ElasticClient getElasticClient();

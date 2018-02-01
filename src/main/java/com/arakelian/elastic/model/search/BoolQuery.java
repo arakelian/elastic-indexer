@@ -33,6 +33,32 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableBoolQuery.Builder.class)
 @JsonTypeName(Query.BOOL_QUERY)
 public interface BoolQuery extends StandardQuery {
+    @Value.Default
+    public default List<Query> getFilterClauses() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    public String getMinimumShouldMatch();
+
+    @Value.Default
+    public default List<Query> getMustClauses() {
+        return ImmutableList.of();
+    }
+
+    @Value.Default
+    public default List<Query> getMustNotClauses() {
+        return ImmutableList.of();
+    }
+
+    @Value.Default
+    public default List<Query> getShouldClauses() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    public Boolean isAdjustPureNegative();
+
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -62,32 +88,6 @@ public interface BoolQuery extends StandardQuery {
             visitor.leave(this);
         }
     }
-
-    @Value.Default
-    public default List<Query> getFilterClauses() {
-        return ImmutableList.of();
-    }
-
-    @Nullable
-    public String getMinimumShouldMatch();
-
-    @Value.Default
-    public default List<Query> getMustClauses() {
-        return ImmutableList.of();
-    }
-
-    @Value.Default
-    public default List<Query> getMustNotClauses() {
-        return ImmutableList.of();
-    }
-
-    @Value.Default
-    public default List<Query> getShouldClauses() {
-        return ImmutableList.of();
-    }
-
-    @Nullable
-    public Boolean isAdjustPureNegative();
 
     @Override
     default boolean isEmpty() {

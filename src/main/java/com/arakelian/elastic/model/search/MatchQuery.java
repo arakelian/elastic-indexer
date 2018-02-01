@@ -35,17 +35,6 @@ public interface MatchQuery extends StandardQuery {
         NONE, ALL;
     }
 
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        if (visitor.enterMatchQuery(this)) {
-            visitor.leaveMatchQuery(this);
-        }
-        visitor.leave(this);
-    }
-
     @Nullable
     public String getAnalyzer();
 
@@ -75,6 +64,9 @@ public interface MatchQuery extends StandardQuery {
     @Nullable
     public Object getValue();
 
+    @Nullable
+    public ZeroTermsQuery getZeroTermsQuery();
+
     @Value.Derived
     @JsonIgnore
     @Value.Auxiliary
@@ -91,19 +83,27 @@ public interface MatchQuery extends StandardQuery {
     }
 
     @Nullable
-    public ZeroTermsQuery getZeroTermsQuery();
-
-    @Nullable
     public Boolean isAutoGenerateSynonymsPhraseQuery();
-
-    @Override
-    default boolean isEmpty() {
-        return getValue() == null;
-    }
 
     @Nullable
     public Boolean isFuzzyTranspositions();
 
     @Nullable
     public Boolean isLenient();
+
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        if (visitor.enterMatchQuery(this)) {
+            visitor.leaveMatchQuery(this);
+        }
+        visitor.leave(this);
+    }
+
+    @Override
+    default boolean isEmpty() {
+        return getValue() == null;
+    }
 }

@@ -67,25 +67,6 @@ public class RefreshLimiterTest {
         delegate = mockRetrofit.create(OkHttpElasticApi.class);
     }
 
-    private MockOkHttpElasticApi mockApi() {
-        final MockOkHttpElasticApi elasticClient = new MockOkHttpElasticApi(delegate) {
-            @Override
-            public Call<Refresh> refreshIndex(final String names) {
-                refreshCount.incrementAndGet();
-                final Refresh response = ImmutableRefresh.builder() //
-                        .shards(
-                                ImmutableShards.builder() //
-                                        .successful(1) //
-                                        .failed(0) //
-                                        .total(1) //
-                                        .build()) //
-                        .build();
-                return delegate.returning(Calls.response(response)).refreshIndex(names);
-            }
-        };
-        return elasticClient;
-    }
-
     @Test
     public void testEnqueueOnePerSecond() {
         verifyEnqueue(3000, 1.0d, false);
@@ -109,6 +90,25 @@ public class RefreshLimiterTest {
     @Test
     public void testTryAcquireTenPerSecond() {
         verifyTryAcquire(3000, 10.0d);
+    }
+
+    private MockOkHttpElasticApi mockApi() {
+        final MockOkHttpElasticApi elasticClient = new MockOkHttpElasticApi(delegate) {
+            @Override
+            public Call<Refresh> refreshIndex(final String names) {
+                refreshCount.incrementAndGet();
+                final Refresh response = ImmutableRefresh.builder() //
+                        .shards(
+                                ImmutableShards.builder() //
+                                        .successful(1) //
+                                        .failed(0) //
+                                        .total(1) //
+                                        .build()) //
+                        .build();
+                return delegate.returning(Calls.response(response)).refreshIndex(names);
+            }
+        };
+        return elasticClient;
     }
 
     private void verifyEnqueue(

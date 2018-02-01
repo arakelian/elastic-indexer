@@ -67,20 +67,6 @@ public class ComputeDigestTest {
         LOGGER.info("Mapping: \n{}", JacksonUtils.toString(mapping, true));
     }
 
-    private String md5(final String... values) {
-        MessageDigest func;
-        try {
-            func = MessageDigest.getInstance("MD5");
-        } catch (final NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        for (final String value : values) {
-            final byte[] bytes = value.getBytes(Charsets.UTF_8);
-            func.update(bytes);
-        }
-        return BaseEncoding.base64().omitPadding().encode(func.digest());
-    }
-
     @Test
     public void testName() throws IOException {
         // only include "name" field in Elastic document
@@ -103,6 +89,20 @@ public class ComputeDigestTest {
                         .mapping(mapping) //
                         .addIdentityField("name", "street", "zip") //
                         .build()));
+    }
+
+    private String md5(final String... values) {
+        MessageDigest func;
+        try {
+            func = MessageDigest.getInstance("MD5");
+        } catch (final NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        for (final String value : values) {
+            final byte[] bytes = value.getBytes(Charsets.UTF_8);
+            func.update(bytes);
+        }
+        return BaseEncoding.base64().omitPadding().encode(func.digest());
     }
 
     private void verifyDigest(final String expected, final ElasticDocBuilder builder) throws IOException {

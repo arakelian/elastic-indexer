@@ -48,55 +48,6 @@ public class DefaultValueProducerTest {
 
     private final ValueProducer producer = new DefaultValueProducer(JacksonUtils.getObjectMapper());
 
-    private void assertEquals(final List<?> expected, final List<?> actual) {
-        final int size = expected.size();
-        Assert.assertEquals(size, actual.size());
-        for (int i = 0; i < size; i++) {
-            final Object lhs = expected.get(i);
-            final Object rhs = actual.get(i);
-            if (lhs instanceof byte[] && rhs instanceof byte[]) {
-                Assert.assertArrayEquals((byte[]) lhs, (byte[]) rhs);
-            } else {
-                Assert.assertEquals(lhs, rhs);
-            }
-        }
-    }
-
-    private void assertFailure(final Field field, final List<String> inputs)
-            throws IOException, JsonProcessingException {
-
-        // inputs should fail individually
-        for (int i = 0, size = inputs.size(); i < size; i++) {
-            assertFailure(field, inputs.get(i));
-        }
-
-        // inputs should fail in an array
-        final String jsonArray = "[" + Joiner.on(",").join(inputs) + "]";
-        assertFailure(field, jsonArray);
-    }
-
-    private void assertFailure(final Field field, final String input) throws IOException {
-        final ValueCollector<Object> result = new ValueCollector<>();
-        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
-        final JsonNode node = mapper.readTree(input);
-        try {
-            producer.traverse(field, node, result);
-            Assert.fail("Should not have been able to deserialize \"" + input + "\" to " + result);
-        } catch (final ValueException ve) {
-            // expected
-        }
-    }
-
-    private List<Object> deserialize(final Field field, final String input)
-            throws IOException, JsonProcessingException {
-        final ValueCollector<Object> result = new ValueCollector<>();
-        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
-        final JsonNode node = mapper.readTree(input);
-        producer.traverse(field, node, result);
-        final List<Object> actual = result.get();
-        return actual;
-    }
-
     @Test
     public void testBinary() throws IOException {
         final Field field = ImmutableField.builder().name("field").type(Type.BINARY).build();
@@ -399,6 +350,55 @@ public class DefaultValueProducerTest {
 
         // objects should be handled
         assertEquals(deserialize(field, "{\"field\":\"value\"}"), ImmutableList.of("value"));
+    }
+
+    private void assertEquals(final List<?> expected, final List<?> actual) {
+        final int size = expected.size();
+        Assert.assertEquals(size, actual.size());
+        for (int i = 0; i < size; i++) {
+            final Object lhs = expected.get(i);
+            final Object rhs = actual.get(i);
+            if (lhs instanceof byte[] && rhs instanceof byte[]) {
+                Assert.assertArrayEquals((byte[]) lhs, (byte[]) rhs);
+            } else {
+                Assert.assertEquals(lhs, rhs);
+            }
+        }
+    }
+
+    private void assertFailure(final Field field, final List<String> inputs)
+            throws IOException, JsonProcessingException {
+
+        // inputs should fail individually
+        for (int i = 0, size = inputs.size(); i < size; i++) {
+            assertFailure(field, inputs.get(i));
+        }
+
+        // inputs should fail in an array
+        final String jsonArray = "[" + Joiner.on(",").join(inputs) + "]";
+        assertFailure(field, jsonArray);
+    }
+
+    private void assertFailure(final Field field, final String input) throws IOException {
+        final ValueCollector<Object> result = new ValueCollector<>();
+        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
+        final JsonNode node = mapper.readTree(input);
+        try {
+            producer.traverse(field, node, result);
+            Assert.fail("Should not have been able to deserialize \"" + input + "\" to " + result);
+        } catch (final ValueException ve) {
+            // expected
+        }
+    }
+
+    private List<Object> deserialize(final Field field, final String input)
+            throws IOException, JsonProcessingException {
+        final ValueCollector<Object> result = new ValueCollector<>();
+        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
+        final JsonNode node = mapper.readTree(input);
+        producer.traverse(field, node, result);
+        final List<Object> actual = result.get();
+        return actual;
     }
 
     private void verifyDeserializer(final Field field, final List<String> inputs, final List<?> outputs)

@@ -121,31 +121,6 @@ public abstract class ElasticDocConfig {
     }
 
     /**
-     * Returns a list of source paths and the {@link Field}s to which it is indexed.
-     *
-     * @return list of source paths and the {@link Field}s to which it is indexed.
-     */
-    @JsonIgnore
-    @Value.Lazy
-    protected Multimap<JsonPointer, Field> getSourcePathsMapping() {
-        final Multimap<JsonPointer, Field> result = LinkedHashMultimap.create();
-        final Mapping mapping = getMapping();
-
-        final Multimap<String, JsonPointer> targets = getTargets();
-        for (final String target : targets.keySet()) {
-            final Field field = mapping.getField(target);
-            if (field == null) {
-                throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
-            }
-            for (final JsonPointer path : targets.get(target)) {
-                result.put(path, field);
-            }
-        }
-
-        return result;
-    }
-
-    /**
      * Returns a list of source paths that should be mapped to each Elastic field.
      *
      * @return list of source paths that should be mapped to each Elastic field.
@@ -168,6 +143,31 @@ public abstract class ElasticDocConfig {
     @Value.Auxiliary
     public boolean isCompact() {
         return true;
+    }
+
+    /**
+     * Returns a list of source paths and the {@link Field}s to which it is indexed.
+     *
+     * @return list of source paths and the {@link Field}s to which it is indexed.
+     */
+    @JsonIgnore
+    @Value.Lazy
+    protected Multimap<JsonPointer, Field> getSourcePathsMapping() {
+        final Multimap<JsonPointer, Field> result = LinkedHashMultimap.create();
+        final Mapping mapping = getMapping();
+
+        final Multimap<String, JsonPointer> targets = getTargets();
+        for (final String target : targets.keySet()) {
+            final Field field = mapping.getField(target);
+            if (field == null) {
+                throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
+            }
+            for (final JsonPointer path : targets.get(target)) {
+                result.put(path, field);
+            }
+        }
+
+        return result;
     }
 
     @JsonIgnore

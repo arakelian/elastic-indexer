@@ -361,6 +361,10 @@ public class WriteAggregationVisitor extends AggregationVisitor {
         return writer;
     }
 
+    private void writeFieldValue(final String field, final Object value) throws IOException {
+        Search.writeFieldValue(writer, field, value);
+    }
+
     /**
      * Serialize an array of sorts
      *
@@ -384,10 +388,6 @@ public class WriteAggregationVisitor extends AggregationVisitor {
             writer.writeEndObject();
         }
         writer.writeEndArray();
-    }
-
-    private void writeFieldValue(final String field, final Object value) throws IOException {
-        Search.writeFieldValue(writer, field, value);
     }
 
     private void writeValueSource(final ValuesSourceAggregation agg) throws IOException {

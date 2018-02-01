@@ -133,24 +133,6 @@ public class ElasticClientWithRetry implements ElasticClient {
         });
     }
 
-    protected <T> T executeWithRetry(final Callable<T> callable) throws ElasticException {
-        try {
-            @SuppressWarnings("unchecked")
-            final T response = (T) retryer.call(() -> {
-                return callable.call();
-            });
-            return response;
-        } catch (final ExecutionException e) {
-            final Throwable cause = e.getCause();
-            if (cause instanceof ElasticException) {
-                throw (ElasticException) cause;
-            }
-            throw new ElasticException(e);
-        } catch (final RetryException e) {
-            throw new ElasticException(e);
-        }
-    }
-
     @Override
     public Document getDocument(
             final String name,
@@ -225,5 +207,23 @@ public class ElasticClientWithRetry implements ElasticClient {
         return executeWithRetry(() -> {
             return delegate.search(name, search);
         });
+    }
+
+    protected <T> T executeWithRetry(final Callable<T> callable) throws ElasticException {
+        try {
+            @SuppressWarnings("unchecked")
+            final T response = (T) retryer.call(() -> {
+                return callable.call();
+            });
+            return response;
+        } catch (final ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof ElasticException) {
+                throw (ElasticException) cause;
+            }
+            throw new ElasticException(e);
+        } catch (final RetryException e) {
+            throw new ElasticException(e);
+        }
     }
 }

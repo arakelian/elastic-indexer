@@ -40,6 +40,15 @@ import com.google.common.collect.ImmutableSortedSet;
 @JsonDeserialize(builder = ImmutableTermsQuery.Builder.class)
 @JsonTypeName(Query.TERMS_QUERY)
 public interface TermsQuery extends StandardQuery {
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @Value.Default
+    @Value.NaturalOrder
+    public default SortedSet<String> getValues() {
+        return ImmutableSortedSet.of();
+    }
+
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -52,15 +61,6 @@ public interface TermsQuery extends StandardQuery {
         } finally {
             visitor.leave(this);
         }
-    }
-
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Value.Default
-    @Value.NaturalOrder
-    public default SortedSet<String> getValues() {
-        return ImmutableSortedSet.of();
     }
 
     @Override

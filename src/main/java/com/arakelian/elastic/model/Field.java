@@ -65,6 +65,17 @@ public abstract class Field implements Serializable {
         }
     }
 
+    public static class SubfieldSerializer extends ExcludeSerializer<Field> {
+        private static final com.fasterxml.jackson.core.filter.TokenFilter FILTER = CompoundTokenFilter.of( //
+                new JsonPointerNotMatchedFilter("/name"), //
+                new JsonPointerNotMatchedFilter("/include_in_all") //
+        );
+
+        public SubfieldSerializer() {
+            super(Field.class, FILTER);
+        }
+    }
+
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
     public enum TermVector {
         NO, //
@@ -138,10 +149,6 @@ public abstract class Field implements Serializable {
         return another instanceof ImmutableField && equalTo((ImmutableField) another);
     }
 
-    private boolean equalTo(final ImmutableField another) {
-        return getName().equals(another.getName());
-    }
-
     /**
      * Returns the analyzer used by this field.
      *
@@ -204,17 +211,6 @@ public abstract class Field implements Serializable {
     @JsonProperty("copy_to")
     @JsonView(Elastic.class)
     public abstract List<String> getCopyTo();
-
-    public static class SubfieldSerializer extends ExcludeSerializer<Field> {
-        private static final com.fasterxml.jackson.core.filter.TokenFilter FILTER = CompoundTokenFilter.of( //
-                new JsonPointerNotMatchedFilter("/name"), //
-                new JsonPointerNotMatchedFilter("/include_in_all") //
-        );
-
-        public SubfieldSerializer() {
-            super(Field.class, FILTER);
-        }
-    }
 
     @Value.Default
     @Value.Auxiliary
@@ -487,5 +483,9 @@ public abstract class Field implements Serializable {
             return null;
         }
         return type == Type.BINARY;
+    }
+
+    private boolean equalTo(final ImmutableField another) {
+        return getName().equals(another.getName());
     }
 }

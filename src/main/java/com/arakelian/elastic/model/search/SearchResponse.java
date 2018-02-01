@@ -39,15 +39,15 @@ public interface SearchResponse extends Serializable {
     @Nullable
     @Value.Default
     @Value.Auxiliary
-    public default SearchHits getHits() {
-        return ImmutableSearchHits.builder().build();
+    public default Map<String, Object> getAggregations() {
+        return ImmutableMap.of();
     }
 
     @Nullable
     @Value.Default
     @Value.Auxiliary
-    public default Map<String, Object> getAggregations() {
-        return ImmutableMap.of();
+    public default SearchHits getHits() {
+        return ImmutableSearchHits.builder().build();
     }
 
     @Nullable

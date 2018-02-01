@@ -90,9 +90,9 @@ public interface HistogramAggregation extends BucketAggregation, ValuesSourceAgg
 
     /**
      * Returns the bucket order.
-     * 
+     *
      * @return the bucket order
-     * 
+     *
      * @see <a href=
      *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/InternalOrder.java">InternalOrder.java</a>
      */

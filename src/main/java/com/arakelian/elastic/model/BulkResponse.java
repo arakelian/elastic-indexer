@@ -83,11 +83,6 @@ public interface BulkResponse {
     @JsonSerialize(as = ImmutableItem.class)
     @JsonDeserialize(builder = ImmutableItem.Builder.class)
     public abstract class Item {
-        @Value.Check
-        protected void checkItem() {
-            Preconditions.checkState(get() != null, "Must have one of " + Arrays.toString(Action.values()));
-        }
-
         @Value.Derived
         public BulkOperationResponse get() {
             if (getCreate() != null) {
@@ -142,6 +137,11 @@ public interface BulkResponse {
         public boolean isSuccessful() {
             final int code = get().getStatus();
             return code >= 200 && code < 300;
+        }
+
+        @Value.Check
+        protected void checkItem() {
+            Preconditions.checkState(get() != null, "Must have one of " + Arrays.toString(Action.values()));
         }
     }
 

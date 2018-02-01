@@ -69,54 +69,6 @@ public abstract class BulkOperation {
         }
     }
 
-    private void addActionAndMetadata(final StringBuilder buf) {
-        final Action action = getAction();
-
-        buf.append('{');
-        buf.append("\"").append(action.toString()).append("\"").append(':');
-        buf.append('{');
-
-        buf.append("\"_index\"").append(':');
-        buf.append('"').append(getIndex().getName()).append('"');
-
-        buf.append(',');
-        buf.append("\"_type\"").append(':');
-        buf.append('"').append(getType()).append('"');
-
-        buf.append(',');
-        buf.append("\"_id\"").append(':');
-        buf.append('"').append(getId()).append('"');
-
-        if (getVersion() != null) {
-            buf.append(',');
-            buf.append("\"_version\"").append(':');
-            buf.append(getVersion());
-            if (getVersionType() != null) {
-                buf.append(',');
-                buf.append("\"version_type\"").append(':');
-                buf.append('"').append(getVersionType()).append('"');
-            }
-        }
-
-        buf.append('}');
-        buf.append('}');
-        buf.append('\n');
-    }
-
-    @Value.Check
-    protected void checkSource() {
-        if (getAction().hasSource()) {
-            final String source = getCompactSource();
-            Preconditions.checkState(source != null && source.length() != 0, "Source must be non-empty");
-            Preconditions.checkState(
-                    source.indexOf('\n') == -1,
-                    "Newlines are not allowed in source JSON document when using Elastic bulk API");
-            Preconditions.checkState(
-                    !StringUtils.equals(getType(), Mapping._DEFAULT_),
-                    "It is forbidden to index into the _default_ mapping");
-        }
-    }
-
     /**
      * Returns mapping type within index.
      *
@@ -183,5 +135,53 @@ public abstract class BulkOperation {
     @Value.Default
     public VersionType getVersionType() {
         return getVersion() != null ? VersionType.EXTERNAL : null;
+    }
+
+    private void addActionAndMetadata(final StringBuilder buf) {
+        final Action action = getAction();
+
+        buf.append('{');
+        buf.append("\"").append(action.toString()).append("\"").append(':');
+        buf.append('{');
+
+        buf.append("\"_index\"").append(':');
+        buf.append('"').append(getIndex().getName()).append('"');
+
+        buf.append(',');
+        buf.append("\"_type\"").append(':');
+        buf.append('"').append(getType()).append('"');
+
+        buf.append(',');
+        buf.append("\"_id\"").append(':');
+        buf.append('"').append(getId()).append('"');
+
+        if (getVersion() != null) {
+            buf.append(',');
+            buf.append("\"_version\"").append(':');
+            buf.append(getVersion());
+            if (getVersionType() != null) {
+                buf.append(',');
+                buf.append("\"version_type\"").append(':');
+                buf.append('"').append(getVersionType()).append('"');
+            }
+        }
+
+        buf.append('}');
+        buf.append('}');
+        buf.append('\n');
+    }
+
+    @Value.Check
+    protected void checkSource() {
+        if (getAction().hasSource()) {
+            final String source = getCompactSource();
+            Preconditions.checkState(source != null && source.length() != 0, "Source must be non-empty");
+            Preconditions.checkState(
+                    source.indexOf('\n') == -1,
+                    "Newlines are not allowed in source JSON document when using Elastic bulk API");
+            Preconditions.checkState(
+                    !StringUtils.equals(getType(), Mapping._DEFAULT_),
+                    "It is forbidden to index into the _default_ mapping");
+        }
     }
 }

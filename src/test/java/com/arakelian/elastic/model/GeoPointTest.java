@@ -73,14 +73,6 @@ public class GeoPointTest {
         JacksonTestUtils.testReadWrite(POINT, GeoPoint.class);
     }
 
-    private GeoPoint testJackson(final String value, final double lat, final double lon) throws IOException {
-        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
-        final GeoPoint point = mapper.readValue(value, GeoPoint.class);
-        assertEquals(lat, point.getLat(), 0.001d);
-        assertEquals(lon, point.getLon(), 0.001d);
-        return point;
-    }
-
     @Test
     public void testRounding() {
         final GeoPoint point = GeoPoint.of("drm3btev3e86");
@@ -94,5 +86,13 @@ public class GeoPointTest {
     @Test
     public void testSerializable() {
         SerializableTestUtils.testSerializable(POINT, GeoPoint.class);
+    }
+
+    private GeoPoint testJackson(final String value, final double lat, final double lon) throws IOException {
+        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
+        final GeoPoint point = mapper.readValue(value, GeoPoint.class);
+        assertEquals(lat, point.getLat(), 0.001d);
+        assertEquals(lon, point.getLon(), 0.001d);
+        return point;
     }
 }

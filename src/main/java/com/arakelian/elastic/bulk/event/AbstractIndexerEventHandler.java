@@ -20,8 +20,6 @@ package com.arakelian.elastic.bulk.event;
 import com.lmax.disruptor.EventHandler;
 
 public abstract class AbstractIndexerEventHandler implements EventHandler<IndexerEvent> {
-    protected abstract void handle(IndexerEvent event, long sequence, boolean endOfBatch) throws Exception;
-
     @Override
     public void onEvent(final IndexerEvent event, final long sequence, final boolean endOfBatch)
             throws Exception {
@@ -31,4 +29,6 @@ public abstract class AbstractIndexerEventHandler implements EventHandler<Indexe
             event.reset();
         }
     }
+
+    protected abstract void handle(IndexerEvent event, long sequence, boolean endOfBatch) throws Exception;
 }

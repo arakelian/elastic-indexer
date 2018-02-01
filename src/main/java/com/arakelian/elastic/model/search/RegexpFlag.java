@@ -19,7 +19,7 @@ package com.arakelian.elastic.model.search;
 
 /**
  * Regular expression flags that can be applied to {@link Query}.
- * 
+ *
  * @see <a href=
  *      "http://lucene.apache.org/core/4_9_0/core/org/apache/lucene/util/automaton/RegExp.html">Lucene
  *      documentation</a>
