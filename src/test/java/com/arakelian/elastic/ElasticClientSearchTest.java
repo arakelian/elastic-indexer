@@ -17,18 +17,11 @@
 
 package com.arakelian.elastic;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import com.arakelian.core.utils.DateUtils;
-import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.search.ImmutableBoolQuery;
 import com.arakelian.elastic.model.search.ImmutableExistsQuery;
 import com.arakelian.elastic.model.search.ImmutableFuzzyQuery;
@@ -42,13 +35,10 @@ import com.arakelian.elastic.model.search.ImmutableSearch;
 import com.arakelian.elastic.model.search.ImmutableTermsQuery;
 import com.arakelian.elastic.model.search.ImmutableWildcardQuery;
 import com.arakelian.elastic.model.search.Operator;
+import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.RegexpFlag;
 import com.arakelian.elastic.model.search.Search;
-import com.arakelian.elastic.model.search.SearchHits;
-import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.faker.model.Person;
-
-import net.javacrumbs.jsonunit.JsonAssert;
 
 public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     public ElasticClientSearchTest(final String version) throws Exception {
@@ -60,10 +50,11 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
         withPeople(10, (index, people) -> {
             final Person person = people.get(0);
 
-            final ImmutableQueryStringQuery query = ImmutableQueryStringQuery.builder() //
+            final QueryStringQuery query = ImmutableQueryStringQuery.builder() //
                     .defaultField("lastName") //
                     .queryString(person.getLastName()) //
                     .build();
+
             assertSearchFindsPerson(
                     index,
                     ImmutableSearch.builder() //
@@ -351,71 +342,5 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
 
             assertSearchFindsPerson(index, search, person);
         });
-    }
-
-    private SearchHits assertSearchFinds(final Index index, final Search search, final int expectedTotal) {
-        final SearchResponse result = search(index, search);
-
-        // verify we have a match
-        final SearchHits hits = result.getHits();
-        final int total = hits.getTotal();
-        if (expectedTotal > 0) {
-            assertEquals(expectedTotal, total);
-        } else {
-            final int leastExpected = -expectedTotal;
-            assertTrue(
-                    "Expected at least " + Integer.toString(leastExpected) + " but found " + total,
-                    total >= leastExpected);
-        }
-        return hits;
-    }
-
-    private void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
-        final SearchHits hits = assertSearchFinds(index, search, -1);
-
-        final String id = person.getId();
-        for (int i = 0, size = hits.getSize(); i < size; i++) {
-            if (!id.equals(hits.getString(i, "_source/id"))) {
-                continue;
-            }
-
-            final Map<String, Object> hit = hits.get(i);
-            JsonAssert.assertJsonPartEquals(id, hit, "_source.id");
-            JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
-            JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
-            JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
-            JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
-            JsonAssert.assertJsonPartEquals(
-                    DateUtils.toStringIsoFormat(person.getBirthdate()),
-                    hit,
-                    "_source.birthdate");
-            return;
-        }
-
-        fail("Unable to find any match for " + person);
-    }
-
-    private void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
-        final SearchHits hits = assertSearchFinds(index, search, 1);
-
-        final Map<String, Object> hit = hits.get(0);
-        JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
-        JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
-        JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
-        JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
-        JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
-        JsonAssert.assertJsonPartEquals(
-                DateUtils.toStringIsoFormat(person.getBirthdate()),
-                hit,
-                "_source.birthdate");
-    }
-
-    private SearchResponse search(final Index index, final Search search) {
-        // make sure index has been refreshed
-        elasticClient.refreshIndex(index.getName());
-
-        // perform search
-        final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
-        return result;
     }
 }

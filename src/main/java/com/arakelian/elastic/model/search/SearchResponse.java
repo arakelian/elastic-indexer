@@ -18,6 +18,7 @@
 package com.arakelian.elastic.model.search;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import org.immutables.value.Value;
 
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableMap;
 
 @Value.Immutable
 @JsonSerialize(as = ImmutableSearchResponse.class)
@@ -39,6 +41,13 @@ public interface SearchResponse extends Serializable {
     @Value.Auxiliary
     public default SearchHits getHits() {
         return ImmutableSearchHits.builder().build();
+    }
+
+    @Nullable
+    @Value.Default
+    @Value.Auxiliary
+    public default Map<String, Object> getAggregations() {
+        return ImmutableMap.of();
     }
 
     @Nullable

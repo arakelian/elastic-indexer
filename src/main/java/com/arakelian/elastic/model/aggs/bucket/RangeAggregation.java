@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
+import com.arakelian.elastic.search.AggregationVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -42,11 +43,25 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableRangeAggregation.Builder.class)
 @JsonTypeName(Aggregation.RANGE_AGGREGATION)
 public interface RangeAggregation extends BucketAggregation, ValuesSourceAggregation {
-    @Nullable
-    public Boolean isKeyed();
-
     @Value.Default
     public default List<Range> getRanges() {
         return ImmutableList.of();
+    }
+
+    @Nullable
+    public Boolean isKeyed();
+
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterRange(this)) {
+                visitor.leaveRange(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
     }
 }

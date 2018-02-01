@@ -27,6 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class CardinalityAggregationTest {
     public static final CardinalityAggregation MINIMAL = ImmutableCardinalityAggregation.builder() //
             .name("my_aggregation") //
+            .field("field") //
             .build();
 
     @Test

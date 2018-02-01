@@ -27,6 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class ExtendedStatsAggregationTest {
     public static final ExtendedStatsAggregation MINIMAL = ImmutableExtendedStatsAggregation.builder() //
             .name("my_aggregation") //
+            .field("field") //
             .build();
 
     @Test

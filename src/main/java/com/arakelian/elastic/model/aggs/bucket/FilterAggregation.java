@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import org.immutables.value.Value;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.model.search.Query;
+import com.arakelian.elastic.search.AggregationVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * Defines a single bucket of all the documents in the current document set context that match a
  * specified filter. Often this will be used to narrow down the current aggregation context to a
  * specific set of documents.
- * 
+ *
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filters-aggregation.html">Filters
  *      Aggregation</a>
@@ -43,4 +44,18 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonTypeName(Aggregation.FILTER_AGGREGATION)
 public interface FilterAggregation extends BucketAggregation {
     public Query getFilter();
+
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterFilter(this)) {
+                visitor.leaveFilter(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
 }

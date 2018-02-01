@@ -42,10 +42,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
-public class ElasticQueryDslVisitor extends QueryVisitor {
+public class WriteQueryVisitor extends QueryVisitor {
     private final JsonGenerator writer;
 
-    public ElasticQueryDslVisitor(final JsonGenerator writer) {
+    public WriteQueryVisitor(final JsonGenerator writer) {
         this.writer = Preconditions.checkNotNull(writer);
     }
 
@@ -133,7 +133,7 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
             writer.writeFieldName("match");
             writer.writeStartObject();
             writer.writeFieldName(match.getFieldName());
-            
+
             final Object value = match.getValue();
             if (value instanceof CharSequence && match.hasMatchDefaults()) {
                 writer.writeObject(value);
@@ -331,37 +331,7 @@ public class ElasticQueryDslVisitor extends QueryVisitor {
     }
 
     private void writeFieldValue(final String field, final Object value) throws IOException {
-        if (value == null) {
-            // omit null values
-            return;
-        }
-
-        if (value instanceof Collection) {
-            final Collection c = (Collection) value;
-            if (c.size() == 0) {
-                // omit empty collections
-                return;
-            }
-            writer.writeFieldName(field);
-            writer.writeStartArray();
-            for (final Object o : c) {
-                writer.writeObject(o);
-            }
-            writer.writeEndArray();
-            return;
-        }
-
-        if (value instanceof CharSequence) {
-            final CharSequence csq = (CharSequence) value;
-            if (csq.length() == 0) {
-                // omit empty strings
-                return;
-            }
-        }
-
-        // output value
-        writer.writeFieldName(field);
-        writer.writeObject(value);
+        Search.writeFieldValue(writer, field, value);
     }
 
     private void writeFieldValue(final String field, final String value) throws IOException {

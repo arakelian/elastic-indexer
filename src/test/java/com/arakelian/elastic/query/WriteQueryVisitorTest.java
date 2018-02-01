@@ -34,8 +34,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.javacrumbs.jsonunit.JsonAssert;
 
-public class ElasticQueryDslVisitorTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticQueryDslVisitorTest.class);
+public class WriteQueryVisitorTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WriteQueryVisitorTest.class);
 
     private static final QueryStringQuery QUERY_STRING_QUERY = ImmutableQueryStringQuery.builder() //
             .addField("content", "name") //
@@ -83,7 +83,7 @@ public class ElasticQueryDslVisitorTest {
 
     @Test
     public void testQueryStringQuery() {
-        validateQueryDsl(ElasticQueryDslVisitorTest.QUERY_STRING_QUERY, "" + //
+        validateQueryDsl(WriteQueryVisitorTest.QUERY_STRING_QUERY, "" + //
                 "{\n" + //
                 "  \"query\" : {\n" + //
                 "    \"query_string\" : {\n" + //
@@ -97,7 +97,7 @@ public class ElasticQueryDslVisitorTest {
     @Test
     public void testTermsQuery() {
         validateQueryDsl(
-                ElasticQueryDslVisitorTest.TERMS_QUERY, //
+                WriteQueryVisitorTest.TERMS_QUERY, //
                 "" + //
                         "{\n" + //
                         "  \"query\" : {\n" + //

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,22 +29,6 @@ import com.google.common.base.Preconditions;
 @JsonDeserialize(builder = ImmutableRange.Builder.class)
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
 public interface Range {
-    public String getKey();
-
-    @Nullable
-    public Object getFrom();
-
-    @Nullable
-    public Object getTo();
-
-    /**
-     * Returns a CIDR mask that defines a range.
-     * 
-     * @return a CIDR mask that defines a range.
-     */
-    @Nullable
-    public String getMask();
-
     @Value.Check
     public default void checkRange() {
         final Object from = getFrom();
@@ -66,4 +50,20 @@ public interface Range {
             throw new IllegalStateException("Range must define a 'from' or 'to' value");
         }
     }
+
+    @Nullable
+    public Object getFrom();
+
+    public String getKey();
+
+    /**
+     * Returns a CIDR mask that defines a range.
+     *
+     * @return a CIDR mask that defines a range.
+     */
+    @Nullable
+    public String getMask();
+
+    @Nullable
+    public Object getTo();
 }

@@ -27,6 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class TermsAggregationTest {
     public static final TermsAggregation MINIMAL = ImmutableTermsAggregation.builder() //
             .name("my_aggregation") //
+            .field("field") //
             .build();
 
     @Test

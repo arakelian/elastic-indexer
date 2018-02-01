@@ -26,8 +26,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.search.ElasticQueryDslVisitor;
+import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.search.OmitEmptyVisitor;
+import com.arakelian.elastic.search.WriteAggregationVisitor;
+import com.arakelian.elastic.search.WriteQueryVisitor;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -38,7 +40,7 @@ import com.google.common.collect.ImmutableList;
 @JsonSerialize(as = ImmutableSearch.class)
 @JsonDeserialize(builder = ImmutableSearch.Builder.class)
 @JsonPropertyOrder({ "scroll", "scrollId", "from", "size", "searchType", "terminateAfter", "sourceFilter",
-        "query", "sort", "version", "explain", "batchedReduceSize", "preference" })
+        "query", "sort", "aggregation", "version", "explain", "batchedReduceSize", "preference" })
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
 public interface Search extends Serializable {
     /**
@@ -101,10 +103,10 @@ public interface Search extends Serializable {
         }
 
         final Query query = search.getQuery();
-        if (!query.isEmpty()) {
+        if (query != null && !query.isEmpty()) {
             writer.writeFieldName("query");
             writer.writeStartObject();
-            query.accept(new OmitEmptyVisitor(new ElasticQueryDslVisitor(writer)));
+            query.accept(new OmitEmptyVisitor(new WriteQueryVisitor(writer)));
             writer.writeEndObject(); // query
         }
 
@@ -114,11 +116,36 @@ public interface Search extends Serializable {
             serialize(writer, sort);
         }
 
+        final List<Aggregation> aggregations = search.getAggregations();
+        if (!aggregations.isEmpty()) {
+            writeAggregations(aggregations, new WriteAggregationVisitor(writer));
+        }
+
         writeFieldValue(writer, "version", search.isVersion());
         writeFieldValue(writer, "explain", search.isExplain());
         writeFieldValue(writer, "batched_reduce_size", search.getBatchedReduceSize());
 
         writer.writeEndObject();
+    }
+
+    public static void writeAggregations(
+            final List<Aggregation> aggregations,
+            final WriteAggregationVisitor visitor) throws IOException {
+        if (aggregations.isEmpty()) {
+            return;
+        }
+
+        final JsonGenerator writer = visitor.getWriter();
+        writer.writeFieldName("aggregations");
+        writer.writeStartObject();
+        for (Aggregation agg : aggregations) {
+            writer.writeFieldName(agg.getName());
+            writer.writeStartObject();
+            agg.accept(visitor);
+            writeAggregations(agg.getSubAggregations(), visitor);
+            writer.writeEndObject(); // name
+        }
+        writer.writeEndObject(); // aggregations
     }
 
     public static void writeArrayOf(final JsonGenerator writer, final Collection<String> values)
@@ -128,14 +155,6 @@ public interface Search extends Serializable {
             writer.writeString(value);
         }
         writer.writeEndArray();
-    }
-
-    public static void writeFieldValue(final JsonGenerator writer, final String field, final Object value)
-            throws IOException {
-        if (value != null) {
-            writer.writeFieldName(field);
-            writer.writeObject(value);
-        }
     }
 
     public static void writeFieldValue(final JsonGenerator writer, final String field, final String value)
@@ -156,6 +175,41 @@ public interface Search extends Serializable {
         }
     }
 
+    public static void writeFieldValue(final JsonGenerator writer, final String field, final Object value)
+            throws IOException {
+        if (value == null) {
+            // omit null values
+            return;
+        }
+
+        if (value instanceof Collection) {
+            final Collection c = (Collection) value;
+            if (c.size() == 0) {
+                // omit empty collections
+                return;
+            }
+            writer.writeFieldName(field);
+            writer.writeStartArray();
+            for (final Object o : c) {
+                writer.writeObject(o);
+            }
+            writer.writeEndArray();
+            return;
+        }
+
+        if (value instanceof CharSequence) {
+            final CharSequence csq = (CharSequence) value;
+            if (csq.length() == 0) {
+                // omit empty strings
+                return;
+            }
+        }
+
+        // output value
+        writer.writeFieldName(field);
+        writer.writeObject(value);
+    }
+
     @Nullable
     public Integer getBatchedReduceSize();
 
@@ -167,6 +221,11 @@ public interface Search extends Serializable {
 
     @Nullable
     public Query getQuery();
+
+    @Value.Default
+    public default List<Aggregation> getAggregations() {
+        return ImmutableList.of();
+    }
 
     @Nullable
     public String getScroll();

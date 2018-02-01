@@ -85,10 +85,6 @@ public class QueryVisitor {
         return true;
     }
 
-    protected int getDepth() {
-        return depth.get();
-    }
-
     public void leave(final Query query) {
         depth.decrementAndGet();
     }
@@ -124,5 +120,9 @@ public class QueryVisitor {
     }
 
     public void leaveWildcardQuery(final WildcardQuery wildcardQuery) {
+    }
+
+    protected int getDepth() {
+        return depth.get();
     }
 }

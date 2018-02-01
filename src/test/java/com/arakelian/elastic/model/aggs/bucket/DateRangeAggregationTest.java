@@ -27,6 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class DateRangeAggregationTest {
     public static final DateRangeAggregation MINIMAL = ImmutableDateRangeAggregation.builder() //
             .name("my_aggregation") //
+            .field("field") //
             .build();
 
     @Test

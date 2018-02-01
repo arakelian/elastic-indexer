@@ -20,9 +20,11 @@ package com.arakelian.elastic;
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.arakelian.core.utils.DateUtils;
 import com.arakelian.docker.junit.Container;
 import com.arakelian.docker.junit.DockerRule;
 import com.arakelian.docker.junit.model.DockerConfig;
@@ -52,12 +55,16 @@ import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.model.search.Search;
+import com.arakelian.elastic.model.search.SearchHits;
+import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
 
+import net.javacrumbs.jsonunit.JsonAssert;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
@@ -86,7 +93,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
-                "5.2.1", //
+                // "5.2.1", //
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
@@ -314,6 +321,77 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             }
             callback.accept(index, people);
         });
+    }
+
+    protected SearchResponse search(final Index index, final Search search) {
+        // make sure index has been refreshed
+        elasticClient.refreshIndex(index.getName());
+
+        // perform search
+        final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
+        return result;
+    }
+
+    protected SearchResponse assertSearchFinds(
+            final Index index,
+            final Search search,
+            final int expectedTotal) {
+        final SearchResponse response = search(index, search);
+
+        // verify we have a match
+        final SearchHits hits = response.getHits();
+        final int total = hits.getTotal();
+        if (expectedTotal > 0) {
+            assertEquals(expectedTotal, total);
+        } else {
+            final int leastExpected = -expectedTotal;
+            assertTrue(
+                    "Expected at least " + Integer.toString(leastExpected) + " but found " + total,
+                    total >= leastExpected);
+        }
+        return response;
+    }
+
+    protected void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, -1);
+        final SearchHits hits = response.getHits();
+
+        final String id = person.getId();
+        for (int i = 0, size = hits.getSize(); i < size; i++) {
+            if (!id.equals(hits.getString(i, "_source/id"))) {
+                continue;
+            }
+
+            final Map<String, Object> hit = hits.get(i);
+            JsonAssert.assertJsonPartEquals(id, hit, "_source.id");
+            JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
+            JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
+            JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
+            JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
+            JsonAssert.assertJsonPartEquals(
+                    DateUtils.toStringIsoFormat(person.getBirthdate()),
+                    hit,
+                    "_source.birthdate");
+            return;
+        }
+
+        fail("Unable to find any match for " + person);
+    }
+
+    protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, 1);
+        final SearchHits hits = response.getHits();
+
+        final Map<String, Object> hit = hits.get(0);
+        JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
+        JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
+        JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
+        JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
+        JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
+        JsonAssert.assertJsonPartEquals(
+                DateUtils.toStringIsoFormat(person.getBirthdate()),
+                hit,
+                "_source.birthdate");
     }
 
     public void withPersonIndex(final WithIndexCallback test) throws IOException {

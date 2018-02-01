@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.model.search.Query;
+import com.arakelian.elastic.search.AggregationVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -33,7 +34,7 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Defines a multi bucket aggregation where each bucket is associated with a filter. Each bucket
  * will collect all documents that match its associated filter.
- * 
+ *
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filters-aggregation.html">Filters
  *      Aggregation</a>
@@ -51,11 +52,25 @@ public interface FiltersAggregation extends BucketAggregation {
     }
 
     @Nullable
+    public String getOtherBucketKey();
+
+    @Nullable
     public Boolean isKeyed();
 
     @Nullable
     public Boolean isOtherBucket();
 
-    @Nullable
-    public String getOtherBucketKey();
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterFilters(this)) {
+                visitor.leaveFilters(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
 }

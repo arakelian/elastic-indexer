@@ -27,6 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class MinAggregationTest {
     public static final MinAggregation MINIMAL = ImmutableMinAggregation.builder() //
             .name("my_aggregation") //
+            .field("field") //
             .build();
 
     @Test

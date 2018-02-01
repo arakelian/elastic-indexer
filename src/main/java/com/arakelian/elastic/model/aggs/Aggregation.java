@@ -56,7 +56,19 @@ import com.arakelian.elastic.search.AggregationVisitor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.collect.ImmutableList;
 
+/**
+ * The aggregations framework helps provide aggregated data based on a search query. It is based on
+ * simple building blocks called aggregations, that can be composed in order to build complex
+ * summaries of the data.
+ *
+ * <p>
+ * An aggregation can be seen as a unit-of-work that builds analytic information over a set of
+ * documents. The context of the execution defines what this document set is (e.g. a top-level
+ * aggregation executes within the context of the executed query/filters of the search request).
+ * </p>
+ */
 @JsonTypeInfo(property = "type", use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({ //
         // metric aggregations
@@ -155,6 +167,11 @@ public interface Aggregation extends Serializable {
      * @return name of the aggregation
      */
     public String getName();
+
+    @Value.Default
+    public default List<Aggregation> getSubAggregations() {
+        return ImmutableList.of();
+    }
 
     @JsonIgnore
     @Value.Derived

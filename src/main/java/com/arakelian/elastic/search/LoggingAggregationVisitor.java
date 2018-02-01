@@ -15,21 +15,29 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.aggs.bucket;
+package com.arakelian.elastic.search;
 
-/**
- * Deferring calculation of child aggregations
- *
- * For fields with many unique terms and a small number of required results it can be more efficient
- * to delay the calculation of child aggregations until the top parent-level aggs have been pruned.
- * Ordinarily, all branches of the aggregation tree are expanded in one depth-first pass and only
- * then any pruning occurs. In some scenarios this can be very wasteful and can hit memory
- * constraints.
- *
- * @see <a href=
- *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_collect_mode">Collect
- *      Mode</a>
- */
-public enum CollectMode {
-    BREADTH_FIRST, DEPTH_FIRST;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.arakelian.elastic.model.aggs.Aggregation;
+
+public class LoggingAggregationVisitor extends DelegatingAggregationVisitor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggingAggregationVisitor.class);
+
+    public LoggingAggregationVisitor(final AggregationVisitor delegate) {
+        super(delegate);
+    }
+
+    @Override
+    public boolean enter(final Aggregation agg) {
+        LOGGER.info("Entering {}", agg);
+        return super.enter(agg);
+    }
+
+    @Override
+    public void leave(final Aggregation agg) {
+        LOGGER.info("Leaving {}", agg);
+        super.leave(agg);
+    }
 }
