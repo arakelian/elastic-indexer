@@ -241,10 +241,11 @@ public interface Highlighter extends Serializable {
     /**
      * Returns the maximum number of fragments to return.
      *
-     * <p[>If the number of fragments is set to 0, no fragments are returned. Instead, the entire
-     * field contents are highlighted and returned. This can be handy when you need to highlight
-     * short texts such as a title or address, but fragmentation is not required. If
-     * number_of_fragments is 0, fragment_size is ignored. Defaults to 5.
+     * <p>
+     * If the number of fragments is set to 0, no fragments are returned. Instead, the entire field
+     * contents are highlighted and returned. This can be handy when you need to highlight short
+     * texts such as a title or address, but fragmentation is not required. If number_of_fragments
+     * is 0, fragment_size is ignored. Defaults to 5.
      * </p>
      *
      * @return the maximum number of fragments to return.
