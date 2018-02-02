@@ -95,6 +95,6 @@ dependencies {
     testCompile 'com.arakelian:more-commons:1.7.2:tests'
     testCompile 'com.arakelian:jackson-utils:1.7.5:tests'
     testCompile 'com.arakelian:docker-junit-rule:1.7.3'
-    testCompile 'com.arakelian:faker:2.0.2'
+    testCompile 'com.arakelian:faker:2.0.3'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
 }

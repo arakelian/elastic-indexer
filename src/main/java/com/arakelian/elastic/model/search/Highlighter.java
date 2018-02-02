@@ -17,22 +17,24 @@
 
 package com.arakelian.elastic.model.search;
 
+import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 /**
+ * Highlighting settings can be set on a global level and overridden at the field level.
+ *
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/fetch/subphase/highlight/AbstractHighlighterBuilder.java">AbstractHighlighterBuilder.java</a>
  */
-public interface Highlighter {
+public interface Highlighter extends Serializable {
     public enum BoundaryScanner {
         /**
          * Use the characters specified by boundary_chars as highlighting boundaries. The
@@ -61,7 +63,12 @@ public interface Highlighter {
     @Value.Immutable
     @JsonSerialize(as = ImmutableField.class)
     @JsonDeserialize(builder = ImmutableField.Builder.class)
+    @JsonPropertyOrder({ "name" })
     public interface Field extends Highlighter {
+        public static Field of(String name) {
+            return ImmutableField.builder().name(name).build();
+        }
+
         /**
          * Returns the margin from which you want to start highlighting. Only valid when using the
          * fvh highlighter.
@@ -89,7 +96,21 @@ public interface Highlighter {
             return ImmutableList.of();
         }
 
+        /**
+         * Returns the field name to retrieve highlights for.
+         *
+         * <p>
+         * You can use wildcards to specify fields. For example, you could specify comment_* to get
+         * highlights for all text and keyword fields that start with comment_.
+         * </p>
+         *
+         * @return the field name to retrieve highlights for.
+         */
         public String getName();
+    }
+
+    public enum Fragmenter {
+        SIMPLE, SPAN;
     }
 
     @Value.Immutable
@@ -99,6 +120,11 @@ public interface Highlighter {
         @Value.Default
         public default List<Field> getFields() {
             return ImmutableList.of();
+        }
+
+        @Value.Default
+        public default boolean isUseExplicitFieldOrder() {
+            return true;
         }
     }
 
@@ -116,7 +142,27 @@ public interface Highlighter {
     }
 
     public enum Type {
-        UNIFIED, PLAIN, FVH;
+        /**
+         * The unified highlighter uses the Lucene Unified Highlighter. This highlighter breaks the
+         * text into sentences and uses the BM25 algorithm to score individual sentences as if they
+         * were documents in the corpus. It also supports accurate phrase and multi-term (fuzzy,
+         * prefix, regex) highlighting. This is the default highlighter.
+         **/
+        UNIFIED,
+
+        /**
+         * The plain highlighter uses the standard Lucene highlighter. It attempts to reflect the
+         * query matching logic in terms of understanding word importance and any word positioning
+         * criteria in phrase queries.
+         **/
+        PLAIN,
+
+        /**
+         * The <code>fvh</code> highlighter uses the Lucene Fast Vector highlighter. This
+         * highlighter can be used on fields with term_vector set to
+         * <code>with_positions_offsets</code> in the mapping.
+         **/
+        FVH;
     }
 
     /**
@@ -128,9 +174,20 @@ public interface Highlighter {
     @Nullable
     public String getBoundaryChars();
 
+    /**
+     * Returns how far to scan for boundary characters. Defaults to 20.
+     *
+     * @return how far to scan for boundary characters
+     */
     @Nullable
     public Integer getBoundaryMaxScan();
 
+    /**
+     * Returns how to break the highlighted fragments: <code>chars</code>, <code>sentence</code>, or
+     * <code>word</code>
+     *
+     * @return how to break the highlighted fragments
+     */
     @Nullable
     public BoundaryScanner getBoundaryScanner();
 
@@ -142,12 +199,29 @@ public interface Highlighter {
     @Nullable
     public String getBoundaryScannerLocale();
 
+    /**
+     * Returns if the snippet should be HTML encoded: <code>default</code> (no encoding) or
+     * <code>html</code> (HTML-escape the snippet text and then insert the highlighting tags)
+     *
+     * @return if the snippet should be HTML encoded
+     */
     @Nullable
     public Encoder getEncoder();
 
+    /**
+     * Returns how text should be broken up in highlight snippets: <code>simple</code> or
+     * <code>span</code>. Only valid for the <code>plain</code> highlighter.
+     *
+     * @return how text should be broken up in highlight snippets
+     */
     @Nullable
-    public String getFragmenter();
+    public Fragmenter getFragmenter();
 
+    /**
+     * Returns the size of the highlighted fragment in characters. Defaults to 100.
+     * 
+     * @return the size of the highlighted fragment in characters
+     */
     @Nullable
     public Integer getFragmentSize();
 
@@ -177,11 +251,6 @@ public interface Highlighter {
      */
     @Nullable
     public Integer getNumberOfFragments();
-
-    @Value.Default
-    public default Map<String, Object> getOptions() {
-        return ImmutableMap.of();
-    }
 
     @Nullable
     public Order getOrder();

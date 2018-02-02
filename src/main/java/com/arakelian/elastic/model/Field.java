@@ -53,9 +53,30 @@ import com.google.common.collect.Sets;
 public abstract class Field implements Serializable {
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
     public enum IndexOptions {
+        /**
+         * Only the doc number is indexed. Can answer the question Does this term exist in this
+         * field?
+         **/
         DOCS, //
+
+        /**
+         * Doc number and term frequencies are indexed. Term frequencies are used to score repeated
+         * terms higher than single terms.
+         **/
         FREQS, //
+
+        /**
+         * Doc number, term frequencies, and term positions (or order) are indexed. Positions can be
+         * used for proximity or phrase queries.
+         **/
         POSITIONS, //
+
+        /**
+         * Doc number, term frequencies, positions, and start and end character offsets (which map
+         * the term back to the original string) are indexed. Offsets are used by the
+         * {@link com.arakelian.elastic.model.search.Highlighter.Type#UNIFIED} highlighter to speed
+         * up highlighting.
+         **/
         OFFSETS;
 
         @Override
@@ -76,12 +97,29 @@ public abstract class Field implements Serializable {
         }
     }
 
-    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
+    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/term-vector.html
     public enum TermVector {
+        /** No term vectors are stored. (default) **/
         NO, //
+
+        /** Just the terms in the field are stored. **/
         YES, //
+
+        /** Terms and positions are stored. **/
         WITH_POSITIONS, //
+
+        /** Terms and character offsets are stored. **/
         WITH_OFFSETS, //
+
+        /**
+         * Terms, positions, and character offsets are stored. The fast vector highlighter requires
+         * <code>with_positions_offsets</code>
+         * 
+         * <p>
+         * WARNING: Setting <code>with_positions_offsets</code> will double the size of a field’s
+         * index.
+         * </p>
+         **/
         WITH_POSITIONS_OFFSETS;
 
         @Override

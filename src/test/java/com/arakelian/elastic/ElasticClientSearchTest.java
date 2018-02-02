@@ -22,9 +22,11 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import com.arakelian.elastic.model.search.Highlighter.Field;
 import com.arakelian.elastic.model.search.ImmutableBoolQuery;
 import com.arakelian.elastic.model.search.ImmutableExistsQuery;
 import com.arakelian.elastic.model.search.ImmutableFuzzyQuery;
+import com.arakelian.elastic.model.search.ImmutableHighlight;
 import com.arakelian.elastic.model.search.ImmutableIdsQuery;
 import com.arakelian.elastic.model.search.ImmutableMatchQuery;
 import com.arakelian.elastic.model.search.ImmutablePrefixQuery;
@@ -170,6 +172,10 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                                             .value(phase) //
                                             .operator(Operator.OR) //
                                             .build()) //
+                            .highlight(
+                                    ImmutableHighlight.builder() //
+                                            .addField(Field.of("lastName")) //
+                                            .build())
                             .build(),
                     person);
         });

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.search.Highlighter;
+import com.arakelian.elastic.model.search.Highlighter.Field;
 import com.arakelian.elastic.model.search.Highlighter.Highlight;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.Search;
@@ -97,6 +98,7 @@ public class WriteSearch {
             // Elastic uses lowercase names
             writer.writeFieldName(field);
             writer.writeString(((Enum) value).name().toLowerCase());
+            return;
         }
 
         // output value
@@ -125,8 +127,33 @@ public class WriteSearch {
     public static void writeHighlight(final JsonGenerator writer, final Highlight highlight)
             throws IOException {
         writeHighlighter(writer, highlight);
-        for (final Highlighter.Field field : highlight.getFields()) {
-            writeHighlighterField(writer, field);
+
+        final List<Field> fields = highlight.getFields();
+        if (fields.size() != 0) {
+            writer.writeFieldName("fields");
+
+            final boolean useExplicitFieldOrder = highlight.isUseExplicitFieldOrder();
+            if (useExplicitFieldOrder) {
+                writer.writeStartArray();
+            } else {
+                writer.writeStartObject();
+            }
+
+            for (final Highlighter.Field field : fields) {
+                if (useExplicitFieldOrder) {
+                    writer.writeStartObject();
+                }
+                writeHighlighterField(writer, field);
+                if (useExplicitFieldOrder) {
+                    writer.writeEndObject();
+                }
+            }
+
+            if (useExplicitFieldOrder) {
+                writer.writeEndArray();
+            } else {
+                writer.writeEndObject();
+            }
         }
     }
 
@@ -141,24 +168,26 @@ public class WriteSearch {
         writeFieldValue(writer, "force_source", highlighter.isForceSource());
         writeFieldValue(writer, "fragment_size", highlighter.getFragmentSize());
         writeFieldValue(writer, "fragmenter", highlighter.getFragmenter());
-        writeFieldValue(writer, "highlight_query", highlighter.getHighlightQuery());
         writeFieldValue(writer, "no_match_size", highlighter.getNoMatchSize());
         writeFieldValue(writer, "number_of_fragments", highlighter.getNumberOfFragments());
-        writeFieldValue(writer, "options", highlighter.getOptions());
         writeFieldValue(writer, "order", highlighter.getOrder());
         writeFieldValue(writer, "phrase_limit", highlighter.getPhraseLimit());
         writeFieldValue(writer, "post_tags", highlighter.getPostTags());
         writeFieldValue(writer, "pre_tags", highlighter.getPreTags());
         writeFieldValue(writer, "tags_schema", highlighter.getTagsSchema());
         writeFieldValue(writer, "require_field_match", highlighter.isRequireFieldMatch());
+
+        writeQuery(writer, "highlight_query", highlighter.getHighlightQuery());
     }
 
     public static void writeHighlighterField(final JsonGenerator writer, final Highlighter.Field field)
             throws IOException {
+        writer.writeFieldName(field.getName());
+        writer.writeStartObject();
         writeHighlighter(writer, field);
-        writeFieldValue(writer, "boundary_chars", field.getName());
         writeFieldValue(writer, "fragment_offset", field.getFragmentOffset());
         writeFieldValue(writer, "matched_fields", field.getMatchedFields());
+        writer.writeEndObject(); // field
     }
 
     public static void writeSearch(final JsonGenerator writer, final Search search) throws IOException {
@@ -183,12 +212,7 @@ public class WriteSearch {
         }
 
         final Query query = search.getQuery();
-        if (query != null && !query.isEmpty()) {
-            writer.writeFieldName("query");
-            writer.writeStartObject();
-            query.accept(new OmitEmptyVisitor(new WriteQueryVisitor(writer)));
-            writer.writeEndObject(); // query
-        }
+        writeQuery(writer, "query", query);
 
         final List<Sort> sort = search.getSorts();
         if (sort.size() != 0) {
@@ -198,7 +222,10 @@ public class WriteSearch {
 
         final Highlight highlight = search.getHighlight();
         if (highlight != null) {
+            writer.writeFieldName("highlight");
+            writer.writeStartObject();
             writeHighlight(writer, highlight);
+            writer.writeEndObject(); // highlight
         }
 
         final List<Aggregation> aggregations = search.getAggregations();
@@ -211,6 +238,16 @@ public class WriteSearch {
         WriteSearch.writeFieldValue(writer, "batched_reduce_size", search.getBatchedReduceSize());
 
         writer.writeEndObject();
+    }
+
+    public static void writeQuery(final JsonGenerator writer, String fieldName, final Query query)
+            throws IOException {
+        if (query != null && !query.isEmpty()) {
+            writer.writeFieldName(fieldName);
+            writer.writeStartObject();
+            query.accept(new OmitEmptyVisitor(new WriteQueryVisitor(writer)));
+            writer.writeEndObject(); // query
+        }
     }
 
     /**
