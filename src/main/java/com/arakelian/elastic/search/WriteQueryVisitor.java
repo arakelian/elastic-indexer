@@ -34,7 +34,6 @@ import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.RangeQuery;
 import com.arakelian.elastic.model.search.RegexpFlag;
 import com.arakelian.elastic.model.search.RegexpQuery;
-import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.StandardQuery;
 import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
@@ -331,16 +330,16 @@ public class WriteQueryVisitor extends QueryVisitor {
     }
 
     private void writeFieldValue(final String field, final Object value) throws IOException {
-        Search.writeFieldValue(writer, field, value);
+        WriteSearch.writeFieldValue(writer, field, value);
     }
 
     private void writeFieldValue(final String field, final String value) throws IOException {
-        Search.writeFieldValue(writer, field, value);
+        WriteSearch.writeFieldValue(writer, field, value);
     }
 
     private void writeFieldWithValues(final String field, final Collection<String> values)
             throws IOException {
-        Search.writeFieldWithValues(writer, field, values);
+        WriteSearch.writeFieldWithValues(writer, field, values);
     }
 
     private void writeStandardFields(final StandardQuery standardQuery) throws IOException {

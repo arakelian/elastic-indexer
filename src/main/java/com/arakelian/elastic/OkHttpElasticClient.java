@@ -39,6 +39,7 @@ import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchResponse;
+import com.arakelian.elastic.search.WriteSearch;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -289,7 +290,7 @@ public class OkHttpElasticClient implements ElasticClient {
     @Override
     public SearchResponse search(final String name, final Search search) {
         final String query = JacksonUtils.toString(writer -> {
-            Search.serialize(writer, search);
+            WriteSearch.writeSearch(writer, search);
         }, mapper, true);
 
         final SearchResponse response = execute(() -> {

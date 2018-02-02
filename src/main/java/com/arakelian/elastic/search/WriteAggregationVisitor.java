@@ -44,7 +44,6 @@ import com.arakelian.elastic.model.aggs.metrics.PercentilesAggregation;
 import com.arakelian.elastic.model.aggs.metrics.StatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.SumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ValueCountAggregation;
-import com.arakelian.elastic.model.search.Search;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Preconditions;
 
@@ -88,9 +87,9 @@ public class WriteAggregationVisitor extends AggregationVisitor {
             writer.writeFieldName("date_histogram");
             writer.writeStartObject();
             writeValueSource(agg);
-            Search.writeFieldValue(writer, "keyed", agg.isKeyed());
-            Search.writeFieldValue(writer, "offset", agg.getOffset());
-            Search.writeFieldValue(writer, "interval", agg.getInterval());
+            WriteSearch.writeFieldValue(writer, "keyed", agg.isKeyed());
+            WriteSearch.writeFieldValue(writer, "offset", agg.getOffset());
+            WriteSearch.writeFieldValue(writer, "interval", agg.getInterval());
             writer.writeEndObject(); // date_histogram
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -362,7 +361,7 @@ public class WriteAggregationVisitor extends AggregationVisitor {
     }
 
     private void writeFieldValue(final String field, final Object value) throws IOException {
-        Search.writeFieldValue(writer, field, value);
+        WriteSearch.writeFieldValue(writer, field, value);
     }
 
     /**

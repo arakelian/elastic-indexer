@@ -29,6 +29,7 @@ import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.TermsQuery;
+import com.arakelian.elastic.search.WriteSearch;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -112,7 +113,7 @@ public class WriteQueryVisitorTest {
         final Search search = ImmutableSearch.builder().query(query).build();
 
         final String dsl = JacksonUtils.toString(writer -> {
-            Search.serialize(writer, search);
+            WriteSearch.writeSearch(writer, search);
         }, mapper, true);
 
         LOGGER.info("Query DSL: {}", dsl);
