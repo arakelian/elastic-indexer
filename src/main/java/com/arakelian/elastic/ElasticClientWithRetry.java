@@ -34,6 +34,7 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.utils.ElasticClientUtils;
@@ -148,6 +149,13 @@ public class ElasticClientWithRetry implements ElasticClient {
     public Documents getDocuments(final Mget mget) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.getDocuments(mget);
+        });
+    }
+
+    @Override
+    public VersionComponents getVersion() {
+        return executeWithRetry(() -> {
+            return delegate.getVersion();
         });
     }
 

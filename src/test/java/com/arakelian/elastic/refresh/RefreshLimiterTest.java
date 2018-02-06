@@ -33,6 +33,7 @@ import com.arakelian.elastic.OkHttpElasticClient;
 import com.arakelian.elastic.model.ImmutableRefresh;
 import com.arakelian.elastic.model.ImmutableShards;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 import retrofit2.Call;
@@ -115,7 +116,11 @@ public class RefreshLimiterTest {
             final int durationMillis,
             final double permitsPerSecond,
             final boolean networkFailures) {
-        LOGGER.info("Starting rate limiter test for {}ms at {}/second", durationMillis, permitsPerSecond);
+        LOGGER.info(
+                "Starting rate limiter test for {}ms at {}/second (failures: {})",
+                durationMillis,
+                permitsPerSecond,
+                networkFailures);
 
         final RefreshLimiterConfig config = ImmutableRefreshLimiterConfig.builder() //
                 .coreThreads(1) //
@@ -124,8 +129,10 @@ public class RefreshLimiterTest {
                 .build();
 
         final MockOkHttpElasticApi mockApi = mockApi();
-        final OkHttpElasticClient elasticClient = new OkHttpElasticClient(mockApi,
-                JacksonUtils.getObjectMapper(), null);
+        final OkHttpElasticClient elasticClient = new OkHttpElasticClient("http://localhost",
+                (elasticUrl, mapper) -> {
+                    return mockApi;
+                }, JacksonUtils.getObjectMapper(), VersionComponents.of("6.0.1"));
         networkBehavior.setFailurePercent(networkFailures ? 100 : 0);
 
         final String index = "test";
@@ -181,8 +188,10 @@ public class RefreshLimiterTest {
                 .build();
 
         final MockOkHttpElasticApi mockApi = mockApi();
-        final OkHttpElasticClient elasticClient = new OkHttpElasticClient(mockApi,
-                JacksonUtils.getObjectMapper(), null);
+        final OkHttpElasticClient elasticClient = new OkHttpElasticClient("http://localhost",
+                (elasticUrl, mapper) -> {
+                    return mockApi;
+                }, JacksonUtils.getObjectMapper(), VersionComponents.of("6.0.1"));
         networkBehavior.setFailurePercent(0);
 
         final String index = "test";

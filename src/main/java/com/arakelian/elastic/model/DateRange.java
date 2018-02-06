@@ -23,8 +23,8 @@ import java.time.ZonedDateTime;
 import org.immutables.value.Value;
 
 import com.arakelian.core.utils.DateUtils;
-import com.arakelian.jackson.ZonedDateTimeDeserializer;
-import com.arakelian.jackson.ZonedDateTimeSerializer;
+import com.arakelian.jackson.databind.ZonedDateTimeDeserializer;
+import com.arakelian.jackson.databind.ZonedDateTimeSerializer;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.arakelian.elastic.model.aggs.bucket.BucketOrder;
 import com.arakelian.elastic.model.aggs.bucket.DateHistogramAggregation;
@@ -45,13 +48,10 @@ import com.arakelian.elastic.model.aggs.metrics.StatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.SumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ValueCountAggregation;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.google.common.base.Preconditions;
 
-public class WriteAggregationVisitor extends AggregationVisitor {
-    private final JsonGenerator writer;
-
-    public WriteAggregationVisitor(final JsonGenerator writer) {
-        this.writer = Preconditions.checkNotNull(writer);
+public class WriteAggregationVisitor extends AbstractVisitor implements AggregationVisitor {
+    public WriteAggregationVisitor(final JsonGenerator writer, final VersionComponents version) {
+        super(writer, version);
     }
 
     @Override
@@ -87,9 +87,9 @@ public class WriteAggregationVisitor extends AggregationVisitor {
             writer.writeFieldName("date_histogram");
             writer.writeStartObject();
             writeValueSource(agg);
-            WriteSearch.writeFieldValue(writer, "keyed", agg.isKeyed());
-            WriteSearch.writeFieldValue(writer, "offset", agg.getOffset());
-            WriteSearch.writeFieldValue(writer, "interval", agg.getInterval());
+            writeFieldValue("keyed", agg.isKeyed());
+            writeFieldValue("offset", agg.getOffset());
+            writeFieldValue("interval", agg.getInterval());
             writer.writeEndObject(); // date_histogram
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -335,7 +335,7 @@ public class WriteAggregationVisitor extends AggregationVisitor {
             writeFieldValue("shard_size", agg.getShardSize());
             writeFieldValue("include", agg.getInclude());
             writeFieldValue("exclude", agg.getExclude());
-            writeOrder(writer, agg.getOrder());
+            writeOrder(agg.getOrder());
             writer.writeEndObject(); // terms
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -360,21 +360,16 @@ public class WriteAggregationVisitor extends AggregationVisitor {
         return writer;
     }
 
-    private void writeFieldValue(final String field, final Object value) throws IOException {
-        WriteSearch.writeFieldValue(writer, field, value);
-    }
-
     /**
      * Serialize an array of sorts
      *
-     * @param writer
-     *            JSON generator
      * @param orders
      *            list of sort fields
+     *
      * @throws IOException
      *             if serialization fails
      */
-    private void writeOrder(final JsonGenerator writer, final List<BucketOrder> orders) throws IOException {
+    private void writeOrder(final List<BucketOrder> orders) throws IOException {
         if (orders.size() == 0) {
             return;
         }
@@ -382,7 +377,15 @@ public class WriteAggregationVisitor extends AggregationVisitor {
         writer.writeStartArray();
         for (final BucketOrder order : orders) {
             writer.writeStartObject();
-            writer.writeFieldName(order.getFieldName());
+
+            String name = order.getFieldName();
+            if (StringUtils.equals(name, "_key")) {
+                if (!version.atLeast(6, 0, 0)) {
+                    name = "_term";
+                }
+            }
+
+            writer.writeFieldName(name);
             writer.writeString(order.getOrder().name().toLowerCase());
             writer.writeEndObject();
         }

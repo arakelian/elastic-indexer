@@ -17,29 +17,67 @@
 
 package com.arakelian.elastic;
 
+import com.arakelian.elastic.model.VersionComponents;
+
 public class Views {
-    public static class Elastic {
+    public static abstract class Elastic {
         public static class Version5 extends Elastic {
             public static class Version52 extends Version5 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(5, 2);
+                }
             }
 
             public static class Version53 extends Version52 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(5, 3);
+                }
             }
 
             public static class Version54 extends Version53 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(5, 4);
+                }
             }
 
             public static class Version55 extends Version54 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(5, 5);
+                }
             }
 
             public static class Version56 extends Version55 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(5, 6);
+                }
+            }
+
+            @Override
+            protected VersionComponents getVersion() {
+                return VersionComponents.of(5, 0);
             }
         }
 
         public static class Version6 extends Elastic {
             public static class Version61 extends Version6 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(6, 1);
+                }
+            }
+
+            @Override
+            protected VersionComponents getVersion() {
+                return VersionComponents.of(6, 0);
             }
         }
+
+        protected abstract VersionComponents getVersion();
     }
 
     public static class Enhancement {

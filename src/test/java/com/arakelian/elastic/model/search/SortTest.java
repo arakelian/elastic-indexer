@@ -23,7 +23,8 @@ import java.util.List;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
-import com.arakelian.elastic.search.WriteSearch;
+import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.search.WriteSearchVisitor;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.google.common.collect.ImmutableList;
@@ -70,7 +71,9 @@ public class SortTest {
 
     @Test
     public void testSorts() {
-        final String actual = JacksonUtils.toString(writer -> WriteSearch.writeSorts(writer, COMPLEX_SORT));
+        final String actual = JacksonUtils.toString(
+                writer -> new WriteSearchVisitor(writer, VersionComponents.of(5, 0))
+                        .writeSorts(COMPLEX_SORT));
         JsonAssert.assertJsonEquals(
                 "[\"field\",\"field\",{\"field\":\"desc\"},{\"field\":{\"order\":\"desc\",\"mode\":\"max\"}}]",
                 actual);

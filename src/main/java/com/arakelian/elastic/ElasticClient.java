@@ -30,6 +30,7 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchResponse;
 
@@ -95,6 +96,8 @@ public interface ElasticClient {
     Document getDocument(String name, String type, String id, String sourceFields) throws ElasticException;
 
     Documents getDocuments(Mget mget) throws ElasticException;
+
+    VersionComponents getVersion();
 
     /**
      * Indexes a document using default versioning scheme, which simply increments the document

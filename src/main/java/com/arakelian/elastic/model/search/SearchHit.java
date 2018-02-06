@@ -19,59 +19,58 @@ package com.arakelian.elastic.model.search;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.SortedSet;
 
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.Shards;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableSearchResponse.class)
-@JsonDeserialize(builder = ImmutableSearchResponse.Builder.class)
-@JsonPropertyOrder({ "_scroll_id", "took", "timed_out", "num_reduce_phases", "terminated_early", "_shards",
-        "hits" })
-public interface SearchResponse extends Serializable {
-    @Nullable
+@JsonSerialize(as = ImmutableSearchHit.class)
+@JsonDeserialize(builder = ImmutableSearchHit.Builder.class)
+@JsonPropertyOrder({ "_index", "_type", "_id", "_score", "_source", "matched_queries" })
+public abstract class SearchHit implements Serializable {
+    @JsonProperty("_id")
+    public abstract String getId();
+
+    @JsonProperty("_index")
+    public abstract String getIndex();
+
+    @JsonProperty("matched_queries")
     @Value.Default
-    @Value.Auxiliary
-    public default Map<String, AggregationResult> getAggregations() {
+    @Value.NaturalOrder
+    public SortedSet<String> getMatchedQueries() {
+        return ImmutableSortedSet.of();
+    }
+
+    @JsonAnyGetter
+    @Value.Default
+    public Map<String, Object> getProperties() {
         return ImmutableMap.of();
     }
 
-    @Nullable
+    @JsonProperty("_score")
+    public abstract Double getScore();
+
+    @JsonProperty("_source")
     @Value.Default
-    @Value.Auxiliary
-    public default SearchHits getHits() {
-        return ImmutableSearchHits.builder().build();
+    public Source getSource() {
+        return ImmutableSource.builder().build();
     }
 
     @Nullable
-    @Value.Auxiliary
-    @JsonProperty("num_reduce_phases")
-    public Integer getNumberOfReducePhases();
+    @JsonProperty("_type")
+    public abstract String getType();
 
-    @Nullable
-    @JsonProperty("_scroll_id")
-    public String getScrollId();
-
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("_shards")
-    public Shards getShards();
-
-    @Nullable
-    public Integer getTook();
-
-    @Nullable
-    @JsonProperty("terminated_early")
-    public Boolean isTerminatedEarly();
-
-    @Nullable
-    @JsonProperty("timed_out")
-    public Boolean isTimedOut();
+    public void setObjectMapper(final ObjectMapper mapper) {
+        getSource().setObjectMapper(mapper);
+    }
 }

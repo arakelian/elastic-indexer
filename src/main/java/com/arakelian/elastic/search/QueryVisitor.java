@@ -17,8 +17,6 @@
 
 package com.arakelian.elastic.search;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.arakelian.elastic.model.search.BoolQuery;
 import com.arakelian.elastic.model.search.ExistsQuery;
 import com.arakelian.elastic.model.search.FuzzyQuery;
@@ -33,96 +31,88 @@ import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
 
 @SuppressWarnings("unused")
-public class QueryVisitor {
-    private final AtomicInteger depth = new AtomicInteger();
-
-    public boolean enter(final Query query) {
-        depth.incrementAndGet();
+public interface QueryVisitor {
+    public default boolean enter(final Query query) {
         return true;
     }
 
-    public boolean enterBoolQuery(final BoolQuery bool) {
+    public default boolean enterBoolQuery(final BoolQuery bool) {
         return true;
     }
 
-    public boolean enterExistsQuery(final ExistsQuery existsQuery) {
+    public default boolean enterExistsQuery(final ExistsQuery existsQuery) {
         return true;
     }
 
-    public boolean enterFuzzyQuery(final FuzzyQuery fuzzyQuery) {
+    public default boolean enterFuzzyQuery(final FuzzyQuery fuzzyQuery) {
         return true;
     }
 
-    public boolean enterIdsQuery(final IdsQuery idsQuery) {
+    public default boolean enterIdsQuery(final IdsQuery idsQuery) {
         return true;
     }
 
-    public boolean enterMatchQuery(final MatchQuery matchQuery) {
+    public default boolean enterMatchQuery(final MatchQuery matchQuery) {
         return true;
     }
 
-    public boolean enterPrefixQuery(final PrefixQuery prefixQuery) {
+    public default boolean enterPrefixQuery(final PrefixQuery prefixQuery) {
         return true;
     }
 
-    public boolean enterQueryStringQuery(final QueryStringQuery queryStringQuery) {
+    public default boolean enterQueryStringQuery(final QueryStringQuery queryStringQuery) {
         return true;
     }
 
-    public boolean enterRangeQuery(final RangeQuery range) {
+    public default boolean enterRangeQuery(final RangeQuery range) {
         return true;
     }
 
-    public boolean enterRegexpQuery(final RegexpQuery regexpQuery) {
+    public default boolean enterRegexpQuery(final RegexpQuery regexpQuery) {
         return true;
     }
 
-    public boolean enterTermsQuery(final TermsQuery termsQuery) {
+    public default boolean enterTermsQuery(final TermsQuery termsQuery) {
         return true;
     }
 
-    public boolean enterWildcardQuery(final WildcardQuery wildcardQuery) {
+    public default boolean enterWildcardQuery(final WildcardQuery wildcardQuery) {
         return true;
     }
 
-    public void leave(final Query query) {
-        depth.decrementAndGet();
+    public default void leave(final Query query) {
     }
 
-    public void leaveBoolQuery(final BoolQuery boolQuery) {
+    public default void leaveBoolQuery(final BoolQuery boolQuery) {
     }
 
-    public void leaveExistsQuery(final ExistsQuery existsQuery) {
+    public default void leaveExistsQuery(final ExistsQuery existsQuery) {
     }
 
-    public void leaveFuzzyQuery(final FuzzyQuery fuzzyQuery) {
+    public default void leaveFuzzyQuery(final FuzzyQuery fuzzyQuery) {
     }
 
-    public void leaveIdsQuery(final IdsQuery idsQuery) {
+    public default void leaveIdsQuery(final IdsQuery idsQuery) {
     }
 
-    public void leaveMatchQuery(final MatchQuery matchQuery) {
+    public default void leaveMatchQuery(final MatchQuery matchQuery) {
     }
 
-    public void leavePrefixQuery(final PrefixQuery prefixQuery) {
+    public default void leavePrefixQuery(final PrefixQuery prefixQuery) {
     }
 
-    public void leaveQueryStringQuery(final QueryStringQuery queryStringQuery) {
+    public default void leaveQueryStringQuery(final QueryStringQuery queryStringQuery) {
     }
 
-    public void leaveRangeQuery(final RangeQuery clause) {
+    public default void leaveRangeQuery(final RangeQuery clause) {
     }
 
-    public void leaveRegexpQuery(final RegexpQuery regexpQuery) {
+    public default void leaveRegexpQuery(final RegexpQuery regexpQuery) {
     }
 
-    public void leaveTermsQuery(final TermsQuery termsQuery) {
+    public default void leaveTermsQuery(final TermsQuery termsQuery) {
     }
 
-    public void leaveWildcardQuery(final WildcardQuery wildcardQuery) {
-    }
-
-    protected int getDepth() {
-        return depth.get();
+    public default void leaveWildcardQuery(final WildcardQuery wildcardQuery) {
     }
 }

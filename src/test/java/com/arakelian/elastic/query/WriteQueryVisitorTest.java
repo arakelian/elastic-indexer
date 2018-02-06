@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.ImmutableBoolQuery;
 import com.arakelian.elastic.model.search.ImmutableQueryStringQuery;
 import com.arakelian.elastic.model.search.ImmutableSearch;
@@ -29,7 +30,7 @@ import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.TermsQuery;
-import com.arakelian.elastic.search.WriteSearch;
+import com.arakelian.elastic.search.WriteSearchVisitor;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -113,7 +114,7 @@ public class WriteQueryVisitorTest {
         final Search search = ImmutableSearch.builder().query(query).build();
 
         final String dsl = JacksonUtils.toString(writer -> {
-            WriteSearch.writeSearch(writer, search);
+            new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSearch(search);
         }, mapper, true);
 
         LOGGER.info("Query DSL: {}", dsl);

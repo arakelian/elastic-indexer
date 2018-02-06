@@ -26,9 +26,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.arakelian.elastic.DefaultOkHttpElasticApiFactory;
 import com.arakelian.elastic.ElasticClient;
 import com.arakelian.elastic.ElasticHttpException;
-import com.arakelian.elastic.OkHttpElasticApi;
 import com.arakelian.elastic.OkHttpElasticClient;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Elastic.Version5.Version52;
@@ -57,9 +57,6 @@ import com.google.common.base.Predicate;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.jackson.JacksonConverterFactory;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class ElasticClientUtils {
     /**
@@ -87,8 +84,10 @@ public class ElasticClientUtils {
     public static final String DEFAULT_TIMEOUT = "30s";
 
     public static void configure(final ObjectMapper mapper, final VersionComponents version) {
-        final Class<?> view = getJsonView(version);
-        JacksonUtils.withView(mapper, view);
+        if (version != null && !version.isEmpty()) {
+            final Class<?> view = getJsonView(version);
+            JacksonUtils.withView(mapper, view);
+        }
     }
 
     public static void configureIndexSerialization(final ObjectMapper mapper) {
@@ -106,31 +105,13 @@ public class ElasticClientUtils {
     }
 
     public static ElasticClient createElasticClient(
-            final OkHttpClient client,
             final String elasticUrl,
+            final OkHttpClient client,
             final ObjectMapper objectMapper,
             final VersionComponents version) {
 
-        // we want Retrofit to have a uniquely configured ObjectMapper
-        final ObjectMapper mapper = objectMapper.copy();
-
-        // we will not know the version of Elastic when we first boot
-        if (version != null) {
-            configure(mapper, version);
-        }
-
-        // when serializing for Retrofit
-        configureIndexSerialization(mapper);
-
-        final Retrofit retrofit = new Retrofit.Builder() //
-                .client(client) //
-                .baseUrl(elasticUrl) //
-                .addConverterFactory(ScalarsConverterFactory.create()) //
-                .addConverterFactory(JacksonConverterFactory.create(mapper)) //
-                .build();
-        final OkHttpElasticApi api = retrofit.create(OkHttpElasticApi.class);
-        final ElasticClient elasticClient = new OkHttpElasticClient(api, mapper, version);
-        return elasticClient;
+        return new OkHttpElasticClient(elasticUrl, new DefaultOkHttpElasticApiFactory(client), objectMapper,
+                version);
     }
 
     public static <T> Retryer<T> createElasticRetryer() {

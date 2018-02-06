@@ -18,6 +18,9 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -31,6 +34,7 @@ import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.Mapping;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.aggs.bucket.BucketOrder;
 import com.arakelian.elastic.model.aggs.bucket.ImmutableTermsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableAvgAggregation;
@@ -45,15 +49,14 @@ import com.arakelian.elastic.model.aggs.metrics.ImmutablePercentilesAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableStatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableSumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableValueCountAggregation;
+import com.arakelian.elastic.model.search.AggregationResult;
 import com.arakelian.elastic.model.search.ImmutableMatchQuery;
 import com.arakelian.elastic.model.search.ImmutableSearch;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.faker.model.Gender;
 import com.arakelian.faker.model.Person;
-import com.arakelian.jackson.utils.JacksonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import net.javacrumbs.jsonunit.JsonAssert;
+import com.arakelian.jackson.MapPath;
+import com.arakelian.jackson.model.GeoPoint;
 
 public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
     public ElasticClientAggregationsTest(final String version) throws Exception {
@@ -74,8 +77,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(avg(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(avg(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -93,8 +96,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(countDistinct(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(countDistinct(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -112,17 +115,17 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(people.size(), json, "age.count");
-            JsonAssert.assertJsonPartEquals(min(people), json, "age.min");
-            JsonAssert.assertJsonPartEquals(max(people), json, "age.max");
-            JsonAssert.assertJsonPartEquals(avg(people), json, "age.avg");
-            JsonAssert.assertJsonPartEquals(sum(people), json, "age.sum");
-            JsonAssert.assertJsonNodePresent(json, "age.sum_of_squares");
-            JsonAssert.assertJsonNodePresent(json, "age.variance");
-            JsonAssert.assertJsonNodePresent(json, "age.std_deviation");
-            JsonAssert.assertJsonNodePresent(json, "age.std_deviation_bounds.upper");
-            JsonAssert.assertJsonNodePresent(json, "age.std_deviation_bounds.lower");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(people.size(), agg.getDouble("count"), 0.001d);
+            assertEquals(min(people), agg.getDouble("min"), 0.001d);
+            assertEquals(max(people), agg.getDouble("max"), 0.001d);
+            assertEquals(avg(people), agg.getDouble("avg"), 0.001d);
+            assertEquals(sum(people), agg.getDouble("sum"), 0.001d);
+            assertNotNull(agg.getObject("sum_of_squares"));
+            assertNotNull(agg.getObject("variance"));
+            assertNotNull(agg.getObject("std_deviation"));
+            assertNotNull(agg.getObject("std_deviation_bounds/upper"));
+            assertNotNull(agg.getObject("std_deviation_bounds/lower"));
         });
     }
 
@@ -149,11 +152,15 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute aggregation
             final SearchResponse response = assertSearchFinds(index, search, 2);
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(48.86111099738628d, json, "viewport.bounds.top_left.lat");
-            JsonAssert.assertJsonPartEquals(2.3269999679178d, json, "viewport.bounds.top_left.lon");
-            JsonAssert.assertJsonPartEquals(48.85999997612089d, json, "viewport.bounds.bottom_right.lat");
-            JsonAssert.assertJsonPartEquals(2.3363889567553997d, json, "viewport.bounds.bottom_right.lon");
+            final AggregationResult agg = response.getAggregations().get("viewport");
+
+            assertEquals(48.861d, agg.getDouble("bounds/top_left/lat"), 0.001d);
+            assertEquals(2.326d, agg.getDouble("bounds/top_left/lon"), 0.001d);
+            assertEquals(GeoPoint.of(48.861d, 2.327d), agg.getGeoPoint("bounds/top_left").round(3));
+
+            assertEquals(48.859d, agg.getDouble("bounds/bottom_right/lat"), 0.001d);
+            assertEquals(2.336d, agg.getDouble("bounds/bottom_right/lon"), 0.001d);
+            assertEquals(GeoPoint.of(48.86d, 2.336d), agg.getGeoPoint("bounds/bottom_right").round(3));
         });
     }
 
@@ -175,10 +182,15 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute aggregation
             final SearchResponse response = assertSearchFinds(index, search, 6);
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(51.00982963107526d, json, "centroid.location.lat");
-            JsonAssert.assertJsonPartEquals(3.9662130922079086d, json, "centroid.location.lon");
-            JsonAssert.assertJsonPartEquals(6, json, "centroid.count");
+            final AggregationResult agg = response.getAggregations().get("centroid");
+            assertEquals(51.009d, agg.getDouble("location/lat"), 0.001d);
+            assertEquals(3.966d, agg.getDouble("location/lon"), 0.001d);
+
+            // started version 5.5
+            final VersionComponents version = elasticClient.getVersion();
+            if (version.atLeast(5, 5, 0)) {
+                assertEquals(6d, agg.getDouble("count"), 0.001d);
+            }
         });
     }
 
@@ -196,8 +208,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(max(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(max(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -215,8 +227,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(min(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(min(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -237,18 +249,17 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonNodePresent(json, "age.values.1\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.5\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.25\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.50\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.75\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.95\\.0");
-            JsonAssert.assertJsonNodePresent(json, "age.values.99\\.0");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertTrue(agg.hasProperty("values.1.0"));
+            assertTrue(agg.hasProperty("values.5.0"));
+            assertTrue(agg.hasProperty("values.25.0"));
+            assertTrue(agg.hasProperty("values.50.0"));
+            assertTrue(agg.hasProperty("values.75.0"));
+            assertTrue(agg.hasProperty("values.95.0"));
+            assertTrue(agg.hasProperty("values.99.0"));
 
-            final Map age = (Map) response.getAggregations().get("age");
             @SuppressWarnings("unchecked")
-            final Map<String, Double> values = (Map<String, Double>) age.get("values");
+            final Map<String, Double> values = (Map<String, Double>) agg.getObject("values");
 
             testPercentileRankAggregation(index, people, values.values());
         });
@@ -268,12 +279,12 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(people.size(), json, "age.count");
-            JsonAssert.assertJsonPartEquals(min(people), json, "age.min");
-            JsonAssert.assertJsonPartEquals(max(people), json, "age.max");
-            JsonAssert.assertJsonPartEquals(avg(people), json, "age.avg");
-            JsonAssert.assertJsonPartEquals(sum(people), json, "age.sum");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(people.size(), agg.getDouble("count"), 0.001d);
+            assertEquals(min(people), agg.getDouble("min"), 0.001d);
+            assertEquals(max(people), agg.getDouble("max"), 0.001d);
+            assertEquals(avg(people), agg.getDouble("avg"), 0.001d);
+            assertEquals(sum(people), agg.getDouble("sum"), 0.001d);
         });
     }
 
@@ -291,8 +302,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(sum(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(sum(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -316,21 +327,27 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute terms aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(0, json, "genders.doc_count_error_upper_bound");
-            JsonAssert.assertJsonPartEquals(0, json, "genders.sum_other_doc_count");
+            final AggregationResult agg = response.getAggregations().get("genders");
+            assertEquals(0, agg.getDouble("doc_count_error_upper_bound"), 0.001d);
+            assertEquals(0, agg.getDouble("sum_other_doc_count"), 0.001d);
 
             // terms should appear in this order, because we sorted terms in descending order
-            JsonAssert.assertJsonPartEquals("MALE", json, "genders.buckets[0].key");
-            JsonAssert.assertJsonPartEquals("FEMALE", json, "genders.buckets[1].key");
+            final List buckets = agg.getList("buckets");
+            assertEquals(2, buckets.size());
+
+            final MapPath male = MapPath.of((Map) buckets.get(0));
+            final MapPath female = MapPath.of((Map) buckets.get(1));
+
+            assertEquals("MALE", male.getString("key"));
+            assertEquals("FEMALE", female.getString("key"));
 
             // we don't know what counts will be, but they should exist
-            JsonAssert.assertJsonNodePresent(json, "genders.buckets[0].doc_count");
-            JsonAssert.assertJsonNodePresent(json, "genders.buckets[1].doc_count");
+            assertTrue(male.hasProperty("doc_count"));
+            assertTrue(female.hasProperty("doc_count"));
 
             // we shouldn't have any errors with single shard used for testing
-            JsonAssert.assertJsonPartEquals(0, json, "genders.buckets[0].doc_count_error_upper_bound");
-            JsonAssert.assertJsonPartEquals(0, json, "genders.buckets[1].doc_count_error_upper_bound");
+            assertEquals(0, male.getDouble("doc_count_error_upper_bound"), 0.001d);
+            assertEquals(0, female.getDouble("doc_count_error_upper_bound"), 0.001d);
         });
     }
 
@@ -348,8 +365,8 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final String json = JacksonUtils.toString(response.getAggregations(), true);
-            JsonAssert.assertJsonPartEquals(count(people), json, "age.value");
+            final AggregationResult agg = response.getAggregations().get("age");
+            assertEquals(count(people), agg.getDouble("value"), 0.001d);
         });
     }
 
@@ -435,7 +452,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
     private void testPercentileRankAggregation(
             final Index index,
             final List<Person> people,
-            final Collection<Double> values) throws JsonProcessingException {
+            final Collection<Double> values) {
         final ImmutableSearch search = ImmutableSearch.builder() //
                 .size(0) //
                 .addAggregation(
@@ -448,9 +465,10 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
         // check response
         final SearchResponse response = assertSearchFinds(index, search, people.size());
-        final String json = JacksonUtils.toString(response.getAggregations(), true);
+        final AggregationResult agg = response.getAggregations().get("age");
         for (final Double val : values) {
-            JsonAssert.assertJsonNodePresent(json, "age.values." + val.toString().replaceAll("\\.", "\\\\."));
+            final String key = "values." + val.toString();
+            assertTrue("Cannot find property: " + key, agg.hasProperty(key));
         }
     }
 

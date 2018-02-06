@@ -19,10 +19,10 @@ package com.arakelian.elastic.search;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.BoolQuery;
 import com.arakelian.elastic.model.search.ExistsQuery;
 import com.arakelian.elastic.model.search.FuzzyQuery;
@@ -39,13 +39,10 @@ import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 
-public class WriteQueryVisitor extends QueryVisitor {
-    private final JsonGenerator writer;
-
-    public WriteQueryVisitor(final JsonGenerator writer) {
-        this.writer = Preconditions.checkNotNull(writer);
+public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
+    public WriteQueryVisitor(final JsonGenerator writer, final VersionComponents version) {
+        super(writer, version);
     }
 
     @Override
@@ -327,19 +324,6 @@ public class WriteQueryVisitor extends QueryVisitor {
         if (multiple) {
             writer.writeEndArray();
         }
-    }
-
-    private void writeFieldValue(final String field, final Object value) throws IOException {
-        WriteSearch.writeFieldValue(writer, field, value);
-    }
-
-    private void writeFieldValue(final String field, final String value) throws IOException {
-        WriteSearch.writeFieldValue(writer, field, value);
-    }
-
-    private void writeFieldWithValues(final String field, final Collection<String> values)
-            throws IOException {
-        WriteSearch.writeFieldWithValues(writer, field, values);
     }
 
     private void writeStandardFields(final StandardQuery standardQuery) throws IOException {

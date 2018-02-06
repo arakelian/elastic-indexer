@@ -22,8 +22,8 @@ import java.util.Map;
 
 import org.immutables.value.Value;
 
-import com.arakelian.jackson.ExcludeSerializer;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
+import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

@@ -31,8 +31,8 @@ import com.arakelian.elastic.Views.Enhancement;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.Mapping.FieldDeserializer;
 import com.arakelian.jackson.CompoundTokenFilter;
-import com.arakelian.jackson.ExcludeSerializer;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
+import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -114,7 +114,7 @@ public abstract class Field implements Serializable {
         /**
          * Terms, positions, and character offsets are stored. The fast vector highlighter requires
          * <code>with_positions_offsets</code>
-         * 
+         *
          * <p>
          * WARNING: Setting <code>with_positions_offsets</code> will double the size of a field’s
          * index.

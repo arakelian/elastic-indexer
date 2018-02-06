@@ -31,7 +31,7 @@ import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
 import com.google.common.base.Preconditions;
 
-public class DelegatingQueryVisitor extends QueryVisitor {
+public class DelegatingQueryVisitor implements QueryVisitor {
     private final QueryVisitor delegate;
 
     public DelegatingQueryVisitor(final QueryVisitor delegate) {

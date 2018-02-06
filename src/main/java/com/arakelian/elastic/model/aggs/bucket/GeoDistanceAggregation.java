@@ -22,10 +22,10 @@ import java.util.List;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.GeoPoint;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.search.AggregationVisitor;
+import com.arakelian.jackson.model.GeoPoint;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

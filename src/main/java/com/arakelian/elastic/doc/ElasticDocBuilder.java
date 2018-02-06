@@ -32,14 +32,18 @@ import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
+import com.arakelian.elastic.model.JsonSelector;
 import com.arakelian.json.JsonFilter;
-import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 /**
  * Builds an Elasticsearch document. Elasticsearch documents are simple (flat) maps that have string
@@ -109,12 +113,19 @@ public class ElasticDocBuilder {
     /** Object writer for document serialization **/
     protected final ObjectMapper mapper;
 
+    /** JsonPath configuration **/
+    private final Configuration jsonPathConfig;
+
     public ElasticDocBuilder(final ElasticDocConfig config) {
         this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
         this.document = LinkedHashMultimap.create();
         this.tokenFilters = Maps.newLinkedHashMap();
         this.mapper = config.getObjectMapper();
+        this.jsonPathConfig = Configuration.builder() //
+                .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
+                .mappingProvider(new JacksonMappingProvider(mapper)) //
+                .build();
     }
 
     public String build(final JsonNode root) throws ElasticDocException {
@@ -124,8 +135,9 @@ public class ElasticDocBuilder {
             final List<ElasticDocBuilderPlugin> plugins = config.getPlugins();
             try {
                 // map document fields to one or more index fields
-                for (final JsonPointer sourcePath : config.getSourcePaths()) {
-                    final JsonNode node = root.at(sourcePath);
+                for (final JsonSelector sourcePath : config.getSourcePaths()) {
+                    final JsonPath jsonPath = sourcePath.getJsonPath();
+                    final JsonNode node = jsonPath.read(root, jsonPathConfig);
 
                     // we've arrived at path! put values into document
                     final Collection<Field> targets = config.getFieldsTargetedBy(sourcePath);

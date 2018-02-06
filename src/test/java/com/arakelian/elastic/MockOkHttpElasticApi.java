@@ -26,6 +26,8 @@ import com.arakelian.elastic.model.ClusterHealth.Status;
 import com.arakelian.elastic.model.DeletedDocument;
 import com.arakelian.elastic.model.Document;
 import com.arakelian.elastic.model.Documents;
+import com.arakelian.elastic.model.ImmutableAbout;
+import com.arakelian.elastic.model.ImmutableVersion;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.IndexCreated;
 import com.arakelian.elastic.model.IndexDeleted;
@@ -38,6 +40,7 @@ import com.arakelian.elastic.model.search.SearchType;
 
 import retrofit2.Call;
 import retrofit2.mock.BehaviorDelegate;
+import retrofit2.mock.Calls;
 
 public class MockOkHttpElasticApi implements OkHttpElasticApi {
     protected final BehaviorDelegate<OkHttpElasticApi> delegate;
@@ -50,7 +53,23 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
 
     @Override
     public Call<About> about() {
-        throw new UnsupportedOperationException();
+        final About about = ImmutableAbout.builder() //
+                .name("name") //
+                .tagline("You Know, for Search") //
+                .clusterName("cluster_name") //
+                .clusterUuid("sVkTY1B_SqS5bVBNJ6TFpQ") //
+                .version(
+                        ImmutableVersion.builder() //
+                                .number("6.0.1") //
+                                .buildHash("601be4a") //
+                                .buildDate("2017-12-04T09:29:09.525Z") //
+                                .buildSnapshot(false) //
+                                .luceneVersion("7.0.1") //
+                                .minimumWireCompatibilityVersion("5.6.0") //
+                                .minimumIndexCompatibilityVersion("5.0.0") //
+                                .build())
+                .build();
+        return delegate.returning(Calls.response(about)).about();
     }
 
     @Override

@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.docker.junit.Container;
+import com.arakelian.docker.junit.Container.Binding;
 import com.arakelian.docker.junit.DockerRule;
 import com.arakelian.docker.junit.model.DockerConfig;
 import com.arakelian.docker.junit.model.HostConfigurers;
@@ -58,13 +58,13 @@ import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchHits;
 import com.arakelian.elastic.model.search.SearchResponse;
+import com.arakelian.elastic.model.search.Source;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.arakelian.json.JsonFilter;
 
-import net.javacrumbs.jsonunit.JsonAssert;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
@@ -93,12 +93,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
-                // "5.2.1", //
-                // "5.3.3", //
-                // "5.4.3", //
-                // "5.5.3", //
-                // "5.6.7", //
-                // "6.0.1", //
+                "5.2.1", //
+                "5.3.3", //
+                "5.4.3", //
+                "5.5.3", //
+                "5.6.7", //
+                "6.0.1", //
                 "6.1.3" //
         };
     }
@@ -142,8 +142,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         // is really available; even after the logs indicate that it has started, it
         // may not respond to requests for a few seconds. We use /_cluster/health API as
         // a means of more reliably determining availability.
-        final int port = container.getPort("9200/tcp");
-        elasticUrl = "http://" + container.getHost() + ":" + port;
+        final Binding binding = container.getPortBinding("9200/tcp");
+        elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
         LOGGER.info("Elastic host: {}", elasticUrl);
 
         // configure OkHttp3
@@ -160,7 +160,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         // create API-specific elastic client
         final VersionComponents version = waitForElasticReady(client);
         elasticClient = ElasticClientUtils
-                .createElasticClient(client, elasticUrl, JacksonUtils.getObjectMapper(), version);
+                .createElasticClient(elasticUrl, client, JacksonUtils.getObjectMapper(), version);
         elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
     }
 
@@ -327,20 +327,17 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
         final String id = person.getId();
         for (int i = 0, size = hits.getSize(); i < size; i++) {
-            if (!id.equals(hits.getString(i, "_source/id"))) {
+            final Source source = hits.get(i).getSource();
+            if (!id.equals(source.getString("id"))) {
                 continue;
             }
 
-            final Map<String, Object> hit = hits.get(i);
-            JsonAssert.assertJsonPartEquals(id, hit, "_source.id");
-            JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
-            JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
-            JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
-            JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
-            JsonAssert.assertJsonPartEquals(
-                    DateUtils.toStringIsoFormat(person.getBirthdate()),
-                    hit,
-                    "_source.birthdate");
+            assertEquals(id, source.getString("id"));
+            assertEquals(person.getFirstName(), source.getString("firstName"));
+            assertEquals(person.getLastName(), source.getString("lastName"));
+            assertEquals(person.getAge(), source.getInt("age"));
+            assertEquals(person.getComments(), source.getString("comments"));
+            assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
             return;
         }
 
@@ -350,17 +347,15 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
         final SearchResponse response = assertSearchFinds(index, search, 1);
         final SearchHits hits = response.getHits();
+        assertEquals(1, hits.getSize());
 
-        final Map<String, Object> hit = hits.get(0);
-        JsonAssert.assertJsonPartEquals(person.getId(), hit, "_source.id");
-        JsonAssert.assertJsonPartEquals(person.getFirstName(), hit, "_source.firstName");
-        JsonAssert.assertJsonPartEquals(person.getLastName(), hit, "_source.lastName");
-        JsonAssert.assertJsonPartEquals(person.getAge(), hit, "_source.age");
-        JsonAssert.assertJsonPartEquals(person.getComments(), hit, "_source.comments");
-        JsonAssert.assertJsonPartEquals(
-                DateUtils.toStringIsoFormat(person.getBirthdate()),
-                hit,
-                "_source.birthdate");
+        final Source source = hits.get(0).getSource();
+        assertEquals(person.getId(), source.getString("id"));
+        assertEquals(person.getFirstName(), source.getString("firstName"));
+        assertEquals(person.getLastName(), source.getString("lastName"));
+        assertEquals(person.getAge(), source.getInt("age"));
+        assertEquals(person.getComments(), source.getString("comments"));
+        assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
     }
 
     @Override

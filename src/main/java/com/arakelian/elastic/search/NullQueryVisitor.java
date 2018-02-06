@@ -30,7 +30,7 @@ import com.arakelian.elastic.model.search.RegexpQuery;
 import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
 
-public class NullQueryVisitor extends QueryVisitor {
+public class NullQueryVisitor implements QueryVisitor {
     public static final NullQueryVisitor INSTANCE = new NullQueryVisitor();
 
     private NullQueryVisitor() {

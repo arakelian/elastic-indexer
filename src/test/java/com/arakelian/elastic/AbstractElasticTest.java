@@ -132,7 +132,7 @@ public abstract class AbstractElasticTest {
     protected final VersionComponents waitForElasticReady(final OkHttpClient client) {
         // configure Retrofit
         final ElasticClient elasticClient = ElasticClientUtils
-                .createElasticClient(client, getElasticUrl(), JacksonUtils.getObjectMapper(), null);
+                .createElasticClient(getElasticUrl(), client, JacksonUtils.getObjectMapper(), null);
 
         // wait for connection
         final About about = ElasticClientUtils.waitForElasticReady(elasticClient, 2, TimeUnit.MINUTES);

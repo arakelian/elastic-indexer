@@ -21,19 +21,40 @@ import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.ImmutableVersionComponents.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableVersionComponents.class)
 @JsonDeserialize(builder = ImmutableVersionComponents.Builder.class)
-public interface VersionComponents extends Serializable {
-    public static Pattern MAJOR_MINOR_BUILD = Pattern.compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(.*|\\d+))?$");
+public abstract class VersionComponents implements Serializable {
+    public static final Pattern MAJOR_MINOR_BUILD = Pattern
+            .compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(.*|\\d+))?$");
+
+    private static final VersionComponents EMPTY = ImmutableVersionComponents.builder().build();
+
+    public static VersionComponents of() {
+        return EMPTY;
+    }
+
+    public static VersionComponents of(final int major, final int minor) {
+        return of(major, minor, 0);
+    }
+
+    public static VersionComponents of(final int major, final int minor, final int build) {
+        return ImmutableVersionComponents.builder() //
+                .major(major) //
+                .minor(minor) //
+                .build(build) //
+                .build();
+    }
 
     public static VersionComponents of(final String number) {
         final Builder builder = ImmutableVersionComponents.builder() //
@@ -60,21 +81,58 @@ public interface VersionComponents extends Serializable {
         return builder.build();
     }
 
+    public boolean atLeast(final int major, final int minor, final int build) {
+        switch (Integer.compare(getMajor(), major)) {
+        case -1:
+            return false;
+        case +1:
+            return true;
+        default:
+            break;
+        }
+        switch (Integer.compare(getMinor(), minor)) {
+        case -1:
+            return false;
+        case +1:
+            return true;
+        default:
+            break;
+        }
+        switch (Integer.compare(getBuild(), build)) {
+        case -1:
+            return false;
+        case +1:
+            return true;
+        default:
+            return true;
+        }
+    }
+
     @Value.Default
-    public default int getBuild() {
+    @Value.Auxiliary
+    public int getBuild() {
         return 0;
     }
 
     @Value.Default
-    public default int getMajor() {
+    @Value.Auxiliary
+    public int getMajor() {
         return 0;
     }
 
     @Value.Default
-    public default int getMinor() {
+    @Value.Auxiliary
+    public int getMinor() {
         return 0;
     }
 
     @Nullable
-    public String getNumber();
+    public abstract String getNumber();
+
+    @JsonIgnore
+    @Value.Derived
+    @Value.Auxiliary
+    public boolean isEmpty() {
+        return StringUtils.isEmpty(getNumber());
+    }
 }

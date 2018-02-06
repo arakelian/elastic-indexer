@@ -65,7 +65,7 @@ public interface Highlighter extends Serializable {
     @JsonDeserialize(builder = ImmutableField.Builder.class)
     @JsonPropertyOrder({ "name" })
     public interface Field extends Highlighter {
-        public static Field of(String name) {
+        public static Field of(final String name) {
             return ImmutableField.builder().name(name).build();
         }
 
@@ -219,7 +219,7 @@ public interface Highlighter extends Serializable {
 
     /**
      * Returns the size of the highlighted fragment in characters. Defaults to 100.
-     * 
+     *
      * @return the size of the highlighted fragment in characters
      */
     @Nullable

@@ -143,6 +143,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
             final Search search = ImmutableSearch.builder() //
                     .query(
                             ImmutableIdsQuery.builder() //
+                                    .name("ids_query") //
                                     .addValue(person.getId()) //
                                     .build()) //
                     .build();

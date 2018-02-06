@@ -17,7 +17,6 @@
 
 package com.arakelian.elastic.model;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -30,15 +29,7 @@ import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonPointer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
@@ -52,25 +43,7 @@ import com.google.common.collect.Multimap;
 @JsonDeserialize(builder = ImmutableElasticDocConfig.Builder.class)
 @JsonPropertyOrder({ "targets", "mapping" })
 public abstract class ElasticDocConfig {
-    public static class JsonPointerDeserializer extends JsonDeserializer<JsonPointer> {
-        @Override
-        public JsonPointer deserialize(final JsonParser p, final DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
-            return JsonPointer.compile(p.getText());
-        }
-    }
-
-    public static class JsonPointerSerializer extends JsonSerializer<JsonPointer> {
-        @Override
-        public void serialize(
-                final JsonPointer value,
-                final JsonGenerator gen,
-                final SerializerProvider serializers) throws IOException, JsonProcessingException {
-            gen.writeString(value.toString());
-        }
-    }
-
-    public Collection<Field> getFieldsTargetedBy(final JsonPointer sourcePath) {
+    public Collection<Field> getFieldsTargetedBy(final JsonSelector sourcePath) {
         final Collection<Field> collection = getSourcePathsMapping().get(sourcePath);
         return collection != null ? collection : ImmutableList.of();
     }
@@ -115,7 +88,7 @@ public abstract class ElasticDocConfig {
 
     @JsonIgnore
     @Value.Derived
-    public Set<JsonPointer> getSourcePaths() {
+    public Set<JsonSelector> getSourcePaths() {
         // must copy otherwise not serializable
         return ImmutableSet.copyOf(getSourcePathsMapping().keySet());
     }
@@ -126,9 +99,8 @@ public abstract class ElasticDocConfig {
      * @return list of source paths that should be mapped to each Elastic field.
      */
     @Value.Default
-    @JsonDeserialize(as = LinkedHashMultimap.class, contentUsing = JsonPointerDeserializer.class)
-    @JsonSerialize(contentUsing = JsonPointerSerializer.class)
-    public Multimap<String, JsonPointer> getTargets() {
+    @JsonDeserialize(as = LinkedHashMultimap.class)
+    public Multimap<String, JsonSelector> getTargets() {
         return LinkedHashMultimap.create();
     }
 
@@ -152,17 +124,17 @@ public abstract class ElasticDocConfig {
      */
     @JsonIgnore
     @Value.Lazy
-    protected Multimap<JsonPointer, Field> getSourcePathsMapping() {
-        final Multimap<JsonPointer, Field> result = LinkedHashMultimap.create();
+    protected Multimap<JsonSelector, Field> getSourcePathsMapping() {
+        final Multimap<JsonSelector, Field> result = LinkedHashMultimap.create();
         final Mapping mapping = getMapping();
 
-        final Multimap<String, JsonPointer> targets = getTargets();
+        final Multimap<String, JsonSelector> targets = getTargets();
         for (final String target : targets.keySet()) {
             final Field field = mapping.getField(target);
             if (field == null) {
                 throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
             }
-            for (final JsonPointer path : targets.get(target)) {
+            for (final JsonSelector path : targets.get(target)) {
                 result.put(path, field);
             }
         }
@@ -178,11 +150,11 @@ public abstract class ElasticDocConfig {
             return this;
         }
 
-        final LinkedHashMultimap<String, JsonPointer> newTargets = LinkedHashMultimap.create();
+        final LinkedHashMultimap<String, JsonSelector> newTargets = LinkedHashMultimap.create();
         for (final String identity : identityFields) {
-            final JsonPointer target = JsonPointer.compile("/" + identity);
+            final JsonSelector target = JsonSelector.of(identity);
             if (getTargets().containsKey(identity)) {
-                final Collection<JsonPointer> targets = getTargets().get(identity);
+                final Collection<JsonSelector> targets = getTargets().get(identity);
                 Preconditions.checkState(
                         targets.contains(target), //
                         "Target \"%s\" is not an identity mapping",

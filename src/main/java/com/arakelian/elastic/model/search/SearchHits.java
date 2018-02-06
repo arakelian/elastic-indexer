@@ -19,22 +19,17 @@ package com.arakelian.elastic.model.search;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.GeoPoint;
-import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * @see <a href=
@@ -46,103 +41,25 @@ import com.google.common.collect.ImmutableMap;
 @JsonDeserialize(builder = ImmutableSearchHits.Builder.class)
 @JsonPropertyOrder({ "total", "max_score", "hits" })
 public abstract class SearchHits implements Serializable {
-    public static final char PATH_SEPARATOR = '/';
-
-    /** ObjectMapper that should be used for deserialization. **/
-    @SuppressWarnings("immutables")
-    private transient ObjectMapper mapper;
-
-    public Map<String, Object> get(final int index) {
-        final List<Map<String, Object>> hits = getHits();
-        if (index < 0 || index > hits.size()) {
-            return ImmutableMap.of();
-        }
-
-        final Map<String, Object> hit = hits.get(index);
-        if (hit == null) {
-            return ImmutableMap.of();
-        }
-
-        return hit;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T get(final int index, final String path, final Class<T> clazz) {
-        Preconditions.checkArgument(clazz != null, "clazz must be non-null");
-
-        Map<String, Object> map = get(index);
-
-        final int length = path.length();
-        for (int start = length > 0 && path.charAt(0) == PATH_SEPARATOR ? 1 : 0; start < length;) {
-            final int next = path.indexOf(PATH_SEPARATOR, start);
-            final boolean lastSegment = next == -1;
-            final int end = lastSegment ? length : next;
-            final String segment = path.substring(start, end);
-
-            final Object value = map.get(segment);
-            if (value == null) {
-                return null;
-            }
-            if (lastSegment) {
-                return getObjectMapper().convertValue(value, clazz);
-            }
-            if (!(value instanceof Map)) {
-                throw new IllegalArgumentException("Expected \"" + path.substring(0, end) + "\" of path \""
-                        + path + "\" to resolve to Map but was " + value.getClass().getSimpleName());
-            }
-
-            map = map.getClass().cast(value);
-            start = next + 1;
-        }
-        return null;
-    }
-
-    public Double getDouble(final int index, final String path) {
-        return get(index, path, Double.class);
-    }
-
-    public Float getFloat(final int index, final String path) {
-        return get(index, path, Float.class);
-    }
-
-    public GeoPoint getGeoPoint(final int index, final String path) {
-        return get(index, path, GeoPoint.class);
+    public SearchHit get(final int index) {
+        final List<SearchHit> hits = getHits();
+        return hits.get(index);
     }
 
     @Value.Default
     @JsonProperty("hits")
-    public List<Map<String, Object>> getHits() {
+    public List<SearchHit> getHits() {
         return ImmutableList.of();
-    }
-
-    public Integer getInt(final int index, final String path) {
-        return get(index, path, Integer.class);
     }
 
     @Nullable
     @JsonProperty("max_score")
     public abstract Float getMaxScore();
 
-    public Object getObject(final int index, final String path) {
-        return get(index, path, Object.class);
-    }
-
-    @JsonIgnore
-    public ObjectMapper getObjectMapper() {
-        if (mapper == null) {
-            mapper = JacksonUtils.getObjectMapper();
-        }
-        return mapper;
-    }
-
     @JsonIgnore
     @Value.Derived
     public int getSize() {
         return getHits().size();
-    }
-
-    public String getString(final int index, final String path) {
-        return get(index, path, String.class);
     }
 
     @Value.Default
@@ -151,6 +68,8 @@ public abstract class SearchHits implements Serializable {
     }
 
     public void setObjectMapper(final ObjectMapper objectMapper) {
-        this.mapper = objectMapper;
+        for (final SearchHit hit : getHits()) {
+            hit.setObjectMapper(objectMapper);
+        }
     }
 }
