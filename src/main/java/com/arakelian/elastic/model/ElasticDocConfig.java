@@ -25,7 +25,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.elastic.doc.DefaultValueProducer;
 import com.arakelian.elastic.doc.ValueProducer;
-import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
+import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

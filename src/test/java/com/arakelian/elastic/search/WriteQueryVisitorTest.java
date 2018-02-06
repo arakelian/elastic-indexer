@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.query;
+package com.arakelian.elastic.search;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -30,7 +30,6 @@ import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.TermsQuery;
-import com.arakelian.elastic.search.WriteSearchVisitor;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.doc.plugin;
+package com.arakelian.elastic.doc.plugins;
 
 import com.arakelian.elastic.doc.ElasticDoc;
 import com.arakelian.elastic.doc.ElasticDocException;

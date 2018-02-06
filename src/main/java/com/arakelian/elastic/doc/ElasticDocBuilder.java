@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.elastic.doc.filters.TokenChain;
 import com.arakelian.elastic.doc.filters.TokenFilter;
-import com.arakelian.elastic.doc.plugin.ElasticDocBuilderPlugin;
+import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.JsonSelector;
