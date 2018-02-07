@@ -43,6 +43,7 @@ multitool {
         // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)        
         'com.jayway.jsonpath'         : 'repackaged.com.arakelian.elastic.${prefix}com.jayway.jsonpath',
         'net.minidev.asm'             : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.asm',
+        'net.minidev.json'            : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.json',
         'org.objectweb.asm'           : 'repackaged.com.arakelian.elastic.${prefix}org.objectweb.asm',
         
         // guava is problematic downstream
