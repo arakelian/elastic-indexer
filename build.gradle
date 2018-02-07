@@ -39,7 +39,13 @@ multitool {
         'com.google.thirdparty'       : 'repackaged.com.arakelian.elastic.${prefix}com.google.thirdparty',
         'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
         'com.github.rholder.retry'    : 'repackaged.com.arakelian.elastic.${prefix}com.github.rholder.retry',
+
+        // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)        
         'com.jayway.jsonpath'         : 'repackaged.com.arakelian.elastic.${prefix}com.jayway.jsonpath',
+        'net.minidev.asm'             : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.asm',
+        'org.objectweb.asm'           : 'repackaged.com.arakelian.elastic.${prefix}org.objectweb.asm',
+        
+        // guava is problematic downstream
         'com.fasterxml.jackson.datatype.guava' : 'repackaged.com.arakelian.elastic.${prefix}com.fasterxml.jackson.datatype.guava'
     ]
     
