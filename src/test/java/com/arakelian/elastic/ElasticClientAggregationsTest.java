@@ -49,7 +49,6 @@ import com.arakelian.elastic.model.aggs.metrics.ImmutablePercentilesAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableStatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableSumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ImmutableValueCountAggregation;
-import com.arakelian.elastic.model.search.AggregationResult;
 import com.arakelian.elastic.model.search.ImmutableMatchQuery;
 import com.arakelian.elastic.model.search.ImmutableSearch;
 import com.arakelian.elastic.model.search.SearchResponse;
@@ -77,7 +76,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(avg(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -96,7 +95,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(countDistinct(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -115,7 +114,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(people.size(), agg.getDouble("count"), 0.001d);
             assertEquals(min(people), agg.getDouble("min"), 0.001d);
             assertEquals(max(people), agg.getDouble("max"), 0.001d);
@@ -152,7 +151,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute aggregation
             final SearchResponse response = assertSearchFinds(index, search, 2);
-            final AggregationResult agg = response.getAggregations().get("viewport");
+            final MapPath agg = response.getAggregations().get("viewport");
 
             assertEquals(48.861d, agg.getDouble("bounds/top_left/lat"), 0.001d);
             assertEquals(2.326d, agg.getDouble("bounds/top_left/lon"), 0.001d);
@@ -182,7 +181,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute aggregation
             final SearchResponse response = assertSearchFinds(index, search, 6);
-            final AggregationResult agg = response.getAggregations().get("centroid");
+            final MapPath agg = response.getAggregations().get("centroid");
             assertEquals(51.009d, agg.getDouble("location/lat"), 0.001d);
             assertEquals(3.966d, agg.getDouble("location/lon"), 0.001d);
 
@@ -208,7 +207,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(max(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -227,7 +226,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(min(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -249,7 +248,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertTrue(agg.hasProperty("values.1.0"));
             assertTrue(agg.hasProperty("values.5.0"));
             assertTrue(agg.hasProperty("values.25.0"));
@@ -279,7 +278,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute average aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(people.size(), agg.getDouble("count"), 0.001d);
             assertEquals(min(people), agg.getDouble("min"), 0.001d);
             assertEquals(max(people), agg.getDouble("max"), 0.001d);
@@ -302,7 +301,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(sum(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -327,7 +326,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // execute terms aggregation
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("genders");
+            final MapPath agg = response.getAggregations().get("genders");
             assertEquals(0, agg.getDouble("doc_count_error_upper_bound"), 0.001d);
             assertEquals(0, agg.getDouble("sum_other_doc_count"), 0.001d);
 
@@ -365,7 +364,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
             // check response
             final SearchResponse response = assertSearchFinds(index, search, people.size());
-            final AggregationResult agg = response.getAggregations().get("age");
+            final MapPath agg = response.getAggregations().get("age");
             assertEquals(count(people), agg.getDouble("value"), 0.001d);
         });
     }
@@ -465,7 +464,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
 
         // check response
         final SearchResponse response = assertSearchFinds(index, search, people.size());
-        final AggregationResult agg = response.getAggregations().get("age");
+        final MapPath agg = response.getAggregations().get("age");
         for (final Double val : values) {
             final String key = "values." + val.toString();
             assertTrue("Cannot find property: " + key, agg.hasProperty(key));

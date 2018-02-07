@@ -79,6 +79,14 @@ public abstract class Source implements Serializable {
         return getMapPath().getLong(path);
     }
 
+    public Map getMap(final String path) {
+        return getMapPath().getMap(path);
+    }
+
+    public MapPath getMapPath(final String path) {
+        return getMapPath().getMapPath(path);
+    }
+
     public Object getObject(final String path) {
         return getMapPath().getObject(path);
     }

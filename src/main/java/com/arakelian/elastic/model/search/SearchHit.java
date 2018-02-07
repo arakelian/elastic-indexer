@@ -24,6 +24,7 @@ import java.util.SortedSet;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.jackson.MapPath;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -64,6 +65,11 @@ public abstract class SearchHit implements Serializable {
     @Value.Default
     public Source getSource() {
         return ImmutableSource.builder().build();
+    }
+
+    @Value.Default
+    public MapPath getHighlight() {
+        return MapPath.of();
     }
 
     @Nullable

@@ -24,6 +24,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.Shards;
+import com.arakelian.jackson.MapPath;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -39,7 +40,7 @@ public interface SearchResponse extends Serializable {
     @Nullable
     @Value.Default
     @Value.Auxiliary
-    public default Map<String, AggregationResult> getAggregations() {
+    public default Map<String, MapPath> getAggregations() {
         return ImmutableMap.of();
     }
 

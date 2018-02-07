@@ -93,13 +93,14 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
-                "5.2.1", //
-                "5.3.3", //
-                "5.4.3", //
-                "5.5.3", //
-                "5.6.7", //
-                "6.0.1", //
-                "6.1.3" //
+                // "5.2.1", //
+                // "5.3.3", //
+                // "5.4.3", //
+                // "5.5.3", //
+                // "5.6.7", //
+                // "6.0.1", //
+                // "6.1.3", //
+                "6.2.0" //
         };
     }
 

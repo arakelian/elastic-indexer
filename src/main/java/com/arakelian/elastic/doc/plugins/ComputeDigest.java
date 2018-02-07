@@ -34,7 +34,6 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.doc.ElasticDoc;
 import com.arakelian.elastic.doc.ElasticDocException;
 import com.arakelian.elastic.doc.ValueException;
-import com.arakelian.elastic.doc.plugin.ImmutableComputeDigestConfig;
 import com.arakelian.elastic.model.Field;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
