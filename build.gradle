@@ -84,7 +84,9 @@ dependencies {
     // shadow stuff we use very little of, to reduce dependencies
     shadow  'org.apache.commons:commons-lang3:3.7'
     shadow  'com.github.rholder:guava-retrying:2.0.0'
-    shadow  'com.jayway.jsonpath:json-path:2.3.0'
+    shadow  ('com.jayway.jsonpath:json-path:2.3.0') {
+        exclude module: 'slf4j-api'
+    }
     
     // third party
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
