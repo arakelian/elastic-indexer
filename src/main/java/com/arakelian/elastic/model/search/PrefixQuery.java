@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  *      Query</a>
  *
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutablePrefixQuery.class)
 @JsonDeserialize(builder = ImmutablePrefixQuery.Builder.class)
 @JsonTypeName(Query.PREFIX_QUERY)

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableLengthFilter.class)
 @JsonDeserialize(builder = ImmutableLengthFilter.Builder.class)
 @JsonTypeName(TokenFilter.LENGTH_FILTER)

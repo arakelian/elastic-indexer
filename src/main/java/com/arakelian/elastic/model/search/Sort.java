@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableSort.class)
 @JsonDeserialize(builder = ImmutableSort.Builder.class)
 @JsonPropertyOrder({ "field", "order", "mode" })

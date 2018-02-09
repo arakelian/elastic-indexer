@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableSearchResponse.class)
 @JsonDeserialize(builder = ImmutableSearchResponse.Builder.class)
 @JsonPropertyOrder({ "_scroll_id", "took", "timed_out", "num_reduce_phases", "terminated_early", "_shards",

@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableSortedSet;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableQueryStringQuery.class)
 @JsonDeserialize(builder = ImmutableQueryStringQuery.Builder.class)
 @JsonTypeName(Query.QUERY_STRING_QUERY)

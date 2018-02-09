@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  *      Query</a>
  *
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableWildcardQuery.class)
 @JsonDeserialize(builder = ImmutableWildcardQuery.Builder.class)
 @JsonTypeName(Query.WILDCARD_QUERY)

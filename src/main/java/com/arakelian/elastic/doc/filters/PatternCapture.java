@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutablePatternCapture.class)
 @JsonDeserialize(builder = ImmutablePatternCapture.Builder.class)
 @JsonTypeName(TokenFilter.PATTERN_CAPTURE)

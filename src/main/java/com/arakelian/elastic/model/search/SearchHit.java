@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableSearchHit.class)
 @JsonDeserialize(builder = ImmutableSearchHit.Builder.class)
 @JsonPropertyOrder({ "_index", "_type", "_id", "_score", "_source", "matched_queries" })

@@ -38,7 +38,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableElasticDocConfig.class)
 @JsonDeserialize(builder = ImmutableElasticDocConfig.Builder.class)
 @JsonPropertyOrder({ "targets", "mapping" })

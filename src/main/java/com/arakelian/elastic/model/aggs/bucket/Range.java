@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableRange.class)
 @JsonDeserialize(builder = ImmutableRange.Builder.class)
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)

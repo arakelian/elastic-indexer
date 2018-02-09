@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableSortedSet;
  *      Query</a>
  *
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableTermsQuery.class)
 @JsonDeserialize(builder = ImmutableTermsQuery.Builder.class)
 @JsonTypeName(Query.TERMS_QUERY)

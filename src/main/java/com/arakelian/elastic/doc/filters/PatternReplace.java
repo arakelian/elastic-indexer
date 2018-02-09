@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutablePatternReplace.class)
 @JsonDeserialize(builder = ImmutablePatternReplace.Builder.class)
 @JsonTypeName(TokenFilter.PATTERN_REPLACE)

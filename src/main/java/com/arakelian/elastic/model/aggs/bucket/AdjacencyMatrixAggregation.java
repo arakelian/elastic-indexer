@@ -48,7 +48,7 @@ import com.google.common.collect.ImmutableMap;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/adjacency/AdjacencyMatrixAggregationBuilder.java">AdjacencyMatrixAggregationBuilder.java</a>
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableAdjacencyMatrixAggregation.class)
 @JsonDeserialize(builder = ImmutableAdjacencyMatrixAggregation.Builder.class)
 @JsonTypeName(Aggregation.ADJACENCY_MATRIX_AGGREGATION)

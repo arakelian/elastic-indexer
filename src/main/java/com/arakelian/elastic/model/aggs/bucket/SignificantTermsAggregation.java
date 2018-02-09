@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableList;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/significant/SignificantTermsAggregationBuilder.java">SignificantTermsAggregationBuilder.java</a>
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableSignificantTermsAggregation.class)
 @JsonDeserialize(builder = ImmutableSignificantTermsAggregation.Builder.class)
 @JsonTypeName(Aggregation.SIGNIFICANT_TERMS_AGGREGATION)

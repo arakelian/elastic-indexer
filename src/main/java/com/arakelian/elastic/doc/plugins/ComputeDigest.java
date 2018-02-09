@@ -46,7 +46,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
 public class ComputeDigest implements ElasticDocBuilderPlugin {
-    @Value.Immutable
+    @Value.Immutable(copy=false)
     @JsonSerialize(as = ImmutableComputeDigestConfig.class)
     @JsonDeserialize(builder = ImmutableComputeDigestConfig.Builder.class)
     public interface ComputeDigestConfig {

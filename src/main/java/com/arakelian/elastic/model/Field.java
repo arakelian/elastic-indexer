@@ -44,7 +44,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableField.class)
 @JsonDeserialize(builder = ImmutableField.Builder.class)
 @JsonPropertyOrder({ "name", "type", "scaling_factor", "format", "enabled", "store", "index", "index_options",

@@ -34,12 +34,11 @@ import org.slf4j.LoggerFactory;
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.ElasticClient;
 import com.arakelian.elastic.model.Refresh;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -94,19 +93,7 @@ public class RefreshLimiter implements Closeable {
      * We maintain state for each of the Elastic indexes that we are refreshing. Using a Guava cache
      * makes it easy to be thread-safe.
      */
-    private final LoadingCache<String, Index> indexes = CacheBuilder.newBuilder()
-            .maximumSize(Integer.MAX_VALUE) //
-            .build(new CacheLoader<String, Index>() {
-                @Override
-                public Index load(final String name) {
-                    final RateLimiter rateLimiter = config.getRateLimiter().get(name);
-                    if (rateLimiter != null) {
-                        return new Index(name, rateLimiter);
-                    }
-                    final double permitsPerSecond = config.getDefaultPermitsPerSecond();
-                    return new Index(name, RateLimiter.create(permitsPerSecond));
-                }
-            });
+    private final LoadingCache<String, Index> indexes;
 
     /** We can only be closed once **/
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -116,6 +103,17 @@ public class RefreshLimiter implements Closeable {
         Preconditions.checkArgument(elasticClient != null, "elasticClient must not be null");
         this.config = config;
         this.elasticClient = elasticClient;
+
+        indexes = Caffeine.newBuilder() //
+                .maximumSize(Integer.MAX_VALUE) //
+                .build(name -> {
+                    final RateLimiter rateLimiter = config.getRateLimiter().get(name);
+                    if (rateLimiter != null) {
+                        return new Index(name, rateLimiter);
+                    }
+                    final double permitsPerSecond = config.getDefaultPermitsPerSecond();
+                    return new Index(name, RateLimiter.create(permitsPerSecond));
+                });
 
         refreshExecutor = MoreExecutors.listeningDecorator(
                 MoreExecutors.getExitingExecutorService( //
@@ -388,6 +386,6 @@ public class RefreshLimiter implements Closeable {
 
     private Index getIndex(final String name) {
         Preconditions.checkArgument(name != null, "name must be non-null");
-        return indexes.getUnchecked(name);
+        return indexes.get(name);
     }
 }

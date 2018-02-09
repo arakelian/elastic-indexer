@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/ExistsQueryBuilder.java">Exists
  *      Query</a>
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableExistsQuery.class)
 @JsonDeserialize(builder = ImmutableExistsQuery.Builder.class)
 @JsonTypeName(Query.EXISTS_QUERY)

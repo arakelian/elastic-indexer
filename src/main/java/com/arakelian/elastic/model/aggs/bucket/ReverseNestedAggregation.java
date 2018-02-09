@@ -43,7 +43,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/nested/ReverseNestedAggregationBuilder.java">ReverseNestedAggregationBuilder.java</a>
  */
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableReverseNestedAggregation.class)
 @JsonDeserialize(builder = ImmutableReverseNestedAggregation.Builder.class)
 @JsonTypeName(Aggregation.REVERSE_NESTED_AGGREGATION)

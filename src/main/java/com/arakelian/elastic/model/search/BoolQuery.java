@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 
-@Value.Immutable
+@Value.Immutable(copy=false)
 @JsonSerialize(as = ImmutableBoolQuery.class)
 @JsonDeserialize(builder = ImmutableBoolQuery.Builder.class)
 @JsonTypeName(Query.BOOL_QUERY)
