@@ -23,14 +23,12 @@ plugins {
     id "com.github.johnrengelman.shadow" version "2.0.2"
 
     // useful utilities
-    id "com.arakelian.multitool" version "1.3.0"
+    id "com.arakelian.multitool" version "1.4.0"
 }
 
 group   = 'com.arakelian'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.4.1'
-}
+task wrapper(type: Wrapper) { gradleVersion = '4.4.1' }
 
 multitool {
     relocates += [
@@ -40,50 +38,52 @@ multitool {
         'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
         'com.github.rholder.retry'    : 'repackaged.com.arakelian.elastic.${prefix}com.github.rholder.retry',
 
-        // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)        
+        // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)
         'com.jayway.jsonpath'         : 'repackaged.com.arakelian.elastic.${prefix}com.jayway.jsonpath',
         'net.minidev.asm'             : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.asm',
         'net.minidev.json'            : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.json',
         'org.objectweb.asm'           : 'repackaged.com.arakelian.elastic.${prefix}org.objectweb.asm',
-        
+
         // guava is problematic downstream
         'com.fasterxml.jackson.datatype.guava' : 'repackaged.com.arakelian.elastic.${prefix}com.fasterxml.jackson.datatype.guava'
     ]
-    
-    proguardOptions.keep += [
-        'class com.arakelian.** { *; }',
-        'class **.fasterxml.jackson.datatype.guava.** { *; }',
-    ]
 
-    proguardOptions.optimizationpasses = 2
+    proguardConfiguration {
+        keep includedescriptorclasses:true, 'class com.arakelian.** { *; }'
+        keep includedescriptorclasses:true, 'class **.fasterxml.jackson.datatype.guava.** { *; }'
+
+        dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
+        dontnote '**.com.jayway.jsonpath.spi.mapper.GsonMappingProvider'
+        dontnote '**.org.apache.commons.lang3.ObjectUtils'
+
+        optimizationpasses 2
+    }
 }
 
 dependencies {
     processor 'org.immutables:value:2.5.6'
-    
-    compile 'com.arakelian:more-commons:1.8.0'
-    compile 'com.arakelian:jackson-utils:1.9.0'
+
+    compile 'com.arakelian:more-commons:1.8.1'
+    compile 'com.arakelian:jackson-utils:1.9.1'
     compile 'com.arakelian:json-filter:1.8.0'
-    compile 'com.arakelian:key-value-store:1.9.0'
+    compile 'com.arakelian:key-value-store:1.9.1'
     compile 'com.github.ben-manes.caffeine:caffeine:2.6.1'
 
     // shadow Guava due to frequent downstream incompatibility issues
     shadow  'com.google.guava:guava:24.0-jre'
 
-    // we use Multimap in ElasticDocConfig; we shadow jackson's guava library 
+    // we use Multimap in ElasticDocConfig; we shadow jackson's guava library
     // so we don't add downstream guava dependency
     shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.8.11') {
-        exclude module: 'jackson-databind' 
-        exclude module: 'jackson-core' 
+        exclude module: 'jackson-databind'
+        exclude module: 'jackson-core'
     }
-    
+
     // shadow stuff we use very little of, to reduce dependencies
     shadow  'org.apache.commons:commons-lang3:3.7'
     shadow  'com.github.rholder:guava-retrying:2.0.0'
-    shadow  ('com.jayway.jsonpath:json-path:2.3.0') {
-        exclude module: 'slf4j-api'
-    }
-    
+    shadow  ('com.jayway.jsonpath:json-path:2.3.0') { exclude module: 'slf4j-api' }
+
     // third party
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
     compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
@@ -104,9 +104,9 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.28.2'
-    testCompile 'com.arakelian:more-commons:1.8.0:tests'
-    testCompile 'com.arakelian:jackson-utils:1.9.0:tests'
-    testCompile 'com.arakelian:docker-junit-rule:2.0.0'
+    testCompile 'com.arakelian:more-commons:1.8.1:tests'
+    testCompile 'com.arakelian:jackson-utils:1.9.1:tests'
+    testCompile 'com.arakelian:docker-junit-rule:2.0.2'
     testCompile 'com.arakelian:faker:2.1.1'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.3.0'
 }
