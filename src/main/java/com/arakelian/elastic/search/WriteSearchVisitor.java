@@ -134,6 +134,10 @@ public class WriteSearchVisitor extends AbstractVisitor {
         writeFieldValue("scroll_id", search.getScrollId());
         writeFieldValue("from", search.getFrom());
         writeFieldValue("size", search.getSize());
+        writeFieldValue("track_scores", search.isTrackScores());
+        writeFieldValue("track_total_hits", search.isTrackTotalHits());
+        writeFieldValue("allow_partial_search_results", search.isAllowPartialSearchResults());
+        writeFieldValue("timeout", search.getTimeout());
         writeFieldValue("terminate_after", search.getTerminateAfter());
 
         final SourceFilter sourceFilter = search.getSourceFilter();

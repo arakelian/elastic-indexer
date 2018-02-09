@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearchHit.class)
 @JsonDeserialize(builder = ImmutableSearchHit.Builder.class)
 @JsonPropertyOrder({ "_index", "_type", "_id", "_score", "_source", "matched_queries" })
@@ -58,6 +58,14 @@ public abstract class SearchHit implements Serializable {
         return ImmutableMap.of();
     }
 
+    /**
+     * Returns the score of record.
+     * 
+     * Note that when custom sorting is used, Elastic will omit the scoring and return a null value.
+     * 
+     * @return the score of record, or null if scoring was not applied
+     */
+    @Nullable
     @JsonProperty("_score")
     public abstract Double getScore();
 

@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearch.class)
 @JsonDeserialize(builder = ImmutableSearch.Builder.class)
 @JsonPropertyOrder({ "scroll", "scrollId", "from", "size", "searchType", "terminateAfter", "sourceFilter",
@@ -101,4 +101,36 @@ public interface Search extends Serializable {
 
     @Nullable
     public Boolean isVersion();
+
+    /**
+     * Returns true to calculate and return scores even if they are not used for sorting
+     * 
+     * @return true to calculate and return scores even if they are not used for sorting
+     */
+    @Nullable
+    public Boolean isTrackScores();
+
+    /**
+     * Returns true if the number of documents that match the query should be tracked
+     * 
+     * @return true if the number of documents that match the query should be tracked
+     */
+    @Nullable
+    public Boolean isTrackTotalHits();
+
+    /**
+     * Returns true if an error should be returned if there is a partial search failure or timeout
+     * 
+     * @return true if an error should be returned if there is a partial search failure or timeout
+     */
+    @Nullable
+    public Boolean isAllowPartialSearchResults();
+
+    /**
+     * Returns the explicit operation timeout, e.g. "20s"
+     * 
+     * @return the explicit operation timeout
+     */
+    @Nullable
+    public String getTimeout();
 }
