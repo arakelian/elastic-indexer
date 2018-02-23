@@ -6,19 +6,36 @@ High-speed indexing into Elastic.
 
 **elastic-indexer** is a high-level Java API for indexing data into [Elastic](https://www.elastic.co/products/elasticsearch).
 It is compatabile with all versions of Elasticsearch starting with version 5.2. This library is currently being used in a 
-production environment where hundreds of billions of records are re-indexed several times per year into an Elastic cluster
-with hundreds of nodes. In other words, it is battle tested at scale.
+production environment where hundreds of billions of records are re-indexed several times each year into an Elastic cluster
+with hundreds of nodes. In other words, this library is battle tested at scale.
 
-When considering a library like **elastic-indexer**, the first question you may ask me is why wouldn't you want to use the offical 
+When considering a library like **elastic-indexer**, the first question you may ask is why wouldn't you want to use the offical 
 [Low Level REST Client](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-low.html), or 
-better yet,[High Level Rest Client](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high.html).
+better yet the new [High Level Rest Client](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high.html).
 
-With regards to the former, the answer is easy: Indexing data at scale involves tasks that the low-level API does not provide
+With regards to the former, the answer is easy: Indexing data at scale involves tasks that the low-level API simply does not provide
 support for. This includes:
-* Building the document that Elastic will index from a larger, hierarchical JSON structure that needs to be transformed in some way
-* Handling the inevitable 'Server to busy' conditions that will occur in production environments with hundreds or thousands of nodes
-* Sending data to Elastic in an asynchronous manner so that the application can continue processing, and registering callbacks so that
-  when indexing failures occur the application can retry at some future date.
+* Building Elastic documents (for indexing) that sourced from large, hierarchical JSON structure which must be transformed, massaged
+  or redacted in some way;
+* Handling the inevitable 'Server too busy' conditions that will occur in production environments with hundreds of nodes, and retrying
+  index operations with backoff so that clusters can recover; 
+* Sending data to Elastic in an asynchronous manner so that your application can continue processing and allowing callers to register
+  callbacks so that when indexing failures occur the application can retry at some future date.
+
+With regards to the latter option, there are at least two things to consider which may be important to you:
+* As of this writing, February 2018, the High Level API is in beta;
+* The High Level API only support version 6.1+ and does not strive to maintain backwards compatibility with previous versions of Elastic.
+
+> "The 6.0 client is able to communicate with any 6.x Elasticsearch node, while the 6.1 client is for sure able to
+> communicate with 6.1, 6.2 and any later 6.x version, but there may be incompatibility issues when communicating 
+> with a previous Elasticsearch node version, for instance between 6.1 and 6.0, in case the 6.1 client supports 
+> new request body fields for some APIs that are not known by the 6.0 node(s)."
+> - Elastic High Level 
+
+**elastic-indexer** is compatible with every version of Elastic from version 5.2. As new features are added to our bulk indexer,
+or search APIs, we strive to maintain backwards compatiblity with old versions of Elastic, since we recognize that enterprise
+deployments of Elastic (like the ones this library operates in) often operate on much longer upgrade cycles than smaller installations
+of Elastic.
 
 ## Installation
 
