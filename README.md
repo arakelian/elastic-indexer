@@ -10,15 +10,13 @@ When considering a library like **elastic-indexer**, the first question you may 
 better yet the new [High Level Rest Client](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high.html).
 
 With regards to the former, the answer is easy: Indexing data at scale involves many tasks that the low-level API simply does not provide
-support for. 
-
-This includes:
-* Building Elastic documents (for indexing) that sourced from large, hierarchical JSON structure which must be transformed, massaged
+support for. This includes:
+* Building Elastic documents for indexing that are sourced from large, hierarchical JSON structure which must be transformed, massaged
   or redacted in some way;
-* Handling the inevitable 'Server too busy' conditions that will occur in production environments with hundreds of nodes, and retrying
-  index operations with backoff so that clusters can recover; 
-* Sending data to Elastic in an asynchronous manner so that your application can continue processing and allowing callers to register
-  callbacks so that when indexing failures occur the application can retry at some future date.
+* Handling the inevitable 'Server too busy' conditions that occur environments with hundreds of nodes, and retrying index operations 
+  with backoff so that clusters can recover; 
+* Sending data to Elastic in an asynchronous manner so that your application can continue processing, while allowing callers to 
+  register callbacks so that if indexing fails (despite retries), the application can schedule a retry at a future date.
 
 With regards to the latter option, there are at least two things you should consider:
 * As of this writing (late February, 2018) the High Level Client remains in beta;
