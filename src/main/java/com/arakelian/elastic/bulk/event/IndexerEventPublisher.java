@@ -45,7 +45,7 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
 
     @SafeVarargs
     public IndexerEventPublisher(final int ringBufferSize, final EventHandler<IndexerEvent>... handlers) {
-        // start disruptor that receives DAO events and forwards to consumers
+        // start disruptor that receives store events and forwards to consumers
         this.disruptor = new Disruptor<>( //
                 new IndexerEventFactory(), //
                 ringBufferSize, //

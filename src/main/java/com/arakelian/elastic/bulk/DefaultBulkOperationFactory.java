@@ -24,11 +24,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.arakelian.core.utils.DateUtils;
-import com.arakelian.dao.feature.HasId;
-import com.arakelian.dao.feature.HasTimestamp;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.jackson.utils.JacksonUtils;
+import com.arakelian.store.feature.HasId;
+import com.arakelian.store.feature.HasTimestamp;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
