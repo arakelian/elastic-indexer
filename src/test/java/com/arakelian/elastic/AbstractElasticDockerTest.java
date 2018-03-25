@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -97,18 +98,18 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
-                // "5.6.7", //
+                // "5.6.8", //
                 // "6.0.1", //
-                // "6.1.3", //
-                "6.2.0" //
+                // "6.1.4", //
+                "6.2.3" //
         };
     }
 
     protected final DockerConfig config;
     protected final String elasticUrl;
     protected final ElasticClient elasticClient;
-
     protected final ElasticClientWithRetry elasticClientWithRetry;
+    protected final Container container;
 
     public AbstractElasticDockerTest(final String imageVersion) throws Exception {
         final String name = "elastic-test-" + imageVersion;
@@ -136,33 +137,46 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         // containers will stop with exit code 137.
         final boolean stopOthers = true;
 
-        // start container that we need
-        final Container container = DockerRule.start(config, stopOthers);
+        container = DockerRule.start(config, stopOthers);
+        container.addRef();
 
-        // there is nothing in the log that we can wait for to indicate that Elastic
-        // is really available; even after the logs indicate that it has started, it
-        // may not respond to requests for a few seconds. We use /_cluster/health API as
-        // a means of more reliably determining availability.
-        final Binding binding = container.getPortBinding("9200/tcp");
-        elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
-        LOGGER.info("Elastic host: {}", elasticUrl);
+        boolean success = false;
+        try {
+            // there is nothing in the log that we can wait for to indicate that Elastic
+            // is really available; even after the logs indicate that it has started, it
+            // may not respond to requests for a few seconds. We use /_cluster/health API as
+            // a means of more reliably determining availability.
+            final Binding binding = container.getPortBinding("9200/tcp");
+            elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
+            LOGGER.info("Elastic host: {}", elasticUrl);
 
-        // configure OkHttp3
-        final OkHttpClient client = new OkHttpClient.Builder() //
-                .addInterceptor( //
-                        new HttpLoggingInterceptor(message -> {
-                            if (!StringUtils.isEmpty(message)) {
-                                final String pretty = JsonFilter.prettyifyQuietly(message);
-                                LOGGER.info(pretty.indexOf('\n') == -1 ? "{}" : "\n{}", pretty);
-                            }
-                        }).setLevel(Level.BODY)) //
-                .build();
+            // configure OkHttp3
+            final OkHttpClient client = new OkHttpClient.Builder() //
+                    .addInterceptor( //
+                            new HttpLoggingInterceptor(message -> {
+                                if (!StringUtils.isEmpty(message)) {
+                                    final String pretty = JsonFilter.prettyifyQuietly(message);
+                                    LOGGER.info(pretty.indexOf('\n') == -1 ? "{}" : "\n{}", pretty);
+                                }
+                            }).setLevel(Level.BODY)) //
+                    .build();
 
-        // create API-specific elastic client
-        final VersionComponents version = waitForElasticReady(client);
-        elasticClient = ElasticClientUtils
-                .createElasticClient(elasticUrl, client, JacksonUtils.getObjectMapper(), version);
-        elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
+            // create API-specific elastic client
+            final VersionComponents version = waitForElasticReady(client);
+            elasticClient = ElasticClientUtils
+                    .createElasticClient(elasticUrl, client, JacksonUtils.getObjectMapper(), version);
+            elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
+            success = true;
+        } finally {
+            if (!success) {
+                container.releaseRef();
+            }
+        }
+    }
+
+    @After
+    public void releaseRef() {
+        container.releaseRef();
     }
 
     public void assertGetDocument(
