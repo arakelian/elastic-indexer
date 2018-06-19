@@ -240,7 +240,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
                             ImmutablePercentilesAggregation.builder() //
                                     .name("age") //
                                     .field("age") //
-                                    .addPercent(1, 5, 25, 50, 75, 95, 99) //
+                                    .addPercents(1, 5, 25, 50, 75, 95, 99) //
                                     .numberOfSignificantValueDigits(3) //
                                     .keyed(true) //
                                     .build()) //

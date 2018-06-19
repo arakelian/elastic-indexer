@@ -25,9 +25,11 @@ import java.util.Set;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views.Elastic.Version6.Version63;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
@@ -62,6 +64,16 @@ public interface Nodes extends Serializable {
         }
 
         public Map<String, Object> getAttributes();
+
+        @Nullable
+        @JsonProperty("build_flavor")
+        @JsonView(Version63.class)
+        public String getBuildFlavor();
+
+        @Nullable
+        @JsonProperty("build_type")
+        @JsonView(Version63.class)
+        public String getBuildType();
 
         @Nullable
         @JsonProperty("build_hash")

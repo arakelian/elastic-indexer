@@ -26,7 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class ElasticDocConfigTest extends AbstractElasticModelTest {
     public static final ElasticDocConfig MINIMAL = ImmutableElasticDocConfig.builder() //
             .mapping(MappingTest.CONTACT) //
-            .addIdentityField("name", "street", "city", "state", "zip") //
+            .addIdentityFields("name", "street", "city", "state", "zip") //
             .build();
 
     public ElasticDocConfigTest(final String number) {

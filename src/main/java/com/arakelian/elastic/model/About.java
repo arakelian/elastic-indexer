@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic.Version6;
+import com.arakelian.elastic.Views.Elastic.Version6.Version63;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -41,6 +42,16 @@ public interface About {
 
         @JsonProperty("build_hash")
         public String getBuildHash();
+
+        @Nullable
+        @JsonProperty("build_flavor")
+        @JsonView(Version63.class)
+        public String getBuildFlavor();
+
+        @Nullable
+        @JsonProperty("build_type")
+        @JsonView(Version63.class)
+        public String getBuildType();
 
         @JsonProperty("build_snapshot")
         public Boolean getBuildSnapshot();

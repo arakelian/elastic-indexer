@@ -85,7 +85,7 @@ public class ComputeDigestTest {
                 new ElasticDocBuilder(ImmutableElasticDocConfig.builder() //
                         .addPlugin(plugin) //
                         .mapping(mapping) //
-                        .addIdentityField("name", "street", "zip") //
+                        .addIdentityFields("name", "street", "zip") //
                         .build()));
     }
 

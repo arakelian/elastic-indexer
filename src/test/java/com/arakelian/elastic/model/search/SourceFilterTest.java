@@ -27,8 +27,8 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SourceFilterTest {
     public static final SourceFilter SAMPLE = ImmutableSourceFilter.builder() //
-            .addInclude("one", "two", "three") //
-            .addExclude("a", "b", "c", "d", "e") //
+            .addIncludes("one", "two", "three") //
+            .addExcludes("a", "b", "c", "d", "e") //
             .build();
 
     @Test

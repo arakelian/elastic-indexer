@@ -63,7 +63,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                             .query(
                                     ImmutableBoolQuery.builder() //
                                             .addMustClause(query) //
-                                            .addShouldClause(query, query, query) //
+                                            .addShouldClauses(query, query, query) //
                                             .minimumShouldMatch("1") // .
                                             .build()) //
                             .build(),

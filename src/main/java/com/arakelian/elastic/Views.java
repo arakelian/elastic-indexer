@@ -71,6 +71,13 @@ public class Views {
                 }
             }
 
+            public static class Version63 extends Version6 {
+                @Override
+                protected VersionComponents getVersion() {
+                    return VersionComponents.of(6, 3);
+                }
+            }
+
             @Override
             protected VersionComponents getVersion() {
                 return VersionComponents.of(6, 0);

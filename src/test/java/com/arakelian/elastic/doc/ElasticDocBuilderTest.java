@@ -413,7 +413,7 @@ public class ElasticDocBuilderTest {
 
         final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //
-                .putTarget("name", JsonSelector.of("/name"), JsonSelector.of("/company/name")) //
+                .putTargets("name", JsonSelector.of("/name"), JsonSelector.of("/company/name")) //
                 .build();
         Assert.assertEquals( //
                 "{\"name\":[\"Schuyler\",\"Hilll - Kassulke\"]}",

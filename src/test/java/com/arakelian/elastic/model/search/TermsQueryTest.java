@@ -27,7 +27,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 public class TermsQueryTest {
     public static final TermsQuery MINIMAL = ImmutableTermsQuery.builder() //
             .fieldName("field") //
-            .addValue("the", "quick", "brown", "fox") //
+            .addValues("the", "quick", "brown", "fox") //
             .build();
 
     @Test

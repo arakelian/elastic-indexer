@@ -35,7 +35,7 @@ public class SearchTest {
             .searchType(SearchType.DFS_QUERY_THEN_FETCH) //
             .terminateAfter(100) //
             .query(TermsQueryTest.MINIMAL) //
-            .addSort(Sort.of("one"), Sort.of("two", SortOrder.DESC)) //
+            .addSorts(Sort.of("one"), Sort.of("two", SortOrder.DESC)) //
             .build();
 
     @Test

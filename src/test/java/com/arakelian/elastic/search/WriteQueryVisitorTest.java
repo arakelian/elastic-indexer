@@ -39,13 +39,13 @@ public class WriteQueryVisitorTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(WriteQueryVisitorTest.class);
 
     private static final QueryStringQuery QUERY_STRING_QUERY = ImmutableQueryStringQuery.builder() //
-            .addField("content", "name") //
+            .addFields("content", "name") //
             .queryString("this AND that") //
             .build();
 
     private static final TermsQuery TERMS_QUERY = ImmutableTermsQuery.builder() //
             .fieldName("field") //
-            .addValue("the", "quick", "brown", "fox") //
+            .addValues("the", "quick", "brown", "fox") //
             .build();
 
     private final ObjectMapper mapper = JacksonUtils.getObjectMapper();
