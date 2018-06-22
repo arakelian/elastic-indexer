@@ -18,6 +18,8 @@
 package com.arakelian.elastic;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -275,11 +277,12 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     @Test
     public void testRegexpQuery() throws IOException {
         withPeople(10, (index, people) -> {
-            // pick first person
-            final Person person = people.get(0);
+            // pick person with longest name
+            Optional<Person> person = people.stream() //
+                    .max(Comparator.comparingInt(p -> p.getLastName().length()));
 
             // build regular expression that matches last name
-            final String lastname = person.getLastName().toLowerCase();
+            final String lastname = person.get().getLastName().toLowerCase();
             final StringBuilder regexp = new StringBuilder(lastname);
             for (int i = 0, length = lastname.length(); i < length; i += 2) {
                 regexp.setCharAt(i, '.'); // matches any character
@@ -296,7 +299,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                                             .value(regexp.toString()) //
                                             .build()) //
                             .build(),
-                    person);
+                    person.get());
         });
     }
 
