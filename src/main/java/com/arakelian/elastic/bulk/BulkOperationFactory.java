@@ -22,12 +22,19 @@ import java.util.List;
 
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 
-public interface BulkOperationFactory<T> {
-    public BulkOperation createBulkOperation(
-            final Action action,
-            String id,
-            String source,
-            final Long version);
-
-    public List<BulkOperation> getBulkOperations(Action action, T bean) throws IOException;
+public interface BulkOperationFactory {
+    /**
+     * Returns a list of bulk operations to perform, which may include operations that affect
+     * different indexes.
+     *
+     * @param action
+     *            action to perform
+     * @param document
+     *            document
+     * @return a list of bulk operations to perform
+     * @throws IOException
+     *             if there is an error creating bulk operations from the given document
+     */
+    public List<BulkOperation> getBulkOperations(final Action action, final Object document)
+            throws IOException;
 }

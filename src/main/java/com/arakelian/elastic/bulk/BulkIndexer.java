@@ -72,11 +72,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 /**
  * Indexes or deletes a group of documents from one or more Elastic indexes using the Elastic Bulk
  * Index API.
- *
- * @param <T>
- *            document type
  */
-public class BulkIndexer<T> implements Closeable {
+public class BulkIndexer implements Closeable {
     /**
      * Represents a single, asynchronous flushing of bulk operations to the Elastic Bulk API.
      */
@@ -324,7 +321,7 @@ public class BulkIndexer<T> implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkIndexer.class);
 
     /** Configuration **/
-    private final BulkIndexerConfig<T> config;
+    private final BulkIndexerConfig config;
 
     /** Elastic API **/
     private final ElasticClient elasticClient;
@@ -372,7 +369,7 @@ public class BulkIndexer<T> implements Closeable {
     private final Thread shutdownHook;
 
     @SuppressWarnings("FutureReturnValueIgnored")
-    public BulkIndexer(final BulkIndexerConfig<T> config, final RefreshLimiter refreshLimiter) {
+    public BulkIndexer(final BulkIndexerConfig config, final RefreshLimiter refreshLimiter) {
         Preconditions.checkArgument(config != null, "config must not be null");
         Preconditions.checkArgument(refreshLimiter != null, "elasticClient must not be null");
         this.config = config;
@@ -501,11 +498,11 @@ public class BulkIndexer<T> implements Closeable {
      * @throws IOException
      *             if document could not be serialized
      */
-    public void delete(final Collection<T> documents) throws RejectedExecutionException, IOException {
+    public void delete(final Collection<?> documents) throws RejectedExecutionException, IOException {
         if (documents != null && documents.size() != 0) {
             // we do not acquire lock here because we might flush, which might cause us to block if
             // the queue is full
-            for (final T document : documents) {
+            for (final Object document : documents) {
                 delete(document);
             }
         }
@@ -521,7 +518,7 @@ public class BulkIndexer<T> implements Closeable {
      * @throws IOException
      *             if document could not be serialized
      */
-    public void delete(final T document) throws RejectedExecutionException, IOException {
+    public void delete(final Object document) throws RejectedExecutionException, IOException {
         add(document, DELETE);
     }
 
@@ -540,7 +537,7 @@ public class BulkIndexer<T> implements Closeable {
         }
     }
 
-    public final BulkIndexerConfig<T> getConfig() {
+    public final BulkIndexerConfig getConfig() {
         return config;
     }
 
@@ -565,11 +562,11 @@ public class BulkIndexer<T> implements Closeable {
      * @throws IOException
      *             if document could not be serialized
      */
-    public void index(final Collection<T> documents) throws RejectedExecutionException, IOException {
+    public void index(final Collection<?> documents) throws RejectedExecutionException, IOException {
         if (documents != null && documents.size() != 0) {
             // we do not acquire lock here because we might flush, which might cause us to block if
             // the queue is full
-            for (final T document : documents) {
+            for (final Object document : documents) {
                 index(document);
             }
         }
@@ -585,7 +582,7 @@ public class BulkIndexer<T> implements Closeable {
      * @throws IOException
      *             if document could not be serialized
      */
-    public void index(final T document) throws RejectedExecutionException, IOException {
+    public void index(final Object document) throws RejectedExecutionException, IOException {
         add(document, INDEX);
     }
 
@@ -667,7 +664,7 @@ public class BulkIndexer<T> implements Closeable {
      * @throws IOException
      *             if document could not be serialized
      */
-    private void add(final T document, final Action action) throws RejectedExecutionException, IOException {
+    private void add(final Object document, final Action action) throws RejectedExecutionException, IOException {
         if (document == null) {
             return;
         }
@@ -676,7 +673,7 @@ public class BulkIndexer<T> implements Closeable {
         ensureOpen();
 
         // a document may be indexed to multiple places
-        final BulkOperationFactory<T> factory = config.getBulkOperationFactory();
+        final BulkOperationFactory factory = config.getBulkOperationFactory();
         final List<BulkOperation> ops = factory.getBulkOperations(action, document);
         if (ops == null || ops.size() == 0) {
             return;

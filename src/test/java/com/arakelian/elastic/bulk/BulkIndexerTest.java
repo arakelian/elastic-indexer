@@ -36,7 +36,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
         withPersonIndex(index -> {
             final List<Person> people = RandomPerson.get().listOf(10);
 
-            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
+            try (final BulkIndexer indexer = createPersonIndexer(index)) {
                 indexer.index(people);
             }
 
@@ -52,7 +52,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
         withPersonIndex(index -> {
             final List<Person> people = RandomPerson.get().listOf(10);
 
-            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
+            try (final BulkIndexer indexer = createPersonIndexer(index)) {
                 for (final Person person : people) {
                     indexer.index(person);
                 }
@@ -68,7 +68,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     public void testDeleteBatch() throws IOException {
         withPersonIndex(index -> {
             final List<Person> people = RandomPerson.get().listOf(10);
-            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
+            try (final BulkIndexer indexer = createPersonIndexer(index)) {
                 // when indexing, the Elastic documents will receive a version timestamp that
                 // corresponds to the update date of the person
                 indexer.index(people);
@@ -84,7 +84,7 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
     public void testDeleteIndividually() throws IOException {
         withPersonIndex(index -> {
             final Iterator<Person> people = RandomPerson.get().iteratorOf(10);
-            try (final BulkIndexer<Person> indexer = createIndexer(index)) {
+            try (final BulkIndexer indexer = createPersonIndexer(index)) {
                 indexer.index(RandomPerson.get().listOf(10));
                 while (people.hasNext()) {
                     indexer.delete(people.next());

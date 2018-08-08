@@ -72,7 +72,9 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
             final List<Person> people = RandomPerson.get().listOf(10);
 
             withPersonIndex(index -> {
-                try (final BulkIndexer<Person> indexer = createIndexer(index, listener)) {
+                try (final BulkIndexer indexer = createIndexer(
+                        createPersonBulkOperationFactory(index),
+                        listener)) {
                     indexer.index(people);
                 }
 

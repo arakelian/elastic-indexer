@@ -29,7 +29,7 @@ import com.github.rholder.retry.Retryer;
 import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)
-public abstract class BulkIndexerConfig<T> {
+public abstract class BulkIndexerConfig {
     public static final int ONE_MEGABYTE = 1 * 1024 * 1024;
 
     /**
@@ -44,7 +44,7 @@ public abstract class BulkIndexerConfig<T> {
     }
 
     @Value.Auxiliary
-    public abstract BulkOperationFactory<T> getBulkOperationFactory();
+    public abstract BulkOperationFactory getBulkOperationFactory();
 
     @Value.Default
     @Value.Auxiliary

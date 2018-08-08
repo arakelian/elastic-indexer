@@ -43,7 +43,9 @@ import com.arakelian.docker.junit.model.DockerConfig;
 import com.arakelian.docker.junit.model.HostConfigurers;
 import com.arakelian.docker.junit.model.ImmutableDockerConfig;
 import com.arakelian.elastic.bulk.BulkIndexer;
-import com.arakelian.elastic.bulk.DefaultBulkOperationFactory;
+import com.arakelian.elastic.bulk.BulkOperationFactory;
+import com.arakelian.elastic.bulk.ImmutableSimpleBulkOperationFactory;
+import com.arakelian.elastic.bulk.SimpleBulkOperationFactory;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.LoggingIndexerListener;
 import com.arakelian.elastic.model.BulkIndexerConfig;
@@ -175,11 +177,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         }
     }
 
-    @After
-    public void releaseRef() {
-        container.releaseRef();
-    }
-
     public void assertGetDocument(
             final Index index,
             final Person expectedPerson,
@@ -198,103 +195,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             assertEquals(expectedVersion, document.getVersion());
         }
         assertTrue(document.isFound());
-    }
-
-    public BulkIndexer<Person> createIndexer(final Index index) {
-        return createIndexer(index, LoggingIndexerListener.SINGLETON);
-    }
-
-    public BulkIndexer<Person> createIndexer(final Index index, final IndexerListener listener) {
-        final BulkIndexerConfig<Person> config = ImmutableBulkIndexerConfig.<Person> builder() //
-                .blockingQueue(true) //
-                .queueSize(10) //
-                .maxBulkOperations(10) //
-                .maxBulkOperationBytes(1 * 1024 * 1024) //
-                .maximumThreads(1) //
-                .bulkOperationFactory(new DefaultBulkOperationFactory<>(index, DEFAULT_TYPE)) //
-                .listener(listener) //
-                .shutdownTimeout(1) //
-                .shutdownTimeoutUnit(TimeUnit.DAYS) //
-                .build();
-        return new BulkIndexer<>(config, getRefreshLimiter());
-    }
-
-    public Mapping createPersonMapping() {
-        final Mapping mapping = ImmutableMapping.builder() //
-                .dynamic(STRICT) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("id") //
-                                .type(Type.KEYWORD) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("firstName") //
-                                .type(Type.TEXT) //
-                                .putField(
-                                        "raw",
-                                        ImmutableField.builder() //
-                                                .name("raw") //
-                                                .type(Type.KEYWORD) //
-                                                .build()) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("lastName") //
-                                .type(Type.TEXT) //
-                                .putField(
-                                        "raw",
-                                        ImmutableField.builder() //
-                                                .name("raw") //
-                                                .type(Type.KEYWORD) //
-                                                .build()) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("title") //
-                                .type(Type.TEXT) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("birthdate") //
-                                .type(Type.DATE) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("age") //
-                                .type(Type.INTEGER) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("gender") //
-                                .type(Type.KEYWORD) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("comments") //
-                                .type(Type.TEXT) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name(ALWAYS_EMPTY_FIELD) //
-                                .type(Type.KEYWORD) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("created") //
-                                .type(Type.DATE) //
-                                .build())
-                .addField(
-                        ImmutableField.builder() //
-                                .name("updated") //
-                                .type(Type.DATE) //
-                                .build())
-                .build();
-        return mapping;
-    }
-
-    public void withPersonIndex(final WithIndexCallback test) throws IOException {
-        withIndex(createPersonMapping(), test);
     }
 
     protected void assertIndexWithInternalVersion(
@@ -374,6 +274,113 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
     }
 
+    public BulkIndexer createIndexer(
+            final BulkOperationFactory bulkOperationFactory,
+            final IndexerListener listener) {
+        final BulkIndexerConfig config = ImmutableBulkIndexerConfig.builder() //
+                .blockingQueue(true) //
+                .queueSize(10) //
+                .maxBulkOperations(10) //
+                .maxBulkOperationBytes(1 * 1024 * 1024) //
+                .maximumThreads(1) //
+                .bulkOperationFactory(bulkOperationFactory) //
+                .listener(listener) //
+                .shutdownTimeout(1) //
+                .shutdownTimeoutUnit(TimeUnit.DAYS) //
+                .build();
+        return new BulkIndexer(config, getRefreshLimiter());
+    }
+
+    public SimpleBulkOperationFactory<Person> createPersonBulkOperationFactory(final Index index) {
+        final SimpleBulkOperationFactory<Person> bulkOperationFactory = //
+                ImmutableSimpleBulkOperationFactory.<Person> builder() //
+                        .type(person -> DEFAULT_TYPE) //
+                        .documentClass(Person.class) //
+                        .index(index) //
+                        .id(person -> person.getId()) //
+                        .version(person -> person.getUpdated()) //
+                        .build();
+        return bulkOperationFactory;
+    }
+
+    public BulkIndexer createPersonIndexer(final Index index) {
+        return createIndexer(createPersonBulkOperationFactory(index), LoggingIndexerListener.SINGLETON);
+    }
+
+    public Mapping createPersonMapping() {
+        final Mapping mapping = ImmutableMapping.builder() //
+                .dynamic(STRICT) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("id") //
+                                .type(Type.KEYWORD) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("firstName") //
+                                .type(Type.TEXT) //
+                                .putField(
+                                        "raw",
+                                        ImmutableField.builder() //
+                                                .name("raw") //
+                                                .type(Type.KEYWORD) //
+                                                .build()) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("lastName") //
+                                .type(Type.TEXT) //
+                                .putField(
+                                        "raw",
+                                        ImmutableField.builder() //
+                                                .name("raw") //
+                                                .type(Type.KEYWORD) //
+                                                .build()) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("title") //
+                                .type(Type.TEXT) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("birthdate") //
+                                .type(Type.DATE) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("age") //
+                                .type(Type.INTEGER) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("gender") //
+                                .type(Type.KEYWORD) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("comments") //
+                                .type(Type.TEXT) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name(ALWAYS_EMPTY_FIELD) //
+                                .type(Type.KEYWORD) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("created") //
+                                .type(Type.DATE) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("updated") //
+                                .type(Type.DATE) //
+                                .build())
+                .build();
+        return mapping;
+    }
+
     @Override
     protected ElasticClient getElasticClient() {
         return elasticClient;
@@ -387,6 +394,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Override
     protected String getElasticUrl() {
         return elasticUrl;
+    }
+
+    @After
+    public void releaseRef() {
+        container.releaseRef();
     }
 
     protected SearchResponse search(final Index index, final Search search) {
@@ -407,5 +419,9 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             }
             callback.accept(index, people);
         });
+    }
+
+    public void withPersonIndex(final WithIndexCallback test) throws IOException {
+        withIndex(createPersonMapping(), test);
     }
 }
