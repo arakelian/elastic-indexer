@@ -95,6 +95,23 @@ public class BulkIndexer implements Closeable {
             BulkIndexer.this.totalBytes.addAndGet(totalBytes);
         }
 
+        /**
+         * Returns the payload for the Elastic bulk API endpoint.
+         *
+         * We compute this by concatenating all of the individual operations being performed on each
+         * document.
+         *
+         * @return payload for the Elastic bulk API endpoint.
+         */
+        private String buildPayload() {
+            final StringBuilder buf = new StringBuilder(totalBytes);
+            for (final BulkOperation op : operations) {
+                buf.append(op.getOperation());
+            }
+            final String ops = buf.toString();
+            return ops;
+        }
+
         @Override
         public BulkResponse call() throws IOException, InterruptedException {
             if (delayMillis != 0) {
@@ -123,33 +140,6 @@ public class BulkIndexer implements Closeable {
             }
         }
 
-        @Override
-        public String toString() {
-            return MoreObjects.toStringHelper(this) //
-                    .omitNullValues() //
-                    .add("id", id) //
-                    .add("operations", operations.size()) //
-                    .add("totalBytes", totalBytes) //
-                    .toString();
-        }
-
-        /**
-         * Returns the payload for the Elastic bulk API endpoint.
-         *
-         * We compute this by concatenating all of the individual operations being performed on each
-         * document.
-         *
-         * @return payload for the Elastic bulk API endpoint.
-         */
-        private String buildPayload() {
-            final StringBuilder buf = new StringBuilder(totalBytes);
-            for (final BulkOperation op : operations) {
-                buf.append(op.getOperation());
-            }
-            final String ops = buf.toString();
-            return ops;
-        }
-
         private void failed(final Throwable t) {
             final IndexerListener listener = config.getListener();
             for (final BulkOperation op : operations) {
@@ -170,6 +160,16 @@ public class BulkIndexer implements Closeable {
                     LOGGER.warn("Unable to queue refresh of index \"{}\"", name, e);
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this) //
+                    .omitNullValues() //
+                    .add("id", id) //
+                    .add("operations", operations.size()) //
+                    .add("totalBytes", totalBytes) //
+                    .toString();
         }
     }
 
@@ -433,6 +433,94 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
+     * Adds a bulk operation to the pending {@link Batch}.
+     *
+     * @param op
+     *            bulk operation
+     * @param retry
+     *            true if operation is being retried
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     */
+    private void add(final BulkOperation bulkOperation, final boolean retry)
+            throws RejectedExecutionException {
+        Preconditions.checkArgument(bulkOperation != null, "bulkOperation must be non-null");
+
+        // we only hold the lock long enough to add the operation and create a batch if needed
+        final Batch batch;
+        batchLock.lock();
+        try {
+            // indexer may have closed since we acquired lock
+            ensureOpen();
+
+            // add to queue
+            final String operation = bulkOperation.getOperation();
+            Preconditions.checkState(
+                    operation.charAt(operation.length() - 1) == '\n',
+                    "Bulk operations must end with newline");
+            totalPendingBytes += operation.length();
+            pendingOperations.add(bulkOperation);
+
+            // keep tally of what we put into queue
+            if (retry) {
+                retries.incrementAndGet();
+            } else {
+                submitted.incrementAndGet();
+            }
+
+            // flush only when queue or memory thresholds are reached
+            batch = createBatch(false);
+        } finally {
+            batchLock.unlock();
+        }
+
+        // we submit to executor outside the lock, since this thread could block if the queue is
+        // full
+        if (batch != null) {
+            submitBatch(batch);
+        }
+    }
+
+    /**
+     * Adds a bulk operation to the queue, using the given document and specified action.
+     *
+     * @param document
+     *            document
+     * @param action
+     *            action to be performed on document
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    private void add(final Object document, final Action action)
+            throws RejectedExecutionException, IOException {
+        if (document == null) {
+            return;
+        }
+
+        // might be closed after this, but save time
+        ensureOpen();
+
+        // a document may be indexed to multiple places
+        final BulkOperationFactory factory = config.getBulkOperationFactory();
+        if (!factory.supports(document)) {
+            throw new IOException("Unsupported document: " + document);
+        }
+
+        final List<BulkOperation> ops = factory.createBulkOperations(document, action);
+        if (ops == null || ops.size() == 0) {
+            return;
+        }
+
+        // we do not acquire lock here because an add may cause a flush, and a flush could
+        // block waiting for the indexer queue to have space
+        for (final BulkOperation op : ops) {
+            add(op, false);
+        }
+    }
+
+    /**
      * Called during shutdown to terminate the scheduled executor thread.
      *
      * @throws BulkIndexerFailed
@@ -489,6 +577,43 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
+     * Return a new {@link Batch} from the list of queued bulk operations.
+     *
+     * If there are no pending operations that need to be flushed, or the batch size thresholds have
+     * not been met (and force is false), this method will return null.
+     *
+     * @param force
+     *            true to force a Batch to be created
+     * @return a new {@link Batch}, or null
+     * @throws RejectedExecutionException
+     *             if indexer is closed (and we have pending operations) or background queue is full
+     */
+    private Batch createBatch(final boolean force) throws RejectedExecutionException {
+        batchLock.lock();
+        try {
+            final int size = pendingOperations.size();
+            if (size == 0) {
+                return null;
+            }
+
+            // indexer may have closed since we acquired lock
+            ensureOpen();
+
+            // we allow flush to occur after indexer is closed
+            if (force || size >= config.getMaxBulkOperations()
+                    || totalPendingBytes > config.getMaxBulkOperationBytes()) {
+                final Batch batch = new Batch(ImmutableList.copyOf(pendingOperations), totalPendingBytes, 0);
+                pendingOperations.clear();
+                totalPendingBytes = 0;
+                return batch;
+            }
+        } finally {
+            batchLock.unlock();
+        }
+        return null;
+    }
+
+    /**
      * Deletes a list of documents from their respective Elastic indexes.
      *
      * @param documents
@@ -523,6 +648,18 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
+     * Throws exception if indexer has been closed.
+     *
+     * @throws RejectedExecutionException
+     *             if indexer has been closed
+     */
+    private void ensureOpen() throws RejectedExecutionException {
+        if (isClosed()) {
+            throw new AlreadyClosedException("Bulk indexer is closed");
+        }
+    }
+
+    /**
      * Flushes any pending bulk operations to Elastic asynchronously.
      *
      * @throws RejectedExecutionException
@@ -534,6 +671,18 @@ public class BulkIndexer implements Closeable {
             // we submit to executor outside a lock, since this thread could block if the
             // batch executor's queue is full
             submitBatch(batch);
+        }
+    }
+
+    /**
+     * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any
+     * exceptions that may occur.
+     */
+    private void flushQuietly() {
+        try {
+            flush();
+        } catch (final Exception e) {
+            LOGGER.warn("Unable to flush {}", this, e);
         }
     }
 
@@ -595,158 +744,6 @@ public class BulkIndexer implements Closeable {
         return closed.get();
     }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this) //
-                .omitNullValues() //
-                .add("config", config) //
-                .toString();
-    }
-
-    /**
-     * Adds a bulk operation to the pending {@link Batch}.
-     *
-     * @param op
-     *            bulk operation
-     * @param retry
-     *            true if operation is being retried
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     */
-    private void add(final BulkOperation bulkOperation, final boolean retry)
-            throws RejectedExecutionException {
-        Preconditions.checkArgument(bulkOperation != null, "bulkOperation must be non-null");
-
-        // we only hold the lock long enough to add the operation and create a batch if needed
-        final Batch batch;
-        batchLock.lock();
-        try {
-            // indexer may have closed since we acquired lock
-            ensureOpen();
-
-            // add to queue
-            final String operation = bulkOperation.getOperation();
-            Preconditions.checkState(
-                    operation.charAt(operation.length() - 1) == '\n',
-                    "Bulk operations must end with newline");
-            totalPendingBytes += operation.length();
-            pendingOperations.add(bulkOperation);
-
-            // keep tally of what we put into queue
-            if (retry) {
-                retries.incrementAndGet();
-            } else {
-                submitted.incrementAndGet();
-            }
-
-            // flush only when queue or memory thresholds are reached
-            batch = createBatch(false);
-        } finally {
-            batchLock.unlock();
-        }
-
-        // we submit to executor outside the lock, since this thread could block if the queue is
-        // full
-        if (batch != null) {
-            submitBatch(batch);
-        }
-    }
-
-    /**
-     * Adds a bulk operation to the queue, using the given document and specified action.
-     *
-     * @param document
-     *            document
-     * @param action
-     *            action to be performed on document
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    private void add(final Object document, final Action action) throws RejectedExecutionException, IOException {
-        if (document == null) {
-            return;
-        }
-
-        // might be closed after this, but save time
-        ensureOpen();
-
-        // a document may be indexed to multiple places
-        final BulkOperationFactory factory = config.getBulkOperationFactory();
-        final List<BulkOperation> ops = factory.getBulkOperations(action, document);
-        if (ops == null || ops.size() == 0) {
-            return;
-        }
-
-        // we do not acquire lock here because an add may cause a flush, and a flush could
-        // block waiting for the indexer queue to have space
-        for (final BulkOperation op : ops) {
-            add(op, false);
-        }
-    }
-
-    /**
-     * Return a new {@link Batch} from the list of queued bulk operations.
-     *
-     * If there are no pending operations that need to be flushed, or the batch size thresholds have
-     * not been met (and force is false), this method will return null.
-     *
-     * @param force
-     *            true to force a Batch to be created
-     * @return a new {@link Batch}, or null
-     * @throws RejectedExecutionException
-     *             if indexer is closed (and we have pending operations) or background queue is full
-     */
-    private Batch createBatch(final boolean force) throws RejectedExecutionException {
-        batchLock.lock();
-        try {
-            final int size = pendingOperations.size();
-            if (size == 0) {
-                return null;
-            }
-
-            // indexer may have closed since we acquired lock
-            ensureOpen();
-
-            // we allow flush to occur after indexer is closed
-            if (force || size >= config.getMaxBulkOperations()
-                    || totalPendingBytes > config.getMaxBulkOperationBytes()) {
-                final Batch batch = new Batch(ImmutableList.copyOf(pendingOperations), totalPendingBytes, 0);
-                pendingOperations.clear();
-                totalPendingBytes = 0;
-                return batch;
-            }
-        } finally {
-            batchLock.unlock();
-        }
-        return null;
-    }
-
-    /**
-     * Throws exception if indexer has been closed.
-     *
-     * @throws RejectedExecutionException
-     *             if indexer has been closed
-     */
-    private void ensureOpen() throws RejectedExecutionException {
-        if (isClosed()) {
-            throw new AlreadyClosedException("Bulk indexer is closed");
-        }
-    }
-
-    /**
-     * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any
-     * exceptions that may occur.
-     */
-    private void flushQuietly() {
-        try {
-            flush();
-        } catch (final Exception e) {
-            LOGGER.warn("Unable to flush {}", this, e);
-        }
-    }
-
     /**
      * Submits a batch of bulk updates to the {@link #batchExecutor}.
      *
@@ -770,5 +767,13 @@ public class BulkIndexer implements Closeable {
 
         // process responses asynchronously too
         future.addListener(new BatchListener(future, batch, queued), bulkResponseExecutor);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this) //
+                .omitNullValues() //
+                .add("config", config) //
+                .toString();
     }
 }
