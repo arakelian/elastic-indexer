@@ -28,6 +28,7 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
+import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.Mapping.FieldDeserializer;
 import com.arakelian.jackson.CompoundTokenFilter;
@@ -42,9 +43,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableField.class)
 @JsonDeserialize(builder = ImmutableField.Builder.class)
 @JsonPropertyOrder({ "name", "type", "scaling_factor", "format", "enabled", "store", "index", "index_options",
@@ -187,6 +189,38 @@ public abstract class Field implements Serializable {
         return another instanceof ImmutableField && equalTo((ImmutableField) another);
     }
 
+    private boolean equalTo(final ImmutableField another) {
+        return getName().equals(another.getName());
+    }
+
+    /**
+     * Returns a list of fields that should be targeted by {@link ElasticDocBuilder} whenever this
+     * field is targeted.
+     *
+     * @return list of fields that should be targeted by {@link ElasticDocBuilder} whenever this
+     *         field is targeted.
+     */
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("additional_targets")
+    @JsonView(Enhancement.class)
+    public List<String> getAdditionalTargets() {
+        return ImmutableList.of();
+    }
+
+    /**
+     * Returns a list of aliases for this field.
+     *
+     * @return list of aliases for this field.
+     */
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("aliases")
+    @JsonView(Enhancement.class)
+    public Set<String> getAliases() {
+        return ImmutableSet.of();
+    }
+
     /**
      * Returns the analyzer used by this field.
      *
@@ -235,6 +269,12 @@ public abstract class Field implements Serializable {
     @JsonProperty("coerce")
     @JsonView(Elastic.class)
     public abstract Boolean getCoerce();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("comment")
+    @JsonView(Enhancement.class)
+    public abstract String getComment();
 
     /**
      * Returns a list of fields that this field value should be copied to.
@@ -521,9 +561,5 @@ public abstract class Field implements Serializable {
             return null;
         }
         return type == Type.BINARY;
-    }
-
-    private boolean equalTo(final ImmutableField another) {
-        return getName().equals(another.getName());
     }
 }

@@ -87,6 +87,10 @@ public class Views {
         protected abstract VersionComponents getVersion();
     }
 
+    /**
+     * This annotation prevents the associated field from being output by Jackson with anything
+     * other than the default ObjectMapper.
+     */
     public static class Enhancement {
     }
 }
