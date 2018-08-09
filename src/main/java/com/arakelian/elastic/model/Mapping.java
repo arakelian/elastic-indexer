@@ -27,6 +27,8 @@ import org.immutables.value.Value;
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
+import com.arakelian.elastic.Views.Enhancement;
+import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -85,6 +87,13 @@ public interface Mapping extends Serializable {
 
     String _DEFAULT_ = "_default_";
 
+    @Value.Default
+    @Value.Auxiliary
+    @JsonView(Enhancement.class)
+    public default List<TokenFilter> getAfterTokenFilters() {
+        return ImmutableList.of();
+    }
+
     /**
      * Returns configuration of _all meta field.
      *
@@ -103,6 +112,13 @@ public interface Mapping extends Serializable {
                 .metaField(true) //
                 .enabled(true) //
                 .build();
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonView(Enhancement.class)
+    public default List<TokenFilter> getBeforeTokenFilters() {
+        return ImmutableList.of();
     }
 
     @Nullable
