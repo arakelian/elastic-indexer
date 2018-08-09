@@ -24,18 +24,21 @@ import java.io.UncheckedIOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
+import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.google.common.collect.Lists;
 
 @Value.Immutable
-public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
-    public default BulkOperation createBulkOperation(
+public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFactory {
+    protected BulkOperation createBulkOperation(
             final Action action,
             final String type,
             final String id,
@@ -52,14 +55,8 @@ public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
                 .build();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * com.arakelian.elastic.bulk.BulkOperationFactory#getBulkOperations(com.arakelian.elastic.bulk.
-     * BulkOperation.Action, java.lang.Object)
-     */
     @Override
-    public default List<BulkOperation> getBulkOperations(final Action action, final Object doc)
+    public List<BulkOperation> createBulkOperations(final Object doc, final Action action)
             throws IOException {
         try {
             // type safe casting
@@ -101,16 +98,10 @@ public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
     /**
      * Returns the date that we should use as delete version passed to Elastic.
      *
-     * For {@link Action#DELETE} requests we cannot use the update or create date (as it it would
-     * fail with "version conflict, current version [XXX] is higher or *equal* to the one provided
-     * [XXX]". The version number we pass on a DELETE is version to be assigned to the DELETED
-     * document. It is equivalent to saying, "delete any version that is OLDER than this timestamp,
-     * and then use that timestamp as the new version number for the deleted document."
-     *
      * @return date that we should use as delete version
      */
     @Value.Default
-    public default Function<T, ZonedDateTime> getDeleteVersion() {
+    public Function<T, ZonedDateTime> getDeleteVersion() {
         return document -> {
             // when deleting a document from Elastic, we don't want to use the document date as our
             // timestamp (it would fail with "version conflict, current version [XXX] is higher or
@@ -120,10 +111,32 @@ public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
         };
     }
 
-    public Class<T> getDocumentClass();
+    public abstract Class<T> getDocumentClass();
+
+    @Nullable
+    public abstract ElasticDocBuilder getElasticDocBuilder();
 
     @Value.Default
-    public default Function<T, String> getElasticDocument() {
+    public Function<T, String> getElasticDocument() {
+        return document -> {
+            final String json = getJson().apply(document);
+
+            final ElasticDocBuilder elasticDocBuilder = getElasticDocBuilder();
+            if (elasticDocBuilder == null) {
+                return json;
+            }
+
+            final String elasticJson = elasticDocBuilder.build(json);
+            return elasticJson;
+        };
+    }
+
+    public abstract Function<T, String> getId();
+
+    public abstract Index getIndex();
+
+    @Value.Default
+    public Function<T, String> getJson() {
         return document -> {
             try {
                 return JacksonUtils.toString(document, false);
@@ -133,13 +146,14 @@ public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
         };
     }
 
-    public Function<T, String> getId();
-
-    public Index getIndex();
+    @Value.Default
+    public Predicate<T> getPredicate() {
+        return document -> true;
+    }
 
     @Value.Default
-    public default Function<T, String> getType() {
-        return document -> "document";
+    public Function<T, String> getType() {
+        return document -> document.getClass().getSimpleName();
     }
 
     /**
@@ -147,5 +161,11 @@ public interface SimpleBulkOperationFactory<T> extends BulkOperationFactory {
      *
      * @return date that we should use as index version
      */
-    public Function<T, ZonedDateTime> getVersion();
+    public abstract Function<T, ZonedDateTime> getVersion();
+
+    @Override
+    public boolean supports(final Object document) {
+        final Class<T> clazz = getDocumentClass();
+        return clazz.isInstance(document) && getPredicate().test(clazz.cast(document));
+    }
 }
