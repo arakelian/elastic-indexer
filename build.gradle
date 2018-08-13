@@ -63,7 +63,7 @@ multitool {
 dependencies {
     processor 'org.immutables:value:2.6.1'
 
-    compile 'com.arakelian:more-commons:1.9.0'
+    compile 'com.arakelian:more-commons:1.9.1'
     compile 'com.arakelian:jackson-utils:1.9.5'
     compile 'com.arakelian:json-filter:1.9.0'
     compile 'com.arakelian:key-value-store:1.9.5'
@@ -104,7 +104,7 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.31.1'
-    testCompile 'com.arakelian:more-commons:1.9.0:tests'
+    testCompile 'com.arakelian:more-commons:1.9.1:tests'
     testCompile 'com.arakelian:jackson-utils:1.9.5:tests'
     testCompile 'com.arakelian:docker-junit-rule:2.2.1'
     testCompile 'com.arakelian:faker:2.2.0'
