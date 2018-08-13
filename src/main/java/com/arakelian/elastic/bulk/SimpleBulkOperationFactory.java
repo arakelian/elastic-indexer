@@ -153,7 +153,7 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
 
     @Value.Default
     public Function<T, String> getType() {
-        return document -> document.getClass().getSimpleName();
+        return document -> "_doc";
     }
 
     /**
