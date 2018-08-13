@@ -31,8 +31,10 @@ public abstract class ReduceWhitespace extends AbstractCharFilter {
     @Override
     public String apply(final String value) {
         if (value == null || value.length() == 0) {
+            // nulls return null, otherwise always non-null
             return value;
         }
+
         final int length = value.length();
         int end = length;
         int start = 0;

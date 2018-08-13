@@ -39,7 +39,7 @@ public class LowercaseTest {
     }
 
     @Test
-    public void testUpper() {
+    public void testLowercase() {
         Assert.assertEquals(null, FILTER.apply(null));
         Assert.assertEquals("", FILTER.apply(""));
         Assert.assertEquals(" ", FILTER.apply(" "));

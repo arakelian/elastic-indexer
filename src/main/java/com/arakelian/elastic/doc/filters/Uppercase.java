@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public abstract class Uppercase extends AbstractCharFilter {
     @Override
     public String apply(final String value) {
+        // nulls return null, otherwise always non-null
         return StringUtils.upperCase(value);
     }
 }

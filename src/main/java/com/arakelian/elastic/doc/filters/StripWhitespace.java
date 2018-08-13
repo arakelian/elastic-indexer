@@ -32,6 +32,7 @@ public abstract class StripWhitespace extends AbstractCharFilter {
     @Override
     public String apply(final String val) {
         if (val == null || val.length() == 0) {
+            // nulls return null, otherwise always non-null
             return val;
         }
 

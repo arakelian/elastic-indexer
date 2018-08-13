@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -39,7 +40,8 @@ public abstract class PatternCapture implements TokenFilter, Serializable {
     @Override
     public <T extends Consumer<String>> T accept(final String value, final T output) {
         if (value == null) {
-            // ignore nulls
+            // always pass nulls through to signal end of tokens
+            output.accept(null);
             return output;
         }
 
@@ -81,6 +83,7 @@ public abstract class PatternCapture implements TokenFilter, Serializable {
     public abstract List<String> getPatterns();
 
     @Value.Default
+    @JsonProperty("preserve_original")
     public boolean isPreserveOriginal() {
         return false;
     }

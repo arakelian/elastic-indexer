@@ -23,9 +23,14 @@ import java.util.function.Consumer;
 public abstract class AbstractCharFilter implements CharFilter, TokenFilter, Serializable {
     @Override
     public final <T extends Consumer<String>> T accept(final String value, final T output) {
-        final String newVal = apply(value);
-        if (newVal != null) {
-            output.accept(newVal);
+        if (value == null) {
+            // always pass nulls through to signal end of tokens
+            output.accept(null);
+        } else {
+            final String newVal = apply(value);
+            if (newVal != null) {
+                output.accept(newVal);
+            }
         }
         return output;
     }

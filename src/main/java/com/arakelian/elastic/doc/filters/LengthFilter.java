@@ -20,7 +20,6 @@ package com.arakelian.elastic.doc.filters;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -28,16 +27,21 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableLengthFilter.class)
 @JsonDeserialize(builder = ImmutableLengthFilter.Builder.class)
 @JsonTypeName(TokenFilter.LENGTH_FILTER)
 public abstract class LengthFilter implements TokenFilter, Serializable {
     @Override
     public <T extends Consumer<String>> T accept(final String value, final T output) {
-        final int length = StringUtils.length(value);
-        if (length >= getMinimum() && length <= getMaximum()) {
-            output.accept(value);
+        if (value == null) {
+            // always pass nulls through to signal end of tokens
+            output.accept(null);
+        } else {
+            final int length = value.length();
+            if (length >= getMinimum() && length <= getMaximum()) {
+                output.accept(value);
+            }
         }
         return output;
     }

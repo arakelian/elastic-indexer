@@ -40,7 +40,8 @@ public abstract class Splitter implements TokenFilter, Serializable {
     @Override
     public <T extends Consumer<String>> T accept(final String value, final T output) {
         if (value == null) {
-            // ignore nulls
+            // always pass nulls through to signal end of tokens
+            output.accept(null);
             return output;
         }
 

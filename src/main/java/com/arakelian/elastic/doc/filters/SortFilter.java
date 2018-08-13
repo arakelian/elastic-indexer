@@ -1,5 +1,5 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
+ * Licensed to the Apache Softwareelse Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
@@ -18,6 +18,8 @@
 package com.arakelian.elastic.doc.filters;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.immutables.value.Value;
@@ -25,17 +27,32 @@ import org.immutables.value.Value;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.Lists;
 
 @Value.Immutable(singleton = true)
-@JsonSerialize(as = ImmutableNullFilter.class)
-@JsonDeserialize(builder = ImmutableNullFilter.Builder.class)
-@JsonTypeName(TokenFilter.NULL)
-public abstract class NullFilter implements TokenFilter, Serializable {
+@JsonSerialize(as = ImmutableSortFilter.class)
+@JsonDeserialize(builder = ImmutableSortFilter.Builder.class)
+@JsonTypeName(TokenFilter.SORT)
+public abstract class SortFilter implements TokenFilter, Serializable {
+    private final List<String> values = Lists.newArrayList();
+
     @Override
     public <T extends Consumer<String>> T accept(final String value, final T output) {
-        if (value != null) {
-            output.accept(value);
+        if (value == null) {
+            try {
+                // flush sorted values
+                Collections.sort(values, String.CASE_INSENSITIVE_ORDER);
+                for (String v : values) {
+                    output.accept(v);
+                }
+            } finally {
+                // make sure we always reset, no matter what
+                values.clear();
+            }
+        } else {
+            values.add(value);
         }
+
         return output;
     }
 }

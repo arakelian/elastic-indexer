@@ -36,8 +36,10 @@ public abstract class PatternReplace extends AbstractCharFilter {
     @Override
     public String apply(final String value) {
         if (StringUtils.isEmpty(value)) {
+            // nulls return null, otherwise always non-null
             return value;
         }
+
         final Matcher matcher = getCompiledPattern().matcher(value);
         return matcher.replaceAll(getReplacement());
     }
