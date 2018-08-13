@@ -17,24 +17,23 @@
 
 package com.arakelian.elastic.doc.filters;
 
-import java.io.Serializable;
-import java.util.function.Consumer;
-
+import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@Value.Immutable(singleton = true)
-@JsonSerialize(as = ImmutableNullFilter.class)
-@JsonDeserialize(builder = ImmutableNullFilter.Builder.class)
-@JsonTypeName(TokenFilter.NULL)
-public abstract class NullFilter implements TokenFilter, Serializable {
+@Value.Immutable
+@JsonSerialize(as = ImmutableTruncate.class)
+@JsonDeserialize(builder = ImmutableTruncate.Builder.class)
+@JsonTypeName(TokenFilter.TRUNCATE)
+public abstract class Truncate extends AbstractCharFilter {
     @Override
-    public <T extends Consumer<String>> T accept(final String value, final T output) {
-        // always pass nulls through to signal end of tokens
-        output.accept(value);
-        return output;
+    public String apply(final String value) {
+        // nulls return null, otherwise always non-null
+        return StringUtils.left(value, getLength());
     }
+
+    public abstract int getLength();
 }

@@ -33,8 +33,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public abstract class NullFilter implements TokenFilter, Serializable {
     @Override
     public <T extends Consumer<String>> T accept(final String value, final T output) {
-        // always pass nulls through to signal end of tokens
-        output.accept(value);
+        if (value != null) {
+            output.accept(value);
+        }
         return output;
     }
 }
