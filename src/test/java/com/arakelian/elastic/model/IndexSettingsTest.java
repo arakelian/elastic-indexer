@@ -28,6 +28,77 @@ public class IndexSettingsTest extends AbstractElasticModelTest {
     public static final IndexSettings MINIMAL = ImmutableIndexSettings.builder() //
             .build();
 
+    public static final IndexSettings CUSTOM = ImmutableIndexSettings.builder() //
+            .putProperty("index.query.default_field", "text") //
+            .putProperty("index.codec", "best_compression") //
+            .build();
+
+    private static final ImmutableAnalyzerSettings ANALYZER = ImmutableAnalyzerSettings.builder()
+            .putAnalyzer(
+                    "default",
+                    ImmutableNamedAnalyzer.builder() //
+                            .tokenizer("safe_icu_tokenizer") //
+                            .addCharFilter("trim", "icu_folding", "uppercase") //
+                            .build())
+            .putAnalyzer(
+                    "custom_analyzer",
+                    ImmutableNamedAnalyzer.builder() //
+                            .tokenizer("keyword") //
+                            .addCharFilter("custom_filter") //
+                            .addFilter("trim", "icu_folding", "uppercase") //
+                            .build())
+            .build();
+
+    private static final ImmutableNormalizerSettings NORMALIZER = ImmutableNormalizerSettings.builder()
+            .putNormalizer(
+                    "my_normalizer",
+                    ImmutableNamedNormalizer.builder() //
+                            .type("custom") //
+                            .addCharFilter("html_strip") //
+                            .addFilter("uppercase", "asciifolding") //
+                            .build())
+            .build();
+
+    private static final ImmutableCharFilterSettings CHAR_FILTER = ImmutableCharFilterSettings.builder()
+            .putCharFilter(
+                    "strip_spaces",
+                    ImmutableNamedCharFilter.builder() //
+                            .type("pattern_replace") //
+                            .pattern("[\\s\\u00A0]+") //
+                            .replacement("") //
+                            .build())
+            .build();
+
+    private static final ImmutableTokenizerSettings TOKENIZER = ImmutableTokenizerSettings.builder()
+            .putTokenizer(
+                    "safe_icu_tokenizer",
+                    ImmutableNamedTokenizer.builder() //
+                            .type("icu_tokenizer") //
+                            .putProperty("max_token_length", 200) //
+                            .build())
+            .build();
+
+    private static final ImmutableFilterSettings FILTER = ImmutableFilterSettings.builder()
+            .putFilter(
+                    "shingler",
+                    ImmutableNamedFilter.builder() //
+                            .type("shingle") //
+                            .putProperty("min_shingle_size", 2) //
+                            .putProperty("max_shingle_size", 5) //
+                            .build())
+            .build();
+
+    public static final IndexSettings FULL = ImmutableIndexSettings.builder() //
+            .analysis(
+                    ImmutableAnalysis.builder() //
+                            .analyzer(ANALYZER) //
+                            .normalizer(NORMALIZER) //
+                            .charFilter(CHAR_FILTER) //
+                            .tokenizer(TOKENIZER) //
+                            .filter(FILTER) //
+                            .build()) //
+            .build();
+
     public IndexSettingsTest(final String number) {
         super(number);
     }
@@ -35,10 +106,14 @@ public class IndexSettingsTest extends AbstractElasticModelTest {
     @Test
     public void testJackson() throws IOException {
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, IndexSettings.class);
+        JacksonTestUtils.testReadWrite(objectMapper, CUSTOM, IndexSettings.class);
+        JacksonTestUtils.testReadWrite(objectMapper, FULL, IndexSettings.class);
     }
 
     @Test
     public void testSerializable() {
         SerializableTestUtils.testSerializable(MINIMAL, IndexSettings.class);
+        SerializableTestUtils.testSerializable(CUSTOM, IndexSettings.class);
+        SerializableTestUtils.testSerializable(FULL, IndexSettings.class);
     }
 }
