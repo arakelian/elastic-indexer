@@ -49,9 +49,11 @@ import com.google.common.collect.Sets;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableField.class)
 @JsonDeserialize(builder = ImmutableField.Builder.class)
-@JsonPropertyOrder({ "name", "type", "scaling_factor", "format", "enabled", "store", "index", "index_options",
-        "doc_values", "fielddata", "ignore_above", "ignore_malformed", "include_in_all", "copy_to",
-        "analyzer", "search_analyzer" })
+@JsonPropertyOrder({ "name", "aliases", "description", "type", "scaling_factor", "format", "enabled", "store",
+        "index", "index_options", "norms", "doc_values", "additional_targets", "ignore_global_token_filters",
+        "sort_tokens", "token_filters", "fielddata", "ignore_above", "ignore_malformed",
+        "position_increment_gap", "eager_global_ordinals", "include_in_all", "copy_to", "normalizer",
+        "analyzer", "search_analyzer", "include_plugins", "exclude_plugins" })
 public abstract class Field implements Serializable {
     // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html
     public enum IndexOptions {
@@ -270,12 +272,6 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public abstract Boolean getCoerce();
 
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("comment")
-    @JsonView(Enhancement.class)
-    public abstract String getComment();
-
     /**
      * Returns a list of fields that this field value should be copied to.
      *
@@ -284,11 +280,19 @@ public abstract class Field implements Serializable {
      *
      * @return list of fields that this field value should be copied to.
      */
-    @Nullable
+    @Value.Default
     @Value.Auxiliary
     @JsonProperty("copy_to")
     @JsonView(Elastic.class)
-    public abstract List<String> getCopyTo();
+    public List<String> getCopyTo() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("description")
+    @JsonView(Enhancement.class)
+    public abstract String getDescription();
 
     @Value.Default
     @Value.Auxiliary
@@ -357,6 +361,17 @@ public abstract class Field implements Serializable {
     public abstract String getName();
 
     /**
+     * Returns the normalizer used by this field.
+     *
+     * @return the normalizer used by this field.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("normalizer")
+    @JsonView(Elastic.class)
+    public abstract String getNormalizer();
+
+    /**
      * Returns a value that will replace null values during indexed.
      *
      * Normally, null values cannot be indexed or searched. This parameter allows you to replace
@@ -369,6 +384,12 @@ public abstract class Field implements Serializable {
     @JsonProperty("null_value")
     @JsonView(Elastic.class)
     public abstract String getNullValue();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("position_increment_gap")
+    @JsonView(Elastic.class)
+    public abstract Integer getPositionIncrementGap();
 
     @Nullable
     @Value.Default
@@ -402,6 +423,7 @@ public abstract class Field implements Serializable {
     @Value.Default
     @Value.Auxiliary
     @JsonView(Enhancement.class)
+    @JsonProperty("token_filters")
     public List<TokenFilter> getTokenFilters() {
         return ImmutableList.of();
     }
@@ -438,6 +460,12 @@ public abstract class Field implements Serializable {
                 type == Type.DATE_RANGE);
     }
 
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("eager_global_ordinals")
+    @JsonView(Elastic.class)
+    public abstract Boolean isEagerGlobalOrdinals();
+
     /**
      * Returns true if this field is enabled.
      *
@@ -468,6 +496,28 @@ public abstract class Field implements Serializable {
     @JsonProperty("fielddata")
     @JsonView(Elastic.class)
     public abstract Boolean isFielddata();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("ignore_global_token_filters")
+    @JsonView(Enhancement.class)
+    public abstract Boolean isIgnoreGlobalTokenFilters();
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("exclude_plugins")
+    @JsonView(Enhancement.class)
+    public Set<String> getExcludePlugins() {
+        return ImmutableSet.of();
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("include_plugins")
+    @JsonView(Enhancement.class)
+    public Set<String> getIncludePlugins() {
+        return ImmutableSet.of();
+    }
 
     /**
      * Returns true if this field should ignore illegal values detected when building Elastic
@@ -541,6 +591,18 @@ public abstract class Field implements Serializable {
         final String name = getName();
         return META_FIELDS.contains(name);
     }
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("norms")
+    @JsonView(Elastic.class)
+    public abstract Boolean isNorms();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("sort_tokens")
+    @JsonView(Enhancement.class)
+    public abstract Boolean isSortTokens();
 
     /**
      * Returns true if the field value is stored.
