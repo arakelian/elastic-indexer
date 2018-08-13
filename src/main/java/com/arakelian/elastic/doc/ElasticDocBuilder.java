@@ -19,9 +19,11 @@ package com.arakelian.elastic.doc;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,14 +34,18 @@ import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
+import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.JsonSelector;
+import com.arakelian.elastic.model.Mapping;
 import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Ordering;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
@@ -101,8 +107,8 @@ public class ElasticDocBuilder {
     /** Elastic document configuration **/
     protected final ElasticDocConfig config;
 
-    /** The Elastic document we're building **/
-    protected final Multimap<String, Object> document;
+    /** The Elastic document we're building. Duplicate values are not stored. **/
+    protected final LinkedHashMultimap<String, Object> document;
 
     /** Token filters **/
     private final Map<Field, TokenFilter> tokenFilters;
@@ -175,6 +181,13 @@ public class ElasticDocBuilder {
         return build(node);
     }
 
+    private void buildDocumentMap(final String fieldName, final Map<String, Object> map) {
+        final Object values = getFieldValues(fieldName);
+        if (values != null) {
+            map.put(fieldName, values);
+        }
+    }
+
     /**
      * Returns the Elastic document as a simple map.
      *
@@ -187,41 +200,124 @@ public class ElasticDocBuilder {
         final Map<String, Object> map = Maps.newLinkedHashMap();
 
         // add fields in the order that they appear in the mapping
-        final Set<String> mappingFields = config.getMapping().getProperties().keySet();
-        for (final String mappingField : mappingFields) {
-            if (document.containsKey(mappingField)) {
-                final Collection<Object> values = document.get(mappingField);
-                if (values.size() == 1) {
-                    map.put(mappingField, values.iterator().next());
-                } else {
-                    map.put(mappingField, values);
-                }
+        final Map<String, Field> properties = config.getMapping().getProperties();
+        final Set<String> mappingFields = properties.keySet();
+        for (final String fieldName : mappingFields) {
+            if (document.containsKey(fieldName)) {
+                buildDocumentMap(fieldName, map);
             }
         }
 
         // add fields that do not appear in mapping
-        for (final String field : document.keys()) {
-            if (!mappingFields.contains(field)) {
-                final Collection<Object> values = document.get(field);
-                if (values.size() == 1) {
-                    map.put(field, values.iterator().next());
-                } else {
-                    map.put(field, values);
-                }
+        for (final String fieldName : document.keys()) {
+            if (!mappingFields.contains(fieldName)) {
+                buildDocumentMap(fieldName, map);
             }
         }
 
         return map;
     }
 
-    protected TokenFilter getTokenFilter(final Field field) {
-        final TokenFilter filter;
-        if (tokenFilters.containsKey(field)) {
-            filter = tokenFilters.get(field);
-        } else {
-            filter = TokenChain.link(field.getTokenFilters());
-            tokenFilters.put(field, filter);
+    private Object getFieldValues(final String fieldName) {
+        final Collection<Object> values = document.get(fieldName);
+        if (values.size() == 0) {
+            // don't output empty values
+            return null;
         }
+
+        if (values.size() == 1) {
+            // single values
+            return values.iterator().next();
+        }
+
+        final Field field = config.getMapping().getField(fieldName);
+        final Boolean sortTokens = field.isSortTokens();
+        if (sortTokens == null || !sortTokens.booleanValue()) {
+            // no sort; just return insertion order
+            return values;
+        }
+
+        // check if we have any comparables
+        List<Comparable> comparables = null;
+        Class<?> comparablesClass = null;
+        for (final Object o : values) {
+            if (o instanceof Comparable) {
+                if (comparables == null) {
+                    comparables = Lists.newArrayList();
+                    comparablesClass = o.getClass();
+                } else if (!comparablesClass.isInstance(o)) {
+                    continue;
+                }
+                comparables.add((Comparable) o);
+            }
+        }
+
+        if (comparables == null) {
+            // sorting is not possible
+            return values;
+        }
+
+        // sort!
+        Collections.sort(comparables, Ordering.natural());
+        final boolean finished = comparables.size() == values.size();
+
+        // optimization: remove analyzed strings which are subsets of another string
+        // - "1234 MAIN STREET"
+        // - "1234 MAIN STREET APT 12345"
+        // - "1234 MAIN STREET APT 12345 RESTON VA 20191"
+        if (field.getType() == Type.TEXT && CharSequence.class.isAssignableFrom(comparablesClass)) {
+            CharSequence last = null;
+            for (int i = 0; i < comparables.size(); i++) {
+                final CharSequence csq = (CharSequence) comparables.get(i);
+                if (i != 0) {
+                    if (StringUtils.startsWith(csq, last) //
+                            && csq.length() > last.length()
+                            && Character.isWhitespace(csq.charAt(last.length()))) {
+                        comparables.remove(--i);
+                    }
+                }
+                last = csq;
+            }
+        }
+        if (finished) {
+            return comparables;
+        }
+
+        // mixture of comparables without non-comparables
+        final List<Object> sorted = Lists.newArrayList(comparables);
+        for (final Object o : values) {
+            if (!comparablesClass.isInstance(o)) {
+                sorted.add(o);
+            }
+        }
+
+        return sorted;
+    }
+
+    protected TokenFilter getTokenFilter(final Field field) {
+        if (tokenFilters.containsKey(field)) {
+            // use cached value
+            return tokenFilters.get(field);
+        }
+
+        // mapping may contain global token filters that are applied before or after the
+        // field-specific list
+        final Mapping mapping = config.getMapping();
+        final List<TokenFilter> before = mapping.getBeforeTokenFilters();
+        final List<TokenFilter> after = mapping.getAfterTokenFilters();
+
+        final TokenFilter filter;
+        if (before.size() == 0 && after.size() == 0) {
+            // optimization: no global filters
+            filter = TokenChain.link(field.getTokenFilters());
+        } else {
+            // combine filters
+            filter = TokenChain
+                    .link(Lists.newArrayList(Iterables.concat(before, field.getTokenFilters(), after)));
+        }
+
+        // store in cache
+        tokenFilters.put(field, filter);
         return filter;
     }
 
@@ -233,17 +329,40 @@ public class ElasticDocBuilder {
 
         // apply token filters
         if (obj instanceof CharSequence) {
-            getTokenFilter(field).accept(obj.toString(), token -> {
-                // we only store non-empty strings in document
-                if (!StringUtils.isEmpty(token)) {
-                    document.put(field.getName(), token);
-                }
-            });
+            putCharSequence(field, obj);
             return;
         }
 
         // store object
         document.put(field.getName(), obj);
+    }
+
+    private void putCharSequence(final Field field, final Object obj) {
+        // flush token filters which buffer
+        final TokenFilter tokenFilter = getTokenFilter(field);
+        tokenFilter.accept(null, token -> {
+            // discard tokens
+        });
+
+        tokenFilter.accept(obj.toString(), token -> {
+            // we only store non-empty strings in document
+            if (!StringUtils.isEmpty(token)) {
+                document.put(field.getName(), token);
+            }
+        });
+
+        // null value is used to flush token filters that buffer
+        for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
+            tokenFilter.accept(null, token -> {
+                if (!StringUtils.isEmpty(token)) {
+                    document.put(field.getName(), token);
+                    changed.set(true);
+                }
+            });
+            if (!changed.get()) {
+                break;
+            }
+        }
     }
 
     /**

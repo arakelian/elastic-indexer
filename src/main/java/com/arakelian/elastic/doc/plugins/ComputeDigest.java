@@ -46,7 +46,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
 public class ComputeDigest implements ElasticDocBuilderPlugin {
-    @Value.Immutable(copy=false)
+    @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableComputeDigestConfig.class)
     @JsonDeserialize(builder = ImmutableComputeDigestConfig.Builder.class)
     public interface ComputeDigestConfig {
@@ -100,10 +100,16 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
         public String getProvider();
     }
 
+    private final String name;
     private final ComputeDigestConfig config;
 
     public ComputeDigest(final ComputeDigestConfig config) {
+        this(config, "digest");
+    }
+
+    public ComputeDigest(final ComputeDigestConfig config, final String name) {
         this.config = Preconditions.checkNotNull(config);
+        this.name = Preconditions.checkNotNull(name);
     }
 
     @Override
@@ -146,6 +152,11 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
         } else {
             return MessageDigest.getInstance(config.getAlgorithm(), provider);
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     protected void traverse(

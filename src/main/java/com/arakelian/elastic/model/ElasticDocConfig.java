@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.immutables.value.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.doc.DefaultValueProducer;
 import com.arakelian.elastic.doc.ValueProducer;
@@ -37,12 +39,51 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableElasticDocConfig.class)
 @JsonDeserialize(builder = ImmutableElasticDocConfig.Builder.class)
 @JsonPropertyOrder({ "targets", "mapping" })
 public abstract class ElasticDocConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticDocConfig.class);
+
+    private void buildSourcePathMapping(
+            final Multimap<JsonSelector, Field> result,
+            final Collection<JsonSelector> paths,
+            final Set<String> visited,
+            final String target) {
+        // make sure we don't visit more than once
+        if (!visited.add(target)) {
+            return;
+        }
+
+        // get target field
+        final Field field = getMapping().getField(target);
+        if (field == null) {
+            throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
+        }
+
+        // map source paths to target field
+        final Set<JsonSelector> skip = selectorsCopiedToField(field);
+        for (final JsonSelector path : paths) {
+            if (!skip.contains(path)) {
+                result.put(path, field);
+            } else {
+                LOGGER.info(
+                        "SKIPPING target '{}' selector '{}' since another field has it along with copy_to:'{}'",
+                        field.getName(),
+                        path.getSelector(),
+                        field.getName());
+            }
+        }
+
+        // map additional targets the same way
+        for (final String additionalTarget : field.getAdditionalTargets()) {
+            buildSourcePathMapping(result, paths, visited, additionalTarget);
+        }
+    }
+
     public Collection<Field> getFieldsTargetedBy(final JsonSelector sourcePath) {
         final Collection<Field> collection = getSourcePathsMapping().get(sourcePath);
         return collection != null ? collection : ImmutableList.of();
@@ -94,6 +135,26 @@ public abstract class ElasticDocConfig {
     }
 
     /**
+     * Returns a list of source paths and the {@link Field}s to which it is indexed.
+     *
+     * @return list of source paths and the {@link Field}s to which it is indexed.
+     */
+    @JsonIgnore
+    @Value.Lazy
+    protected Multimap<JsonSelector, Field> getSourcePathsMapping() {
+        final Multimap<JsonSelector, Field> result = LinkedHashMultimap.create();
+        final Set<String> visited = Sets.newHashSet();
+
+        final Multimap<String, JsonSelector> targets = getTargets();
+        for (final String target : targets.keySet()) {
+            final Collection<JsonSelector> paths = targets.get(target);
+            buildSourcePathMapping(result, paths, visited, target);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns a list of source paths that should be mapped to each Elastic field.
      *
      * @return list of source paths that should be mapped to each Elastic field.
@@ -115,31 +176,6 @@ public abstract class ElasticDocConfig {
     @Value.Auxiliary
     public boolean isCompact() {
         return true;
-    }
-
-    /**
-     * Returns a list of source paths and the {@link Field}s to which it is indexed.
-     *
-     * @return list of source paths and the {@link Field}s to which it is indexed.
-     */
-    @JsonIgnore
-    @Value.Lazy
-    protected Multimap<JsonSelector, Field> getSourcePathsMapping() {
-        final Multimap<JsonSelector, Field> result = LinkedHashMultimap.create();
-        final Mapping mapping = getMapping();
-
-        final Multimap<String, JsonSelector> targets = getTargets();
-        for (final String target : targets.keySet()) {
-            final Field field = mapping.getField(target);
-            if (field == null) {
-                throw new IllegalStateException("Mapping does not contain field \"" + target + "\"");
-            }
-            for (final JsonSelector path : targets.get(target)) {
-                result.put(path, field);
-            }
-        }
-
-        return result;
     }
 
     @JsonIgnore
@@ -171,5 +207,32 @@ public abstract class ElasticDocConfig {
                 .identityFields(ImmutableSet.of()) //
                 .putAllTargets(newTargets) //
                 .build();
+    }
+
+    /**
+     * Returns a list of selectors from all fields that copy_to the given target field.
+     *
+     * @param target
+     *            target field
+     * @return a list of selectors from all fields that copy_to the given target field
+     */
+    private Set<JsonSelector> selectorsCopiedToField(final Field targetField) {
+        Set<JsonSelector> selectors = null;
+
+        for (final Field field : getMapping().getFields()) {
+            if (!field.getCopyTo().contains(targetField.getName())) {
+                continue;
+            }
+
+            final Multimap<String, JsonSelector> targets = getTargets();
+            if (targets.containsKey(field.getName())) {
+                if (selectors == null) {
+                    selectors = Sets.newLinkedHashSet();
+                }
+                selectors.addAll(targets.get(field.getName()));
+            }
+        }
+
+        return selectors != null ? selectors : ImmutableSet.of();
     }
 }
