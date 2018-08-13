@@ -52,7 +52,8 @@ import com.google.common.collect.Maps;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableMapping.class)
 @JsonDeserialize(builder = ImmutableMapping.Builder.class)
-@JsonPropertyOrder({ "_all", "_source", "dynamic", "properties" })
+@JsonPropertyOrder({ "_all", "_source", "dynamic", "before_token_filters", "after_token_filters",
+        "properties" })
 public interface Mapping extends Serializable {
     public static enum Dynamic {
         TRUE, FALSE, STRICT;
@@ -90,8 +91,26 @@ public interface Mapping extends Serializable {
     @Value.Default
     @Value.Auxiliary
     @JsonView(Enhancement.class)
+    @JsonProperty("after_token_filters")
     public default List<TokenFilter> getAfterTokenFilters() {
         return ImmutableList.of();
+    }
+
+    @JsonIgnore
+    @Value.Auxiliary
+    @Value.Lazy
+    public default Map<String, String> getAliases() {
+        final ImmutableMap.Builder<String, String> aliases = ImmutableMap.<String, String> builder();
+
+        final List<Field> fields = getFields();
+        for (final Field field : fields) {
+            for (final String alias : field.getAliases()) {
+                aliases.put(alias, field.getName());
+            }
+        }
+
+        // duplicate keys will cause this to fail with IllegalArgumentException
+        return aliases.build();
     }
 
     /**
@@ -117,6 +136,7 @@ public interface Mapping extends Serializable {
     @Value.Default
     @Value.Auxiliary
     @JsonView(Enhancement.class)
+    @JsonProperty("before_token_filters")
     public default List<TokenFilter> getBeforeTokenFilters() {
         return ImmutableList.of();
     }
@@ -128,9 +148,18 @@ public interface Mapping extends Serializable {
     public Dynamic getDynamic();
 
     public default Field getField(final String name) {
+        // quick check to see if field exists
         final Map<String, Field> fields = getProperties();
-        Preconditions.checkState(fields.containsKey(name), "Field \"%s\" is not part of index mapping", name);
-        return fields.get(name);
+        if (fields.containsKey(name)) {
+            return fields.get(name);
+        }
+
+        // if not, we'll try using alias
+        final Map<String, String> aliases = getAliases();
+        Preconditions
+                .checkState(aliases.containsKey(name), "Field \"%s\" is not part of index mapping", name);
+        final String canonical = aliases.get(name);
+        return getField(canonical);
     }
 
     /**
@@ -174,11 +203,23 @@ public interface Mapping extends Serializable {
     }
 
     public default boolean hasField(final Field field) {
-        return field != null && getProperties().containsKey(field.getName());
+        return field != null && hasField(field.getName());
     }
 
     public default boolean hasField(final String name) {
-        return name != null && getProperties().containsKey(name);
+        if (name == null) {
+            return false;
+        }
+
+        // quick check to see if field exists
+        final Map<String, Field> fields = getProperties();
+        if (fields.containsKey(name)) {
+            return true;
+        }
+
+        // if not, we'll try using alias
+        final Map<String, String> aliases = getAliases();
+        return aliases.containsKey(name) && hasField(aliases.get(name));
     }
 
     @Value.Check
