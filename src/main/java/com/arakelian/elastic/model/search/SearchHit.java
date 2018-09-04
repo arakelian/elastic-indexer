@@ -17,31 +17,34 @@
 
 package com.arakelian.elastic.model.search;
 
-import java.io.Serializable;
-import java.util.Map;
 import java.util.SortedSet;
 
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.jackson.AbstractMapPath;
 import com.arakelian.jackson.MapPath;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearchHit.class)
 @JsonDeserialize(builder = ImmutableSearchHit.Builder.class)
 @JsonPropertyOrder({ "_index", "_type", "_id", "_score", "_source", "matched_queries" })
-public abstract class SearchHit implements Serializable {
+public abstract class SearchHit extends AbstractMapPath {
+    @Value.Default
+    public MapPath getHighlight() {
+        return MapPath.of();
+    }
+
     @JsonProperty("_id")
     public abstract String getId();
 
+    @Nullable
     @JsonProperty("_index")
     public abstract String getIndex();
 
@@ -52,17 +55,11 @@ public abstract class SearchHit implements Serializable {
         return ImmutableSortedSet.of();
     }
 
-    @JsonAnyGetter
-    @Value.Default
-    public Map<String, Object> getProperties() {
-        return ImmutableMap.of();
-    }
-
     /**
      * Returns the score of record.
-     * 
+     *
      * Note that when custom sorting is used, Elastic will omit the scoring and return a null value.
-     * 
+     *
      * @return the score of record, or null if scoring was not applied
      */
     @Nullable
@@ -75,15 +72,11 @@ public abstract class SearchHit implements Serializable {
         return ImmutableSource.builder().build();
     }
 
-    @Value.Default
-    public MapPath getHighlight() {
-        return MapPath.of();
-    }
-
     @Nullable
     @JsonProperty("_type")
     public abstract String getType();
 
+    @Override
     public void setObjectMapper(final ObjectMapper mapper) {
         getSource().setObjectMapper(mapper);
     }
