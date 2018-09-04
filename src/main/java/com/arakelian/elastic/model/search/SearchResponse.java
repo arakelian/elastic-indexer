@@ -25,19 +25,20 @@ import org.immutables.value.Value;
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.Shards;
 import com.arakelian.jackson.MapPath;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearchResponse.class)
 @JsonDeserialize(builder = ImmutableSearchResponse.Builder.class)
-@JsonPropertyOrder({ "_scroll_id", "took", "timed_out", "num_reduce_phases", "terminated_early", "_shards",
-        "hits" })
+@JsonPropertyOrder({ "error", "_scroll_id", "took", "timed_out", "num_reduce_phases", "terminated_early",
+        "_shards", "hits" })
 public interface SearchResponse extends Serializable {
-    @Nullable
     @Value.Default
     @Value.Auxiliary
     public default Map<String, MapPath> getAggregations() {
@@ -45,6 +46,9 @@ public interface SearchResponse extends Serializable {
     }
 
     @Nullable
+    @Value.Auxiliary
+    public MapPath getError();
+
     @Value.Default
     @Value.Auxiliary
     public default SearchHits getHits() {
@@ -55,6 +59,12 @@ public interface SearchResponse extends Serializable {
     @Value.Auxiliary
     @JsonProperty("num_reduce_phases")
     public Integer getNumberOfReducePhases();
+
+    @JsonAnyGetter
+    @Value.Default
+    public default Map<String, Object> getProperties() {
+        return ImmutableMap.of();
+    }
 
     @Nullable
     @JsonProperty("_scroll_id")
@@ -67,6 +77,13 @@ public interface SearchResponse extends Serializable {
 
     @Nullable
     public Integer getTook();
+
+    @JsonIgnore
+    @Value.Derived
+    @Value.Auxiliary
+    public default boolean hasError() {
+        return getError() != null;
+    }
 
     @Nullable
     @JsonProperty("terminated_early")
