@@ -64,7 +64,7 @@ dependencies {
     processor 'org.immutables:value:2.6.1'
 
     compile 'com.arakelian:more-commons:1.9.1'
-    compile 'com.arakelian:jackson-utils:1.9.5'
+    compile 'com.arakelian:jackson-utils:1.9.6+'
     compile 'com.arakelian:json-filter:1.9.0'
     compile 'com.arakelian:key-value-store:1.9.5'
     compile 'com.github.ben-manes.caffeine:caffeine:2.6.2'
