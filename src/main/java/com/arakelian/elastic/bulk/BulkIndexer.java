@@ -26,8 +26,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -276,7 +279,8 @@ public class BulkIndexer implements Closeable {
 
                 // there is no need to check if we are closed, as we will get a
                 // RejectedExecutionException.
-                submitBatch(retryBatch);
+                ListenableFuture<BulkResponse> result = submitBatch(retryBatch);
+                assert result != null;
             }
         }
 
@@ -421,29 +425,47 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Adds a bulk operation to the pending bartch.
+     * Adds a bulk operation to the pending batch, and returns a {@link ListenableFuture} that
+     * represents that bulk update (or null if a batch operation is not available yet).
      *
      * @param op
      *            bulk operation
+     * @param forceFlush
+     *            true if flush operation should be forced, even if batch is not full
+     * @return a Future that represents the batch, or null if batch is not flushed
      * @throws RejectedExecutionException
      *             if indexer is closed or background queue is full
      */
-    public void add(final BulkOperation op) throws RejectedExecutionException {
-        add(op, false);
+    public Optional<Future<Boolean>> add(final BulkOperation op, final boolean forceFlush)
+            throws RejectedExecutionException {
+        final ListenableFuture<BulkResponse> future = add(op, forceFlush, false);
+        if (future == null) {
+            Preconditions.checkState(!forceFlush, "Expected bulk operation to result in future");
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                new FutureTask<>(ImmutableBulkFuturesSuccessful.builder() //
+                        .addFuture(future) //
+                        .build()));
     }
 
     /**
      * Adds a bulk operation to the pending {@link Batch}.
      *
-     * @param op
+     * @param bulkOperation
      *            bulk operation
+     * @param forceFlush
+     *            true if flush operation should be forced, even if batch is not full
      * @param retry
      *            true if operation is being retried
      * @throws RejectedExecutionException
      *             if indexer is closed or background queue is full
      */
-    private void add(final BulkOperation bulkOperation, final boolean retry)
-            throws RejectedExecutionException {
+    private ListenableFuture<BulkResponse> add(
+            final BulkOperation bulkOperation,
+            final boolean forceFlush,
+            final boolean retry) throws RejectedExecutionException {
         Preconditions.checkArgument(bulkOperation != null, "bulkOperation must be non-null");
 
         // we only hold the lock long enough to add the operation and create a batch if needed
@@ -469,16 +491,14 @@ public class BulkIndexer implements Closeable {
             }
 
             // flush only when queue or memory thresholds are reached
-            batch = createBatch(false);
+            batch = createBatch(forceFlush);
         } finally {
             batchLock.unlock();
         }
 
         // we submit to executor outside the lock, since this thread could block if the queue is
         // full
-        if (batch != null) {
-            submitBatch(batch);
-        }
+        return batch != null ? submitBatch(batch) : null;
     }
 
     /**
@@ -488,12 +508,14 @@ public class BulkIndexer implements Closeable {
      *            document
      * @param action
      *            action to be performed on document
+     * @param forceFlush
+     *            TODO
      * @throws RejectedExecutionException
      *             if indexer is closed or background queue is full
      * @throws IOException
      *             if document could not be serialized
      */
-    private void add(final Object document, final Action action)
+    private void add(final Object document, final Action action, final boolean forceFlush)
             throws RejectedExecutionException, IOException {
         if (document == null) {
             return;
@@ -515,8 +537,10 @@ public class BulkIndexer implements Closeable {
 
         // we do not acquire lock here because an add may cause a flush, and a flush could
         // block waiting for the indexer queue to have space
-        for (final BulkOperation op : ops) {
-            add(op, false);
+        for (int i = 0, size = ops.size(); i < size; i++) {
+            final BulkOperation op = ops.get(i);
+            ListenableFuture<BulkResponse> future = add(op, forceFlush && i == size - 1, false);
+            assert !forceFlush || future != null;
         }
     }
 
@@ -582,13 +606,13 @@ public class BulkIndexer implements Closeable {
      * If there are no pending operations that need to be flushed, or the batch size thresholds have
      * not been met (and force is false), this method will return null.
      *
-     * @param force
+     * @param forceFlush
      *            true to force a Batch to be created
      * @return a new {@link Batch}, or null
      * @throws RejectedExecutionException
      *             if indexer is closed (and we have pending operations) or background queue is full
      */
-    private Batch createBatch(final boolean force) throws RejectedExecutionException {
+    private Batch createBatch(final boolean forceFlush) throws RejectedExecutionException {
         batchLock.lock();
         try {
             final int size = pendingOperations.size();
@@ -600,7 +624,7 @@ public class BulkIndexer implements Closeable {
             ensureOpen();
 
             // we allow flush to occur after indexer is closed
-            if (force || size >= config.getMaxBulkOperations()
+            if (forceFlush || size >= config.getMaxBulkOperations()
                     || totalPendingBytes > config.getMaxBulkOperationBytes()) {
                 final Batch batch = new Batch(ImmutableList.copyOf(pendingOperations), totalPendingBytes, 0);
                 pendingOperations.clear();
@@ -644,7 +668,7 @@ public class BulkIndexer implements Closeable {
      *             if document could not be serialized
      */
     public void delete(final Object document) throws RejectedExecutionException, IOException {
-        add(document, DELETE);
+        add(document, DELETE, false);
     }
 
     /**
@@ -660,18 +684,22 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Flushes any pending bulk operations to Elastic asynchronously.
+     * Flushes any pending bulk operations to Elastic asynchronously, and returns a future that
+     * corresponds to the batch (or null if no batch operation is required).
      *
+     * @return returns a future that corresponds to the batch, or null if no batch operation
+     *         required
      * @throws RejectedExecutionException
      *             if indexer is closed (and we have pending operations) or background queue is full
      */
-    public void flush() throws RejectedExecutionException {
+    public ListenableFuture<BulkResponse> flush() throws RejectedExecutionException {
         final Batch batch = createBatch(true);
         if (batch != null) {
             // we submit to executor outside a lock, since this thread could block if the
             // batch executor's queue is full
-            submitBatch(batch);
+            return submitBatch(batch);
         }
+        return null;
     }
 
     /**
@@ -680,7 +708,8 @@ public class BulkIndexer implements Closeable {
      */
     private void flushQuietly() {
         try {
-            flush();
+            @SuppressWarnings("unused")
+            ListenableFuture<BulkResponse> future = flush();
         } catch (final Exception e) {
             LOGGER.warn("Unable to flush {}", this, e);
         }
@@ -688,6 +717,10 @@ public class BulkIndexer implements Closeable {
 
     public final BulkIndexerConfig getConfig() {
         return config;
+    }
+
+    public RefreshLimiter getRefreshLimiter() {
+        return refreshLimiter;
     }
 
     public BulkIndexerStats getStats() {
@@ -732,7 +765,7 @@ public class BulkIndexer implements Closeable {
      *             if document could not be serialized
      */
     public void index(final Object document) throws RejectedExecutionException, IOException {
-        add(document, INDEX);
+        add(document, INDEX, false);
     }
 
     /**
@@ -752,7 +785,7 @@ public class BulkIndexer implements Closeable {
      * @throws RejectedExecutionException
      *             if background queue is full
      */
-    private void submitBatch(final Batch batch) throws RejectedExecutionException {
+    private ListenableFuture<BulkResponse> submitBatch(final Batch batch) throws RejectedExecutionException {
         LOGGER.info("Queuing {}", batch);
         final Stopwatch queued = Stopwatch.createStarted();
         final ListenableFuture<BulkResponse> future;
@@ -767,6 +800,7 @@ public class BulkIndexer implements Closeable {
 
         // process responses asynchronously too
         future.addListener(new BatchListener(future, batch, queued), bulkResponseExecutor);
+        return future;
     }
 
     @Override
