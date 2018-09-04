@@ -32,12 +32,35 @@ import com.google.common.base.Preconditions;
  */
 @Value.Immutable(copy = false)
 public abstract class BulkOperation {
-    // see: https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html
+    /**
+     * Bulk actions are INDEX, CREATE, DELETE and UPDATE.
+     *
+     * @see <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html">Bulk
+     *      API</a>
+     */
     public static enum Action {
-        CREATE(true), //
-        DELETE(false), //
-        INDEX(true), //
-        UPDATE(true);
+    /**
+     * CREATE has put-if-absent semantics. The index operation will fail if a document by that id
+     * already exists in the index.
+     **/
+    CREATE(true),
+
+    /**
+     * DELETE does not expect a source on the following line, and has the same semantics as the
+     * standard delete API.
+     **/
+    DELETE(false),
+
+    /**
+     * Unlike {@link #CREATE}, INDEX will add or replace document as necessary.
+     */
+    INDEX(true),
+
+    /**
+     * UPDATE expects that next line is a partial document or a script.
+     */
+    UPDATE(true);
 
         private final boolean hasSource;
 
@@ -67,74 +90,6 @@ public abstract class BulkOperation {
         public String toString() {
             return this.name().toLowerCase();
         }
-    }
-
-    /**
-     * Returns mapping type within index.
-     *
-     * @return mapping type within index.
-     */
-    public abstract Action getAction();
-
-    @Nullable
-    @Value.Derived
-    @Value.Auxiliary
-    public String getCompactSource() {
-        final String source = getSource();
-        if (source != null && source.indexOf('\n') != -1) {
-            return JsonFilter.compactQuietly(source);
-        }
-        return source;
-    }
-
-    /**
-     * Returns the id of the document.
-     *
-     * @return id of the document.
-     */
-    public abstract String getId();
-
-    /**
-     * Returns index that this document will be indexed into.
-     *
-     * @return index that this document will be indexed into.
-     */
-    public abstract Index getIndex();
-
-    @Value.Derived
-    @Value.Auxiliary
-    public String getOperation() {
-        final StringBuilder buf = new StringBuilder();
-        addActionAndMetadata(buf);
-        if (getAction().hasSource()) {
-            buf.append(getCompactSource()).append('\n');
-        }
-        return buf.toString();
-    }
-
-    /**
-     * Returns source JSON document that will be indexed by {@link BulkIndexer}
-     *
-     * @return source JSON document that will be indexed by {@link BulkIndexer}
-     */
-    @Nullable
-    @Value.Auxiliary
-    public abstract String getSource();
-
-    /**
-     * Returns mapping type within index.
-     *
-     * @return mapping type within index.
-     */
-    public abstract String getType();
-
-    @Nullable
-    public abstract Long getVersion();
-
-    @Nullable
-    @Value.Default
-    public VersionType getVersionType() {
-        return getVersion() != null ? VersionType.EXTERNAL : null;
     }
 
     private void addActionAndMetadata(final StringBuilder buf) {
@@ -183,5 +138,77 @@ public abstract class BulkOperation {
                     !StringUtils.equals(getType(), Mapping._DEFAULT_),
                     "It is forbidden to index into the _default_ mapping");
         }
+    }
+
+    /**
+     * Returns mapping type within index.
+     *
+     * @return mapping type within index.
+     */
+    public abstract Action getAction();
+
+    @Nullable
+    @Value.Derived
+    @Value.Auxiliary
+    public String getCompactSource() {
+        final String source = getSource();
+        if (source != null && source.indexOf('\n') != -1) {
+            return JsonFilter.compactQuietly(source);
+        }
+        return source;
+    }
+
+    /**
+     * Returns the id of the document.
+     *
+     * @return id of the document.
+     */
+    public abstract String getId();
+
+    /**
+     * Returns index that this document will be indexed into.
+     *
+     * @return index that this document will be indexed into.
+     */
+    public abstract Index getIndex();
+
+    @Nullable
+    @Value.Auxiliary
+    public abstract BulkOperationListener getListener();
+
+    @Value.Derived
+    @Value.Auxiliary
+    public String getOperation() {
+        final StringBuilder buf = new StringBuilder();
+        addActionAndMetadata(buf);
+        if (getAction().hasSource()) {
+            buf.append(getCompactSource()).append('\n');
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Returns source JSON document that will be indexed by {@link BulkIndexer}
+     *
+     * @return source JSON document that will be indexed by {@link BulkIndexer}
+     */
+    @Nullable
+    @Value.Auxiliary
+    public abstract String getSource();
+
+    /**
+     * Returns mapping type within index.
+     *
+     * @return mapping type within index.
+     */
+    public abstract String getType();
+
+    @Nullable
+    public abstract Long getVersion();
+
+    @Nullable
+    @Value.Default
+    public VersionType getVersionType() {
+        return getVersion() != null ? VersionType.EXTERNAL : null;
     }
 }
