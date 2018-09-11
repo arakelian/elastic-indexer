@@ -34,61 +34,24 @@ import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.jackson.utils.JacksonUtils;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 @Value.Immutable
 public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFactory {
-    protected BulkOperation createBulkOperation(
-            final Action action,
-            final String type,
-            final String id,
-            final String source,
-            final Long version) {
-        return ImmutableBulkOperation.builder() //
-                .action(action) //
-                .index(getIndex()) //
-                .type(type) //
-                .id(id) //
-                .source(source) //
-                .version(version) //
-                .versionType(EXTERNAL) //
-                .build();
-    }
-
     @Override
     public List<BulkOperation> createBulkOperations(final Object doc, final Action action)
             throws IOException {
         try {
-            // type safe casting
-            final T document = getDocumentClass().cast(doc);
-
-            // type
-            final String type = getType().apply(document);
-
-            // id
-            final String id = getId().apply(document);
-
-            // version
-            ZonedDateTime versionDate = getVersion().apply(document);
-
-            final Long version;
-            if (versionDate == null) {
-                // versioning is disabled
-                version = null;
-            } else {
-                if (action == Action.DELETE) {
-                    versionDate = getDeleteVersion().apply(document);
-                }
-                final ZonedDateTime utc = DateUtils.toUtc(versionDate);
-                version = Long.valueOf(utc.toInstant().toEpochMilli());
+            if (doc instanceof String) {
+                // hard-coded action
+                final String id = (String) doc;
+                return doCreateBulkOperations(id, action);
             }
 
-            // document
-            final String source = action.hasSource() ? getElasticDocument().apply(document) : null;
-
-            // create operation
-            final BulkOperation operation = createBulkOperation(action, type, id, source, version);
-            return Lists.newArrayList(operation);
+            // type safe casting
+            final T document = getDocumentClass().cast(doc);
+            return doCreateBulkOperations(document, action);
         } catch (IllegalStateException | IllegalArgumentException | ClassCastException
                 | UncheckedIOException e) {
             throw new IOException("Unable to create bulk operation (action=" + action + ", " + doc + ")", e);
@@ -167,5 +130,61 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
     public boolean supports(final Object document) {
         final Class<T> clazz = getDocumentClass();
         return clazz.isInstance(document) && getPredicate().test(clazz.cast(document));
+    }
+
+    private List<BulkOperation> doCreateBulkOperations(final String id, final Action action) {
+        Preconditions.checkArgument(action == Action.DELETE);
+
+        final String type = getType().apply(null);
+        final BulkOperation operation = createBulkOperation(action, type, id, null, null);
+        return Lists.newArrayList(operation);
+    }
+
+    private List<BulkOperation> doCreateBulkOperations(final T document, final Action action) {
+        // type
+        final String type = getType()
+                .apply(Preconditions.checkNotNull(document, "document must be non-null"));
+
+        // id
+        final String id = getId().apply(document);
+
+        // version
+        ZonedDateTime versionDate = getVersion().apply(document);
+
+        final Long version;
+        if (versionDate == null) {
+            // versioning is disabled
+            version = null;
+        } else {
+            if (action == Action.DELETE) {
+                versionDate = getDeleteVersion().apply(document);
+            }
+            final ZonedDateTime utc = DateUtils.toUtc(versionDate);
+            version = Long.valueOf(utc.toInstant().toEpochMilli());
+        }
+
+        // document
+        final String source = action.hasSource() ? getElasticDocument().apply(document) : null;
+
+        // create operation
+        final BulkOperation operation = createBulkOperation(action, type, id, source, version);
+        return Lists.newArrayList(operation);
+    }
+
+    protected BulkOperation createBulkOperation(
+            final Action action,
+            final String type,
+            final String id,
+            final String source,
+            final Long version) {
+        return ImmutableBulkOperation.builder() //
+                .action(action) //
+                .index(getIndex()) //
+                .type(type) //
+                .id(id) //
+                .source(source) //
+                .version(version) //
+                .versionType(EXTERNAL) //
+                .build();
     }
 }
