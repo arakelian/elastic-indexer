@@ -17,16 +17,47 @@
 
 package com.arakelian.elastic;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 
 import okhttp3.OkHttpClient;
+import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class DefaultOkHttpElasticApiFactory implements OkHttpElasticApiFactory {
     private final OkHttpClient client;
+
+    public final static class EnumConverterFactory extends Converter.Factory {
+        private static final class EnumConverter implements Converter<Enum, String> {
+            static final EnumConverter INSTANCE = new EnumConverter();
+
+            @Override
+            public String convert(Enum value) {
+                // Elastic often only recognizes lowercase enum values, e.g. query_then_fetch.
+                return value.name().toLowerCase();
+            }
+        }
+
+        public static EnumConverterFactory create() {
+            return new EnumConverterFactory();
+        }
+
+        private EnumConverterFactory() {
+        }
+
+        @Override
+        public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
+            if (type instanceof Class && ((Class<?>) type).isEnum()) {
+                return EnumConverter.INSTANCE;
+            }
+            return null;
+        }
+    }
 
     public DefaultOkHttpElasticApiFactory(final OkHttpClient client) {
         this.client = Preconditions.checkNotNull(client);
@@ -37,6 +68,7 @@ public class DefaultOkHttpElasticApiFactory implements OkHttpElasticApiFactory {
         final Retrofit retrofit = new Retrofit.Builder() //
                 .client(client) //
                 .baseUrl(elasticUrl) //
+                .addConverterFactory(EnumConverterFactory.create()) //
                 .addConverterFactory(ScalarsConverterFactory.create()) //
                 .addConverterFactory(JacksonConverterFactory.create(mapper)) //
                 .build();

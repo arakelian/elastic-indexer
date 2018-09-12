@@ -63,6 +63,9 @@ multitool {
 dependencies {
     processor 'org.immutables:value:2.7.1'
 
+    // the gradle plugin uses latest.release which breaks reproducibility
+    errorprone 'com.google.errorprone:error_prone_core:2.3.1'
+    
     compile 'com.arakelian:more-commons:1.9.3'
     compile 'com.arakelian:jackson-utils:1.9.7'
     compile 'com.arakelian:json-filter:1.9.1'
