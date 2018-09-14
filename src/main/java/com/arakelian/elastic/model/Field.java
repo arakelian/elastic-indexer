@@ -31,6 +31,9 @@ import com.arakelian.elastic.Views.Enhancement;
 import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.Mapping.FieldDeserializer;
+import com.arakelian.elastic.model.enums.Orientation;
+import com.arakelian.elastic.model.enums.SpatialStrategy;
+import com.arakelian.elastic.model.enums.Tree;
 import com.arakelian.jackson.CompoundTokenFilter;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
@@ -51,7 +54,8 @@ import com.google.common.collect.Sets;
 @JsonDeserialize(builder = ImmutableField.Builder.class)
 @JsonPropertyOrder({ "name", "aliases", "description", "type", "scaling_factor", "format", "enabled", "store",
         "index", "index_options", "norms", "doc_values", "additional_targets", "ignore_global_token_filters",
-        "sort_tokens", "token_filters", "fielddata", "ignore_above", "ignore_malformed",
+        "sort_tokens", "token_filters", "fielddata", "tree", "precision", "tree_levels", "strategy",
+        "orientation", "points_only", "ignore_z_value", "ignore_above", "ignore_malformed",
         "position_increment_gap", "eager_global_ordinals", "include_in_all", "copy_to", "normalizer",
         "analyzer", "search_analyzer", "include_plugins", "exclude_plugins" })
 public abstract class Field implements Serializable {
@@ -154,7 +158,7 @@ public abstract class Field implements Serializable {
         DOUBLE_RANGE, //
         DATE_RANGE, //
         GEO_POINT, //
-        // GEO_SHAPE, //
+        GEO_SHAPE, //
         IP, //
         COMPLETION, //
         TOKEN_COUNT;
@@ -449,7 +453,7 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isDocValues() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
             return null;
         }
         return Boolean.TRUE.equals(isIndex()) && !(type == Type.TEXT || //
@@ -532,6 +536,74 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public abstract Boolean isIgnoreMalformed();
 
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("tree")
+    @JsonView(Elastic.class)
+    public abstract Tree getTree();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("precision")
+    @JsonView(Elastic.class)
+    public abstract String getPrecision();
+
+    /**
+     * Returns maximum number of layers to be used by the PrefixTree. This can be used to control
+     * the precision of shape representations and therefore how many terms are indexed. Defaults to
+     * the default value of the chosen PrefixTree implementation
+     *
+     * @return maximum number of layers to be used by the PrefixTree
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("tree_levels")
+    @JsonView(Elastic.class)
+    public abstract String getTreeLevels();
+
+    /**
+     * Returns the approach for how to represent shapes at indexing and search time.
+     *
+     * @return the approach for how to represent shapes at indexing and search time.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("strategy")
+    @JsonView(Elastic.class)
+    public abstract SpatialStrategy getStrategy();
+
+    /**
+     * Returns how to interpret vertex order for polygons / multipolygons.
+     *
+     * @return how to interpret vertex order for polygons / multipolygons.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("orientation")
+    @JsonView(Elastic.class)
+    public abstract Orientation getOrientation();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("points_only")
+    @JsonView(Elastic.class)
+    public abstract Boolean isPointsOnly();
+
+    /**
+     * Returns true (default) if three dimension points will be accepted (stored in source) but only
+     * latitude and longitude values will be indexed; the third dimension is ignored. If false,
+     * geo-points containing any more than latitude and longitude (two dimensions) values throw an
+     * exception and reject the whole document.
+     *
+     * @return true if three dimension points will be accepted but only latitude and longitude
+     *         values will be indexed
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("ignore_z_value")
+    @JsonView(Elastic.class)
+    public abstract Boolean isIgnoreZValue();
+
     /**
      * Returns true if this field should not be included in _all.
      *
@@ -547,7 +619,7 @@ public abstract class Field implements Serializable {
     @JsonView(Version5.class)
     public Boolean isIncludeInAll() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
             return null;
         }
 
@@ -577,7 +649,7 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isIndex() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
             return null;
         }
         return type != Type.BINARY;
@@ -619,7 +691,7 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isStore() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
             return null;
         }
         return type == Type.BINARY;

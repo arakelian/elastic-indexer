@@ -15,8 +15,20 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.search;
+package com.arakelian.elastic.model.enums;
 
-public enum SortMode {
-    MIN, MAX, SUM, AVG, MEDIAN;
+public enum ExecutionHint {
+    /**
+     * GLOBAL_ORDINALS is the default option for keyword fields, it uses global ordinals to
+     * allocates buckets dynamically so memory usage is linear to the number of values of the
+     * documents that are part of the aggregation scope.
+     **/
+    GLOBAL_ORDINALS,
+
+    /**
+     * MAP should only be considered when very few documents match a query. Otherwise the
+     * ordinals-based execution mode is significantly faster. By default, map is only used when
+     * running an aggregation on scripts, since they don’t have ordinals.
+     */
+    MAP;
 }

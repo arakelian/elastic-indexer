@@ -39,7 +39,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(name = Query.RANGE_QUERY, value = RangeQuery.class), //
         @JsonSubTypes.Type(name = Query.REGEXP_QUERY, value = RegexpQuery.class), //
         @JsonSubTypes.Type(name = Query.TERMS_QUERY, value = TermsQuery.class), //
-        @JsonSubTypes.Type(name = Query.WILDCARD_QUERY, value = WildcardQuery.class) //
+        @JsonSubTypes.Type(name = Query.WILDCARD_QUERY, value = WildcardQuery.class), //
+        @JsonSubTypes.Type(name = Query.GEO_SHAPE_QUERY, value = GeoShapeQuery.class), //
+        @JsonSubTypes.Type(name = Query.GEO_POLYGON_QUERY, value = GeoPolygonQuery.class), //
+        @JsonSubTypes.Type(name = Query.GEO_DISTANCE_QUERY, value = GeoDistanceQuery.class), //
+        @JsonSubTypes.Type(name = Query.GEO_BOUNDING_BOX_QUERY, value = GeoBoundingBoxQuery.class), //
+        @JsonSubTypes.Type(name = Query.MORE_LIKE_THIS_QUERY, value = MoreLikeThisQuery.class), //
 })
 public interface Query extends Serializable {
     public static final String BOOL_QUERY = "bool";
@@ -53,6 +58,11 @@ public interface Query extends Serializable {
     public static final String REGEXP_QUERY = "regexp";
     public static final String TERMS_QUERY = "terms";
     public static final String WILDCARD_QUERY = "wildcard";
+    public static final String GEO_SHAPE_QUERY = "geo_shape";
+    public static final String GEO_POLYGON_QUERY = "geo_polygon";
+    public static final String GEO_DISTANCE_QUERY = "geo_distance";
+    public static final String GEO_BOUNDING_BOX_QUERY = "geo_bounding_box";
+    public static final String MORE_LIKE_THIS_QUERY = "more_like_this";
 
     static int countNotEmpty(final List<Query> queries) {
         if (queries == null) {

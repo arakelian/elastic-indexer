@@ -21,7 +21,7 @@ import java.io.Serializable;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.model.search.SortOrder;
+import com.arakelian.elastic.model.enums.SortOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.search;
+package com.arakelian.elastic.model.enums;
 
-public enum ShapeRelation {
-    INTERSECTS, //
-    DISJOINT, //
-    WITHIN, //
-    CONTAINS;
+public enum MultiMatchType {
+    BEST_FIELDS, //
+    MOST_FIELDS, //
+    CROSS_FIELDS, //
+    PHRASE, //
+    PHRASE_PREFIX;
 }

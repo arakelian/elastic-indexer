@@ -24,25 +24,44 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import com.arakelian.elastic.model.enums.DistanceType;
+import com.arakelian.elastic.model.enums.GeoShapeType;
+import com.arakelian.elastic.model.enums.Operator;
+import com.arakelian.elastic.model.enums.RegexpFlag;
+import com.arakelian.elastic.model.enums.ShapeRelation;
+import com.arakelian.elastic.model.enums.SpatialStrategy;
+import com.arakelian.elastic.model.enums.ValidationMethod;
+import com.arakelian.elastic.model.search.GeoBoundingBoxQuery;
+import com.arakelian.elastic.model.search.GeoDistanceQuery;
+import com.arakelian.elastic.model.search.GeoPolygonQuery;
+import com.arakelian.elastic.model.search.GeoShapeQuery;
 import com.arakelian.elastic.model.search.Highlighter.Field;
 import com.arakelian.elastic.model.search.ImmutableBoolQuery;
 import com.arakelian.elastic.model.search.ImmutableExistsQuery;
 import com.arakelian.elastic.model.search.ImmutableFuzzyQuery;
+import com.arakelian.elastic.model.search.ImmutableGeoBoundingBoxQuery;
+import com.arakelian.elastic.model.search.ImmutableGeoDistanceQuery;
+import com.arakelian.elastic.model.search.ImmutableGeoPolygonQuery;
+import com.arakelian.elastic.model.search.ImmutableGeoShapeQuery;
 import com.arakelian.elastic.model.search.ImmutableHighlight;
 import com.arakelian.elastic.model.search.ImmutableIdsQuery;
+import com.arakelian.elastic.model.search.ImmutableItem;
 import com.arakelian.elastic.model.search.ImmutableMatchQuery;
+import com.arakelian.elastic.model.search.ImmutableMoreLikeThisQuery;
 import com.arakelian.elastic.model.search.ImmutablePrefixQuery;
 import com.arakelian.elastic.model.search.ImmutableQueryStringQuery;
 import com.arakelian.elastic.model.search.ImmutableRangeQuery;
 import com.arakelian.elastic.model.search.ImmutableRegexpQuery;
 import com.arakelian.elastic.model.search.ImmutableSearch;
+import com.arakelian.elastic.model.search.ImmutableShape;
 import com.arakelian.elastic.model.search.ImmutableTermsQuery;
 import com.arakelian.elastic.model.search.ImmutableWildcardQuery;
-import com.arakelian.elastic.model.search.Operator;
+import com.arakelian.elastic.model.search.MoreLikeThisQuery;
 import com.arakelian.elastic.model.search.QueryStringQuery;
-import com.arakelian.elastic.model.search.RegexpFlag;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.faker.model.Person;
+import com.arakelian.jackson.model.Coordinate;
+import com.arakelian.jackson.model.GeoPoint;
 
 public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     public ElasticClientSearchTest(final String version) throws Exception {
@@ -55,6 +74,8 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
             final Person person = people.get(0);
 
             final QueryStringQuery query = ImmutableQueryStringQuery.builder() //
+                    .name("my_querystring_filter") //
+                    .boost(2.0f) //
                     .defaultField("lastName") //
                     .queryString(person.getLastName()) //
                     .build();
@@ -74,6 +95,150 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     }
 
     @Test
+    public void testGeoShapeQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final GeoShapeQuery query = ImmutableGeoShapeQuery.builder() //
+                    .name("my_geoshape_query") //
+                    .boost(2.0f) //
+                    .fieldName("shape") //
+                    .shape(
+                            ImmutableShape.builder() //
+                                    .type(GeoShapeType.LINESTRING) //
+                                    .addCoordinate(Coordinate.of(102.0, 2.0)) //
+                                    .addCoordinate(Coordinate.of(103.0, 2.0)) //
+                                    .build())
+                    .relation(ShapeRelation.CONTAINS) //
+                    .strategy(SpatialStrategy.RECURSIVE) //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(query) //
+                            .build(),
+                    0);
+        });
+    }
+
+    @Test
+    public void testGeoPolygonQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            // bermuda triangle
+            final GeoPolygonQuery query = ImmutableGeoPolygonQuery.builder() //
+                    .name("my_geopolygon_query") //
+                    .boost(2.0f) //
+                    .fieldName("location") //
+                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                    .addPoint(GeoPoint.of(-80.19, 25.76)) //
+                    .addPoint(GeoPoint.of(-66.09, 18.43)) //
+                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(query) //
+                            .build(),
+                    0);
+        });
+    }
+
+    @Test
+    public void testMoreLikeThisQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            // bermuda triangle
+            final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
+                    .name("my_morelikethis") //
+                    .boost(2.0f) //
+                    .addLikeText("four score and seven years ago") //
+                    .addLikeItem(ImmutableItem.builder().id("id").build()) //
+                    .minTermFrequency(10) //
+                    .minDocFrequency(10) //
+                    .maxDocFrequency(0) //
+                    .minWordLength(10) //
+                    .maxWordLength(0) //
+                    .maxQueryTerms(0) //
+                    .minimumShouldMatch("100%") //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(query) //
+                            .build(),
+                    0);
+        });
+    }
+
+    @Test
+    public void testGeoBoundingBoxQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final GeoBoundingBoxQuery tlbr = ImmutableGeoBoundingBoxQuery.builder() //
+                    .name("my_geoboundingbox") //
+                    .boost(2.0f) //
+                    .fieldName("location") //
+                    .topLeft(GeoPoint.of(40.73, -74.1)) //
+                    .bottomRight(GeoPoint.of(40.01, -71.12)) //
+                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                    .type(GeoBoundingBoxQuery.Type.MEMORY) //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(tlbr) //
+                            .build(),
+                    0);
+
+            final GeoBoundingBoxQuery trbl = ImmutableGeoBoundingBoxQuery.builder() //
+                    .name("my_geoboundingbox") //
+                    .boost(2.0f) //
+                    .fieldName("location") //
+                    .topRight(GeoPoint.of(40.73, 40.01)) //
+                    .bottomLeft(GeoPoint.of(-74.1, -71.12)) //
+                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                    .type(GeoBoundingBoxQuery.Type.MEMORY) //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(trbl) //
+                            .build(),
+                    0);
+        });
+    }
+
+    @Test
+    public void testGeoDistanceQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            final GeoDistanceQuery tlbr = ImmutableGeoDistanceQuery.builder() //
+                    .name("my_geodistance_query") //
+                    .boost(2.0f) //
+                    .fieldName("location") //
+                    .distance("12km") //
+                    .point(GeoPoint.of(40.73, -74.1)) //
+                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                    .distanceType(DistanceType.ARC) //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(tlbr) //
+                            .build(),
+                    0);
+        });
+    }
+
+    @Test
     public void testExistsQuery() throws IOException {
         withPeople(10, (index, people) -> {
             // all people should have a last name
@@ -82,6 +247,8 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                     ImmutableSearch.builder() //
                             .query(
                                     ImmutableExistsQuery.builder() //
+                                            .name("my_exists_filter") //
+                                            .boost(2.0f) //
                                             .fieldName("lastName") //
                                             .build()) //
                             .build(),
@@ -93,6 +260,8 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                     ImmutableSearch.builder() //
                             .query(
                                     ImmutableExistsQuery.builder() //
+                                            .name("my_exists_filter") //
+                                            .boost(2.0f) //
                                             .fieldName(ALWAYS_EMPTY_FIELD) //
                                             .build()) //
                             .build(),

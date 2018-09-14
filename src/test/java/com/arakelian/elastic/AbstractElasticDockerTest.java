@@ -364,6 +364,16 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                                 .build())
                 .addField(
                         ImmutableField.builder() //
+                                .name("location") //
+                                .type(Type.GEO_POINT) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
+                                .name("shape") //
+                                .type(Type.GEO_SHAPE) //
+                                .build())
+                .addField(
+                        ImmutableField.builder() //
                                 .name(ALWAYS_EMPTY_FIELD) //
                                 .type(Type.KEYWORD) //
                                 .build())

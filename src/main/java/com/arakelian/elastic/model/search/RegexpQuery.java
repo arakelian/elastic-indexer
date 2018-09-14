@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.model.enums.RegexpFlag;
+import com.arakelian.elastic.model.enums.Rewrite;
 import com.arakelian.elastic.search.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;

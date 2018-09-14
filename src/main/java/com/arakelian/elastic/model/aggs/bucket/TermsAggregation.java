@@ -25,6 +25,8 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
+import com.arakelian.elastic.model.enums.CollectMode;
+import com.arakelian.elastic.model.enums.ExecutionHint;
 import com.arakelian.elastic.search.AggregationVisitor;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

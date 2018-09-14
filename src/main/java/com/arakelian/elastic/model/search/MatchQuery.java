@@ -20,6 +20,7 @@ package com.arakelian.elastic.model.search;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.model.enums.Operator;
 import com.arakelian.elastic.search.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;

@@ -15,8 +15,11 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.search;
+package com.arakelian.elastic.model.enums;
 
-public enum Operator {
-    OR, AND;
+public enum ShapeRelation {
+    INTERSECTS, //
+    DISJOINT, //
+    WITHIN, //
+    CONTAINS;
 }

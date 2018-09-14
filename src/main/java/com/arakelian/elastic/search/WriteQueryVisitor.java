@@ -23,17 +23,24 @@ import java.util.List;
 import java.util.Set;
 
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.model.enums.RegexpFlag;
 import com.arakelian.elastic.model.search.BoolQuery;
 import com.arakelian.elastic.model.search.ExistsQuery;
 import com.arakelian.elastic.model.search.FuzzyQuery;
+import com.arakelian.elastic.model.search.GeoBoundingBoxQuery;
+import com.arakelian.elastic.model.search.GeoDistanceQuery;
+import com.arakelian.elastic.model.search.GeoPolygonQuery;
+import com.arakelian.elastic.model.search.GeoShapeQuery;
 import com.arakelian.elastic.model.search.IdsQuery;
+import com.arakelian.elastic.model.search.IndexedShape;
 import com.arakelian.elastic.model.search.MatchQuery;
+import com.arakelian.elastic.model.search.MoreLikeThisQuery;
 import com.arakelian.elastic.model.search.PrefixQuery;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.RangeQuery;
-import com.arakelian.elastic.model.search.RegexpFlag;
 import com.arakelian.elastic.model.search.RegexpQuery;
+import com.arakelian.elastic.model.search.Shape;
 import com.arakelian.elastic.model.search.StandardQuery;
 import com.arakelian.elastic.model.search.TermsQuery;
 import com.arakelian.elastic.model.search.WildcardQuery;
@@ -81,6 +88,34 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
     }
 
     @Override
+    public boolean enterMoreLikeThisQuery(MoreLikeThisQuery moreLikeThis) {
+        try {
+            writer.writeFieldName("more_like_this");
+            writer.writeStartObject();
+            writeStandardFields(moreLikeThis);
+            writeFieldValue("like", moreLikeThis.getLike());
+            writeFieldValue("unlike", moreLikeThis.getUnlike());
+            writeFieldValue("fields", moreLikeThis.getFields());
+            writeFieldValue("max_query_terms", moreLikeThis.getMaxQueryTerms());
+            writeFieldValue("min_term_freq", moreLikeThis.getMinTermFrequency());
+            writeFieldValue("min_doc_freq", moreLikeThis.getMinDocFrequency());
+            writeFieldValue("max_doc_freq", moreLikeThis.getMaxDocFrequency());
+            writeFieldValue("min_word_length", moreLikeThis.getMinWordLength());
+            writeFieldValue("max_word_length", moreLikeThis.getMaxWordLength());
+            writeFieldValue("stop_words", moreLikeThis.getStopWords());
+            writeFieldValue("analyzer", moreLikeThis.getAnalyzer());
+            writeFieldValue("minimum_should_match", moreLikeThis.getMinimumShouldMatch());
+            writeFieldValue("fail_on_unsupported_field", moreLikeThis.isFailOnUnsupportedField());
+            writeFieldValue("boost_terms", moreLikeThis.getBoostTerms());
+            writeFieldValue("include", moreLikeThis.isInclude());
+            writer.writeEndObject(); // more_like_this
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
     public boolean enterFuzzyQuery(final FuzzyQuery fuzzy) {
         try {
             writer.writeFieldName("fuzzy");
@@ -102,6 +137,111 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
                 writer.writeEndObject();
             }
             writer.writeEndObject(); // fuzzy
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoBoundingBoxQuery(final GeoBoundingBoxQuery geoBoundingBox) {
+        try {
+            writer.writeFieldName("geo_bounding_box");
+            writer.writeStartObject();
+
+            writeStandardFields(geoBoundingBox);
+
+            writer.writeFieldName(geoBoundingBox.getFieldName());
+            writer.writeStartObject();
+            writeFieldValue("top_left", geoBoundingBox.getTopLeft());
+            writeFieldValue("top_right", geoBoundingBox.getTopRight());
+            writeFieldValue("bottom_right", geoBoundingBox.getBottomRight());
+            writeFieldValue("bottom_left", geoBoundingBox.getBottomLeft());
+            writer.writeEndObject(); // field
+
+            writeFieldValue("validation_method", geoBoundingBox.getValidationMethod());
+            writeFieldValue("type", geoBoundingBox.getType());
+
+            writer.writeEndObject(); // geo_bounding_box
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoDistanceQuery(GeoDistanceQuery geoDistance) {
+        try {
+            writer.writeFieldName("geo_distance");
+            writer.writeStartObject();
+
+            writeStandardFields(geoDistance);
+            writeFieldValue("distance", geoDistance.getDistance());
+            writeFieldValue("distance_type", geoDistance.getDistanceType());
+            writeFieldValue(geoDistance.getFieldName(), geoDistance.getPoint());
+            writeFieldValue("validation_method", geoDistance.getValidationMethod());
+
+            writer.writeEndObject(); // geo_distance
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoPolygonQuery(final GeoPolygonQuery geoPolygon) {
+        try {
+            writer.writeFieldName("geo_polygon");
+            writer.writeStartObject();
+            writeStandardFields(geoPolygon);
+
+            writer.writeFieldName(geoPolygon.getFieldName());
+            writer.writeStartObject();
+            writeFieldValue("points", geoPolygon.getPoints());
+            writer.writeEndObject(); // field
+
+            writeFieldValue("validation_method", geoPolygon.getValidationMethod());
+            writer.writeEndObject(); // geo_polygon
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoShapeQuery(final GeoShapeQuery geoshape) {
+        try {
+            writer.writeFieldName("geo_shape");
+            writer.writeStartObject();
+            writeStandardFields(geoshape);
+
+            writer.writeFieldName(geoshape.getFieldName());
+            writer.writeStartObject();
+
+            final Shape shape = geoshape.getShape();
+            if (shape != null) {
+                writer.writeFieldName("shape");
+                writer.writeStartObject();
+                writeFieldValue("type", shape.getType());
+                writeFieldValue("coordinates", shape.getCoordinates());
+                writer.writeEndObject();
+            }
+
+            final IndexedShape is = geoshape.getIndexedShape();
+            if (is != null) {
+                writer.writeFieldName("indexed_shape");
+                writer.writeStartObject();
+                writeFieldValue("index", is.getIndex());
+                writeFieldValue("type", is.getType());
+                writeFieldValue("id", is.getId());
+                writeFieldValue("path", is.getPath());
+                writer.writeEndObject();
+            }
+
+            writeFieldValue("relation", geoshape.getRelation());
+            writeFieldValue("strategy", geoshape.getStrategy());
+            writer.writeEndObject(); // field
+            writer.writeEndObject(); // geo_shape
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -298,9 +438,6 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
     private void writeClause(final Query clause) throws IOException {
         writer.writeStartObject();
         clause.accept(this);
-        if (clause instanceof StandardQuery) {
-            writeStandardFields((StandardQuery) clause);
-        }
         writer.writeEndObject();
     }
 

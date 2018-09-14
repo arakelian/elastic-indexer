@@ -22,6 +22,8 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.elastic.model.enums.SearchType;
+import com.arakelian.elastic.model.enums.SortOrder;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SearchTest {

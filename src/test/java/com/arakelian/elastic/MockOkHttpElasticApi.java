@@ -35,8 +35,8 @@ import com.arakelian.elastic.model.IndexedDocument;
 import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
+import com.arakelian.elastic.model.enums.SearchType;
 import com.arakelian.elastic.model.search.SearchResponse;
-import com.arakelian.elastic.model.search.SearchType;
 
 import retrofit2.Call;
 import retrofit2.mock.BehaviorDelegate;

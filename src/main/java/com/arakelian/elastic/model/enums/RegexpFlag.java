@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.search;
+package com.arakelian.elastic.model.enums;
+
+import com.arakelian.elastic.model.search.Query;
 
 /**
  * Regular expression flags that can be applied to {@link Query}.

@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.model.enums.SortMode;
+import com.arakelian.elastic.model.enums.SortOrder;
 import com.arakelian.elastic.search.WriteSearchVisitor;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.arakelian.jackson.utils.JacksonUtils;

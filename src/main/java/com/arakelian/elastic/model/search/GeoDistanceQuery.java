@@ -17,12 +17,13 @@
 
 package com.arakelian.elastic.model.search;
 
-import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.enums.Rewrite;
+import com.arakelian.elastic.model.enums.DistanceType;
+import com.arakelian.elastic.model.enums.ValidationMethod;
 import com.arakelian.elastic.search.QueryVisitor;
+import com.arakelian.jackson.model.GeoPoint;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -30,31 +31,22 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * @see <a href=
- *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/WildcardQueryBuilder.java">Wildcard
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/GeoDistanceQueryBuilder.java">GeoDistance
  *      Query</a>
- *
  */
-@Value.Immutable(copy=false)
-@JsonSerialize(as = ImmutableWildcardQuery.class)
-@JsonDeserialize(builder = ImmutableWildcardQuery.Builder.class)
-@JsonTypeName(Query.WILDCARD_QUERY)
-public interface WildcardQuery extends StandardQuery {
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Nullable
-    public Rewrite getRewrite();
-
-    public String getValue();
-
+@Value.Immutable(copy = false)
+@JsonSerialize(as = ImmutableGeoDistanceQuery.class)
+@JsonDeserialize(builder = ImmutableGeoDistanceQuery.Builder.class)
+@JsonTypeName(Query.GEO_DISTANCE_QUERY)
+public interface GeoDistanceQuery extends StandardQuery {
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
             return;
         }
         try {
-            if (visitor.enterWildcardQuery(this)) {
-                visitor.leaveWildcardQuery(this);
+            if (visitor.enterGeoDistanceQuery(this)) {
+                visitor.leaveGeoDistanceQuery(this);
             }
         } finally {
             visitor.leave(this);
@@ -63,6 +55,23 @@ public interface WildcardQuery extends StandardQuery {
 
     @Override
     default boolean isEmpty() {
-        return StringUtils.isEmpty(getValue());
+        return false;
     }
+
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @Nullable
+    @JsonProperty("validation_method")
+    public ValidationMethod getValidationMethod();
+
+    @JsonProperty("distance")
+    public String getDistance();
+
+    @Nullable
+    @JsonProperty("distance_type")
+    public DistanceType getDistanceType();
+
+    @JsonProperty("point")
+    public GeoPoint getPoint();
 }

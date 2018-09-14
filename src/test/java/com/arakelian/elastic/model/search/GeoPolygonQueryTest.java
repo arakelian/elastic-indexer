@@ -15,11 +15,26 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.search;
+package com.arakelian.elastic.model.search;
 
-public class NullQueryVisitor implements QueryVisitor {
-    public static final NullQueryVisitor INSTANCE = new NullQueryVisitor();
+import java.io.IOException;
 
-    private NullQueryVisitor() {
+import org.junit.Test;
+
+import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.jackson.utils.JacksonTestUtils;
+
+public class GeoPolygonQueryTest {
+    public static final GeoPolygonQuery MINIMAL = ImmutableGeoPolygonQuery.builder() //
+            .build();
+
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(MINIMAL, GeoPolygonQuery.class);
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(MINIMAL, GeoPolygonQuery.class);
     }
 }

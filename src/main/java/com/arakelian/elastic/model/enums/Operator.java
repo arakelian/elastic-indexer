@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.search;
+package com.arakelian.elastic.model.enums;
 
-public class NullQueryVisitor implements QueryVisitor {
-    public static final NullQueryVisitor INSTANCE = new NullQueryVisitor();
-
-    private NullQueryVisitor() {
-    }
+public enum Operator {
+    OR, AND;
 }

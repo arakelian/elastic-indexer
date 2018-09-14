@@ -24,6 +24,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
+import com.arakelian.elastic.model.enums.SearchType;
 import com.arakelian.elastic.model.search.Highlighter.Highlight;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -34,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 @JsonSerialize(as = ImmutableSearch.class)
 @JsonDeserialize(builder = ImmutableSearch.Builder.class)
 @JsonPropertyOrder({ "scroll", "scrollId", "from", "size", "searchType", "terminateAfter", "sourceFilter",
-        "query", "sort", "aggregation", "version", "explain", "batchedReduceSize", "preference" })
+        "fields", "query", "sort", "aggregation", "version", "explain", "batchedReduceSize", "preference" })
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
 public interface Search extends Serializable {
     @Value.Default
@@ -74,6 +75,11 @@ public interface Search extends Serializable {
         return ImmutableList.of();
     }
 
+    @Value.Default
+    public default List<String> getFields() {
+        return ImmutableList.of();
+    }
+
     @Nullable
     public SourceFilter getSourceFilter();
 
@@ -104,7 +110,7 @@ public interface Search extends Serializable {
 
     /**
      * Returns true to calculate and return scores even if they are not used for sorting
-     * 
+     *
      * @return true to calculate and return scores even if they are not used for sorting
      */
     @Nullable
@@ -112,7 +118,7 @@ public interface Search extends Serializable {
 
     /**
      * Returns true if the number of documents that match the query should be tracked
-     * 
+     *
      * @return true if the number of documents that match the query should be tracked
      */
     @Nullable
@@ -120,7 +126,7 @@ public interface Search extends Serializable {
 
     /**
      * Returns true if an error should be returned if there is a partial search failure or timeout
-     * 
+     *
      * @return true if an error should be returned if there is a partial search failure or timeout
      */
     @Nullable
@@ -128,7 +134,7 @@ public interface Search extends Serializable {
 
     /**
      * Returns the explicit operation timeout, e.g. "20s"
-     * 
+     *
      * @return the explicit operation timeout
      */
     @Nullable

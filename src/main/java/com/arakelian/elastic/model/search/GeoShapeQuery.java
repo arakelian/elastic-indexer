@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.enums.ShapeRelation;
+import com.arakelian.elastic.model.enums.SpatialStrategy;
 import com.arakelian.elastic.search.QueryVisitor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -29,48 +30,24 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 
 /**
+ * The geo_shape query uses the same grid square representation as the geo_shape mapping to find
+ * documents that have a shape that intersects with the query shape. It will also use the same
+ * PrefixTree configuration as defined for the field mapping.
+ *
+ * The query supports two ways of defining the query shape, either by providing a whole shape
+ * definition, or by referencing the name of a shape pre-indexed in another index.
+ *
  * @see <a href=
- *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/RangeQueryBuilder.java">Range
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/GeoShapeQueryBuilder.java">GeoShape
  *      Query</a>
  */
-@Value.Immutable(copy=false)
-@JsonSerialize(as = ImmutableRangeQuery.class)
-@JsonDeserialize(builder = ImmutableRangeQuery.Builder.class)
-@JsonTypeName(Query.RANGE_QUERY)
-@Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
-public interface RangeQuery extends StandardQuery {
-    @Value.Check
-    public default void checkType() {
-        final Object lower = getLower();
-        final Object upper = getUpper();
-        if (lower == null || upper == null) {
-            return;
-        }
-        Preconditions.checkState(lower.getClass().isInstance(upper) || upper.getClass().isInstance(lower));
-    }
-
+@Value.Immutable(copy = false)
+@JsonSerialize(as = ImmutableGeoShapeQuery.class)
+@JsonDeserialize(builder = ImmutableGeoShapeQuery.Builder.class)
+@JsonTypeName(Query.GEO_SHAPE_QUERY)
+public interface GeoShapeQuery extends StandardQuery {
+    @JsonProperty("field")
     public String getFieldName();
-
-    @JsonProperty("from")
-    @Nullable
-    public Object getLower();
-
-    @Nullable
-    public ShapeRelation getRelation();
-
-    @JsonProperty("to")
-    @Nullable
-    public Object getUpper();
-
-    @Value.Default
-    public default boolean isIncludeLower() {
-        return true;
-    }
-
-    @Value.Default
-    public default boolean isIncludeUpper() {
-        return true;
-    }
 
     @Override
     default void accept(final QueryVisitor visitor) {
@@ -78,16 +55,38 @@ public interface RangeQuery extends StandardQuery {
             return;
         }
         try {
-            if (visitor.enterRangeQuery(this)) {
-                visitor.leaveRangeQuery(this);
+            if (visitor.enterGeoShapeQuery(this)) {
+                visitor.leaveGeoShapeQuery(this);
             }
         } finally {
             visitor.leave(this);
         }
     }
 
+    @Value.Check
+    public default void checkShape() {
+        final boolean haveBoth = getShape() != null && getIndexedShape() != null;
+        Preconditions.checkState(!haveBoth, "Cannot specify shape and indexed_shape simultaneously");
+    }
+
+    @Nullable
+    @JsonProperty("indexed_shape")
+    public IndexedShape getIndexedShape();
+
+    @Nullable
+    @JsonProperty("relation")
+    public ShapeRelation getRelation();
+
+    @Nullable
+    @JsonProperty("shape")
+    public Shape getShape();
+
+    @Nullable
+    @JsonProperty("strategy")
+    public SpatialStrategy getStrategy();
+
     @Override
     default boolean isEmpty() {
-        return getLower() == null && getUpper() == null;
+        return false;
     }
 }

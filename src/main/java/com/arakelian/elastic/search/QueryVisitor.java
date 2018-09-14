@@ -20,8 +20,13 @@ package com.arakelian.elastic.search;
 import com.arakelian.elastic.model.search.BoolQuery;
 import com.arakelian.elastic.model.search.ExistsQuery;
 import com.arakelian.elastic.model.search.FuzzyQuery;
+import com.arakelian.elastic.model.search.GeoBoundingBoxQuery;
+import com.arakelian.elastic.model.search.GeoDistanceQuery;
+import com.arakelian.elastic.model.search.GeoPolygonQuery;
+import com.arakelian.elastic.model.search.GeoShapeQuery;
 import com.arakelian.elastic.model.search.IdsQuery;
 import com.arakelian.elastic.model.search.MatchQuery;
+import com.arakelian.elastic.model.search.MoreLikeThisQuery;
 import com.arakelian.elastic.model.search.PrefixQuery;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
@@ -48,11 +53,31 @@ public interface QueryVisitor {
         return true;
     }
 
+    public default boolean enterGeoBoundingBoxQuery(final GeoBoundingBoxQuery geoBoundingBoxQuery) {
+        return true;
+    }
+
+    public default boolean enterGeoDistanceQuery(final GeoDistanceQuery geoDistanceQuery) {
+        return true;
+    }
+
+    public default boolean enterGeoPolygonQuery(final GeoPolygonQuery geoPolygonQuery) {
+        return true;
+    }
+
+    public default boolean enterGeoShapeQuery(GeoShapeQuery geoShapeQuery) {
+        return true;
+    }
+
     public default boolean enterIdsQuery(final IdsQuery idsQuery) {
         return true;
     }
 
     public default boolean enterMatchQuery(final MatchQuery matchQuery) {
+        return true;
+    }
+
+    public default boolean enterMoreLikeThisQuery(final MoreLikeThisQuery moreLikeThisQuery) {
         return true;
     }
 
@@ -92,10 +117,25 @@ public interface QueryVisitor {
     public default void leaveFuzzyQuery(final FuzzyQuery fuzzyQuery) {
     }
 
+    public default void leaveGeoBoundingBoxQuery(final GeoBoundingBoxQuery geoBoundingBoxQuery) {
+    }
+
+    public default void leaveGeoDistanceQuery(final GeoDistanceQuery geoDistanceQuery) {
+    }
+
+    public default void leaveGeoPolygonQuery(final GeoPolygonQuery geoPolygonQuery) {
+    }
+
+    public default void leaveGeoShapeQuery(final GeoShapeQuery geoShapeQuery) {
+    }
+
     public default void leaveIdsQuery(final IdsQuery idsQuery) {
     }
 
     public default void leaveMatchQuery(final MatchQuery matchQuery) {
+    }
+
+    public default void leaveMoreLikeThisQuery(final MoreLikeThisQuery moreLikeThisQuery) {
     }
 
     public default void leavePrefixQuery(final PrefixQuery prefixQuery) {

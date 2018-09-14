@@ -24,6 +24,8 @@ import org.immutables.value.Value;
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.enums.DistanceType;
+import com.arakelian.elastic.model.enums.Unit;
 import com.arakelian.elastic.search.AggregationVisitor;
 import com.arakelian.jackson.model.GeoPoint;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -53,14 +55,6 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableGeoDistanceAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEO_DISTANCE_AGGREGATION)
 public interface GeoDistanceAggregation extends BucketAggregation {
-    public enum DistanceType {
-        ARC, PLANE;
-    }
-
-    public enum Unit {
-        M, MI, IN, YD, KM, CM, MM;
-    }
-
     @Nullable
     public DistanceType getDistanceType();
 

@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface StandardQuery extends Query {
     @Nullable
@@ -35,6 +36,7 @@ public interface StandardQuery extends Query {
      *      Queries</a>
      */
     @Nullable
+    @JsonProperty("_name")
     public String getName();
 
     @Value.Derived

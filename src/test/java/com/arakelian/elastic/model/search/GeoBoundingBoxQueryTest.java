@@ -17,10 +17,24 @@
 
 package com.arakelian.elastic.model.search;
 
-public enum MultiMatchType {
-    BEST_FIELDS, //
-    MOST_FIELDS, //
-    CROSS_FIELDS, //
-    PHRASE, //
-    PHRASE_PREFIX;
+import java.io.IOException;
+
+import org.junit.Test;
+
+import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.jackson.utils.JacksonTestUtils;
+
+public class GeoBoundingBoxQueryTest {
+    public static final GeoBoundingBoxQuery MINIMAL = ImmutableGeoBoundingBoxQuery.builder() //
+            .build();
+
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(MINIMAL, GeoBoundingBoxQuery.class);
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(MINIMAL, GeoBoundingBoxQuery.class);
+    }
 }

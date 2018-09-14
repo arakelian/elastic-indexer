@@ -20,8 +20,13 @@ package com.arakelian.elastic.search;
 import com.arakelian.elastic.model.search.BoolQuery;
 import com.arakelian.elastic.model.search.ExistsQuery;
 import com.arakelian.elastic.model.search.FuzzyQuery;
+import com.arakelian.elastic.model.search.GeoBoundingBoxQuery;
+import com.arakelian.elastic.model.search.GeoDistanceQuery;
+import com.arakelian.elastic.model.search.GeoPolygonQuery;
+import com.arakelian.elastic.model.search.GeoShapeQuery;
 import com.arakelian.elastic.model.search.IdsQuery;
 import com.arakelian.elastic.model.search.MatchQuery;
+import com.arakelian.elastic.model.search.MoreLikeThisQuery;
 import com.arakelian.elastic.model.search.PrefixQuery;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
@@ -59,6 +64,26 @@ public class DelegatingQueryVisitor implements QueryVisitor {
     }
 
     @Override
+    public boolean enterGeoBoundingBoxQuery(final GeoBoundingBoxQuery geoBoundingBoxQuery) {
+        return delegate.enterGeoBoundingBoxQuery(geoBoundingBoxQuery);
+    }
+
+    @Override
+    public boolean enterGeoDistanceQuery(final GeoDistanceQuery geoDistanceQuery) {
+        return delegate.enterGeoDistanceQuery(geoDistanceQuery);
+    }
+
+    @Override
+    public boolean enterGeoPolygonQuery(final GeoPolygonQuery geoPolygonQuery) {
+        return delegate.enterGeoPolygonQuery(geoPolygonQuery);
+    }
+
+    @Override
+    public boolean enterGeoShapeQuery(final GeoShapeQuery geoShapeQuery) {
+        return delegate.enterGeoShapeQuery(geoShapeQuery);
+    }
+
+    @Override
     public boolean enterIdsQuery(final IdsQuery idsQuery) {
         return delegate.enterIdsQuery(idsQuery);
     }
@@ -66,6 +91,11 @@ public class DelegatingQueryVisitor implements QueryVisitor {
     @Override
     public boolean enterMatchQuery(final MatchQuery matchQuery) {
         return delegate.enterMatchQuery(matchQuery);
+    }
+
+    @Override
+    public boolean enterMoreLikeThisQuery(final MoreLikeThisQuery moreLikeThisQuery) {
+        return delegate.enterMoreLikeThisQuery(moreLikeThisQuery);
     }
 
     @Override
@@ -119,6 +149,26 @@ public class DelegatingQueryVisitor implements QueryVisitor {
     }
 
     @Override
+    public void leaveGeoBoundingBoxQuery(final GeoBoundingBoxQuery geoBoundingBoxQuery) {
+        delegate.leaveGeoBoundingBoxQuery(geoBoundingBoxQuery);
+    }
+
+    @Override
+    public void leaveGeoDistanceQuery(final GeoDistanceQuery geoDistanceQuery) {
+        delegate.leaveGeoDistanceQuery(geoDistanceQuery);
+    }
+
+    @Override
+    public void leaveGeoPolygonQuery(final GeoPolygonQuery geoPolygonQuery) {
+        delegate.leaveGeoPolygonQuery(geoPolygonQuery);
+    }
+
+    @Override
+    public void leaveGeoShapeQuery(final GeoShapeQuery geoShapeQuery) {
+        delegate.leaveGeoShapeQuery(geoShapeQuery);
+    }
+
+    @Override
     public void leaveIdsQuery(final IdsQuery idsQuery) {
         delegate.leaveIdsQuery(idsQuery);
     }
@@ -126,6 +176,11 @@ public class DelegatingQueryVisitor implements QueryVisitor {
     @Override
     public void leaveMatchQuery(final MatchQuery matchQuery) {
         delegate.leaveMatchQuery(matchQuery);
+    }
+
+    @Override
+    public void leaveMoreLikeThisQuery(final MoreLikeThisQuery moreLikeThisQuery) {
+        delegate.leaveMoreLikeThisQuery(moreLikeThisQuery);
     }
 
     @Override

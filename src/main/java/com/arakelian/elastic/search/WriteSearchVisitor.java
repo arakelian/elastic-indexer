@@ -22,13 +22,13 @@ import java.util.List;
 
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.aggs.Aggregation;
+import com.arakelian.elastic.model.enums.SortMode;
 import com.arakelian.elastic.model.search.Highlighter;
 import com.arakelian.elastic.model.search.Highlighter.Field;
 import com.arakelian.elastic.model.search.Highlighter.Highlight;
 import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.Sort;
-import com.arakelian.elastic.model.search.SortMode;
 import com.arakelian.elastic.model.search.SourceFilter;
 import com.fasterxml.jackson.core.JsonGenerator;
 
@@ -151,6 +151,16 @@ public class WriteSearchVisitor extends AbstractVisitor {
                 writeFieldWithValues("excludes", sourceFilter.getExcludes());
                 writer.writeEndObject(); // query
             }
+        }
+
+        List<String> fields = search.getFields();
+        if (fields.size() != 0) {
+            writer.writeFieldName("fields");
+            writer.writeStartArray();
+            for (final String field : fields) {
+                writer.writeString(field);
+            }
+            writer.writeEndArray();
         }
 
         final Query query = search.getQuery();

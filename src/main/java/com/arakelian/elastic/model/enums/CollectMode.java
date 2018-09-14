@@ -15,11 +15,21 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.search;
+package com.arakelian.elastic.model.enums;
 
-public class NullQueryVisitor implements QueryVisitor {
-    public static final NullQueryVisitor INSTANCE = new NullQueryVisitor();
-
-    private NullQueryVisitor() {
-    }
+/**
+ * Deferring calculation of child aggregations
+ *
+ * For fields with many unique terms and a small number of required results it can be more efficient
+ * to delay the calculation of child aggregations until the top parent-level aggs have been pruned.
+ * Ordinarily, all branches of the aggregation tree are expanded in one depth-first pass and only
+ * then any pruning occurs. In some scenarios this can be very wasteful and can hit memory
+ * constraints.
+ *
+ * @see <a href=
+ *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_collect_mode">Collect
+ *      Mode</a>
+ */
+public enum CollectMode {
+    BREADTH_FIRST, DEPTH_FIRST;
 }

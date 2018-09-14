@@ -17,52 +17,61 @@
 
 package com.arakelian.elastic.model.search;
 
-import org.apache.commons.lang3.StringUtils;
+import java.util.List;
+
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.enums.Rewrite;
+import com.arakelian.elastic.model.enums.ValidationMethod;
 import com.arakelian.elastic.search.QueryVisitor;
+import com.arakelian.jackson.model.GeoPoint;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @see <a href=
- *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/WildcardQueryBuilder.java">Wildcard
+ *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/GeoPolygonQueryBuilder.java">GeoPolygon
  *      Query</a>
- *
  */
-@Value.Immutable(copy=false)
-@JsonSerialize(as = ImmutableWildcardQuery.class)
-@JsonDeserialize(builder = ImmutableWildcardQuery.Builder.class)
-@JsonTypeName(Query.WILDCARD_QUERY)
-public interface WildcardQuery extends StandardQuery {
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Nullable
-    public Rewrite getRewrite();
-
-    public String getValue();
-
+@Value.Immutable(copy = false)
+@JsonSerialize(as = ImmutableGeoPolygonQuery.class)
+@JsonDeserialize(builder = ImmutableGeoPolygonQuery.Builder.class)
+@JsonPropertyOrder({ "_name", "boost", "field", "points", "validation_method" })
+@JsonTypeName(Query.GEO_POLYGON_QUERY)
+public interface GeoPolygonQuery extends StandardQuery {
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
             return;
         }
         try {
-            if (visitor.enterWildcardQuery(this)) {
-                visitor.leaveWildcardQuery(this);
+            if (visitor.enterGeoPolygonQuery(this)) {
+                visitor.leaveGeoPolygonQuery(this);
             }
         } finally {
             visitor.leave(this);
         }
     }
 
+    @Nullable
+    @JsonProperty("validation_method")
+    public ValidationMethod getValidationMethod();
+
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @JsonProperty("points")
+    @Value.Default
+    public default List<GeoPoint> getPoints() {
+        return ImmutableList.of();
+    }
+
     @Override
     default boolean isEmpty() {
-        return StringUtils.isEmpty(getValue());
+        return false;
     }
 }

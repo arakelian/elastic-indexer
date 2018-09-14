@@ -15,9 +15,16 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic.model.search;
+package com.arakelian.elastic.model.enums;
 
-public enum SearchType {
-    QUERY_THEN_FETCH, //
-    DFS_QUERY_THEN_FETCH;
+public enum GeoShapeType {
+    POINT, //
+    MULTIPOINT, //
+    LINESTRING, //
+    MULTILINESTRING, //
+    POLYGON, //
+    MULTIPOLYGON, //
+    ENVELOPE, //
+    CIRCLE, //
+    GEOMETRYCOLLECTION;
 }
