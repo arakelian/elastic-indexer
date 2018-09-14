@@ -158,6 +158,8 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
         case TEXT:
         case TOKEN_COUNT:
             return "Sample " + type.name().toLowerCase() + " value";
+        case GEO_SHAPE:
+            return "POINT(-77.03653 38.897676)";
         default:
             throw new IllegalStateException("Unsupported type: " + type);
         }

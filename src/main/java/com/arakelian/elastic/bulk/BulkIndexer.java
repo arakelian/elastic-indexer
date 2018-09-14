@@ -776,6 +776,7 @@ public class BulkIndexer implements Closeable {
      * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any
      * exceptions that may occur.
      */
+    @SuppressWarnings("FutureReturnValueIgnored")
     private void flushQuietly() {
         try {
             flush();

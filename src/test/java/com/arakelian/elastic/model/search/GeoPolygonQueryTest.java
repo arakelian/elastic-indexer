@@ -26,6 +26,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GeoPolygonQueryTest {
     public static final GeoPolygonQuery MINIMAL = ImmutableGeoPolygonQuery.builder() //
+            .fieldName("field") //
             .build();
 
     @Test
