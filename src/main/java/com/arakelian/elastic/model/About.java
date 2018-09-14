@@ -40,18 +40,13 @@ public interface About {
         @JsonProperty("build_date")
         public String getBuildDate();
 
-        @JsonProperty("build_hash")
-        public String getBuildHash();
-
         @Nullable
         @JsonProperty("build_flavor")
         @JsonView(Version63.class)
         public String getBuildFlavor();
 
-        @Nullable
-        @JsonProperty("build_type")
-        @JsonView(Version63.class)
-        public String getBuildType();
+        @JsonProperty("build_hash")
+        public String getBuildHash();
 
         @JsonProperty("build_snapshot")
         public Boolean getBuildSnapshot();
@@ -59,6 +54,11 @@ public interface About {
         @Nullable
         @JsonProperty("build_timestamp")
         public String getBuildTimestamp();
+
+        @Nullable
+        @JsonProperty("build_type")
+        @JsonView(Version63.class)
+        public String getBuildType();
 
         @JsonIgnore
         @Value.Derived

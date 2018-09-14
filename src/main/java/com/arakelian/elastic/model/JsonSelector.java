@@ -32,7 +32,7 @@ import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableJsonSelector.class)
 @JsonDeserialize(builder = ImmutableJsonSelector.Builder.class)
 public abstract class JsonSelector implements Serializable {

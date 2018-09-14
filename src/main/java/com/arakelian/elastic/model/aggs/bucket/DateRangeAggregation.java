@@ -38,7 +38,7 @@ import com.google.common.collect.ImmutableList;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/range/DateRangeAggregationBuilder.java">DateRangeAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableDateRangeAggregation.class)
 @JsonDeserialize(builder = ImmutableDateRangeAggregation.Builder.class)
 @JsonTypeName(Aggregation.DATE_RANGE_AGGREGATION)

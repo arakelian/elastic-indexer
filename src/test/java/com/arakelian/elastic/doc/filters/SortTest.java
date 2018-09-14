@@ -33,13 +33,13 @@ public class SortTest {
     public static final SortFilter SAMPLE = ImmutableSortFilter.builder().build();
 
     @Test
-    public void testSerializable() {
-        SerializableTestUtils.testSerializable(SAMPLE, SortFilter.class);
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(SAMPLE, SortFilter.class);
     }
 
     @Test
-    public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(SAMPLE, SortFilter.class);
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(SAMPLE, SortFilter.class);
     }
 
     @Test
@@ -47,11 +47,11 @@ public class SortTest {
         assertEquals(ImmutableList.of("a", "b", "c"), test("c", "b", "a"));
     }
 
-    private List<String> test(String... values) {
-        TokenCollector collector = new TokenCollector();
+    private List<String> test(final String... values) {
+        final TokenCollector collector = new TokenCollector();
 
         // pipe in values
-        for (String v : values) {
+        for (final String v : values) {
             SAMPLE.accept(v, token -> {
                 fail("Should not have received a token");
             });

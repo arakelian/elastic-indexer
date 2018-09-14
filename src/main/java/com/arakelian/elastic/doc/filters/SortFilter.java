@@ -1,5 +1,5 @@
 /*
- * Licensed to the Apache Softwareelse Foundation (ASF) under one or more
+ * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
@@ -42,7 +42,7 @@ public abstract class SortFilter implements TokenFilter, Serializable {
             try {
                 // flush sorted values
                 Collections.sort(values, String.CASE_INSENSITIVE_ORDER);
-                for (String v : values) {
+                for (final String v : values) {
                     output.accept(v);
                 }
             } finally {

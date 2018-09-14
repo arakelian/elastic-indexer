@@ -197,83 +197,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         assertTrue(document.isFound());
     }
 
-    protected void assertIndexWithInternalVersion(
-            final Index index,
-            final Person person,
-            final long expectedVersion) throws IOException {
-        // test default versioning
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument(
-                        index.getName(), //
-                        DEFAULT_TYPE, //
-                        person.getId(), //
-                        JacksonUtils.toString(person, false)));
-
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
-    }
-
-    protected SearchResponse assertSearchFinds(
-            final Index index,
-            final Search search,
-            final int expectedTotal) {
-        final SearchResponse response = search(index, search);
-
-        // verify we have a match
-        final SearchHits hits = response.getHits();
-        final int total = hits.getTotal();
-        if (expectedTotal > 0) {
-            assertEquals(expectedTotal, total);
-        } else {
-            final int leastExpected = -expectedTotal;
-            assertTrue(
-                    "Expected at least " + Integer.toString(leastExpected) + " but found " + total,
-                    total >= leastExpected);
-        }
-        return response;
-    }
-
-    protected void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
-        final SearchResponse response = assertSearchFinds(index, search, -1);
-        final SearchHits hits = response.getHits();
-
-        final String id = person.getId();
-        for (int i = 0, size = hits.getSize(); i < size; i++) {
-            final Source source = hits.get(i).getSource();
-            if (!id.equals(source.getString("id"))) {
-                continue;
-            }
-
-            assertEquals(id, source.getString("id"));
-            assertEquals(person.getFirstName(), source.getString("firstName"));
-            assertEquals(person.getLastName(), source.getString("lastName"));
-            assertEquals(person.getAge(), source.getInt("age"));
-            assertEquals(person.getComments(), source.getString("comments"));
-            assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
-            return;
-        }
-
-        fail("Unable to find any match for " + person);
-    }
-
-    protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
-        final SearchResponse response = assertSearchFinds(index, search, 1);
-        final SearchHits hits = response.getHits();
-        assertEquals(1, hits.getSize());
-
-        final Source source = hits.get(0).getSource();
-        assertEquals(person.getId(), source.getString("id"));
-        assertEquals(person.getFirstName(), source.getString("firstName"));
-        assertEquals(person.getLastName(), source.getString("lastName"));
-        assertEquals(person.getAge(), source.getInt("age"));
-        assertEquals(person.getComments(), source.getString("comments"));
-        assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
-    }
-
     public BulkIndexer createIndexer(
             final BulkOperationFactory bulkOperationFactory,
             final IndexerListener listener) {
@@ -391,6 +314,92 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return mapping;
     }
 
+    @After
+    public void releaseRef() {
+        container.releaseRef();
+    }
+
+    public void withPersonIndex(final WithIndexCallback test) throws IOException {
+        withIndex(createPersonMapping(), test);
+    }
+
+    protected void assertIndexWithInternalVersion(
+            final Index index,
+            final Person person,
+            final long expectedVersion) throws IOException {
+        // test default versioning
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument(
+                        index.getName(), //
+                        DEFAULT_TYPE, //
+                        person.getId(), //
+                        JacksonUtils.toString(person, false)));
+
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
+    }
+
+    protected SearchResponse assertSearchFinds(
+            final Index index,
+            final Search search,
+            final int expectedTotal) {
+        final SearchResponse response = search(index, search);
+
+        // verify we have a match
+        final SearchHits hits = response.getHits();
+        final int total = hits.getTotal();
+        if (expectedTotal > 0) {
+            assertEquals(expectedTotal, total);
+        } else {
+            final int leastExpected = -expectedTotal;
+            assertTrue(
+                    "Expected at least " + Integer.toString(leastExpected) + " but found " + total,
+                    total >= leastExpected);
+        }
+        return response;
+    }
+
+    protected void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, -1);
+        final SearchHits hits = response.getHits();
+
+        final String id = person.getId();
+        for (int i = 0, size = hits.getSize(); i < size; i++) {
+            final Source source = hits.get(i).getSource();
+            if (!id.equals(source.getString("id"))) {
+                continue;
+            }
+
+            assertEquals(id, source.getString("id"));
+            assertEquals(person.getFirstName(), source.getString("firstName"));
+            assertEquals(person.getLastName(), source.getString("lastName"));
+            assertEquals(person.getAge(), source.getInt("age"));
+            assertEquals(person.getComments(), source.getString("comments"));
+            assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
+            return;
+        }
+
+        fail("Unable to find any match for " + person);
+    }
+
+    protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, 1);
+        final SearchHits hits = response.getHits();
+        assertEquals(1, hits.getSize());
+
+        final Source source = hits.get(0).getSource();
+        assertEquals(person.getId(), source.getString("id"));
+        assertEquals(person.getFirstName(), source.getString("firstName"));
+        assertEquals(person.getLastName(), source.getString("lastName"));
+        assertEquals(person.getAge(), source.getInt("age"));
+        assertEquals(person.getComments(), source.getString("comments"));
+        assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
+    }
+
     @Override
     protected ElasticClient getElasticClient() {
         return elasticClient;
@@ -404,11 +413,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Override
     protected String getElasticUrl() {
         return elasticUrl;
-    }
-
-    @After
-    public void releaseRef() {
-        container.releaseRef();
     }
 
     protected SearchResponse search(final Index index, final Search search) {
@@ -429,9 +433,5 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             }
             callback.accept(index, people);
         });
-    }
-
-    public void withPersonIndex(final WithIndexCallback test) throws IOException {
-        withIndex(createPersonMapping(), test);
     }
 }

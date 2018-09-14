@@ -95,82 +95,68 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     }
 
     @Test
-    public void testGeoShapeQuery() throws IOException {
+    public void testExistsQuery() throws IOException {
         withPeople(10, (index, people) -> {
-            final GeoShapeQuery query = ImmutableGeoShapeQuery.builder() //
-                    .name("my_geoshape_query") //
-                    .boost(2.0f) //
-                    .fieldName("shape") //
-                    .shape(
-                            ImmutableShape.builder() //
-                                    .type(GeoShapeType.LINESTRING) //
-                                    .addCoordinate(Coordinate.of(102.0, 2.0)) //
-                                    .addCoordinate(Coordinate.of(103.0, 2.0)) //
-                                    .build())
-                    .relation(ShapeRelation.CONTAINS) //
-                    .strategy(SpatialStrategy.RECURSIVE) //
-                    .build();
-
-            // just a syntax check, no people should be found
+            // all people should have a last name
             assertSearchFinds(
                     index,
                     ImmutableSearch.builder() //
-                            .query(query) //
+                            .query(
+                                    ImmutableExistsQuery.builder() //
+                                            .name("my_exists_filter") //
+                                            .boost(2.0f) //
+                                            .fieldName("lastName") //
+                                            .build()) //
+                            .build(),
+                    10);
+
+            // no people should have a value for this field
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableExistsQuery.builder() //
+                                            .name("my_exists_filter") //
+                                            .boost(2.0f) //
+                                            .fieldName(ALWAYS_EMPTY_FIELD) //
+                                            .build()) //
                             .build(),
                     0);
         });
     }
 
     @Test
-    public void testGeoPolygonQuery() throws IOException {
+    public void testFuzzyQuery() throws IOException {
         withPeople(10, (index, people) -> {
-            // bermuda triangle
-            final GeoPolygonQuery query = ImmutableGeoPolygonQuery.builder() //
-                    .name("my_geopolygon_query") //
-                    .boost(2.0f) //
-                    .fieldName("location") //
-                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
-                    .addPoint(GeoPoint.of(-80.19, 25.76)) //
-                    .addPoint(GeoPoint.of(-66.09, 18.43)) //
-                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
-                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
-                    .build();
+            // pick first person
+            final Person person = people.get(0);
 
-            // just a syntax check, no people should be found
-            assertSearchFinds(
+            // build regular expression that matches last name
+            int fuzziness = 0;
+            final String lastname = person.getLastName().toLowerCase();
+            final StringBuilder fuzzy = new StringBuilder(lastname);
+            for (int i = 0, length = lastname.length(); i + 1 < length && fuzziness < 2; i += 2) {
+                // swap letters
+                final char ch = lastname.charAt(i);
+                final char ch2 = lastname.charAt(i + 1);
+                fuzzy.setCharAt(i, ch2);
+                fuzzy.setCharAt(i + 1, ch);
+                fuzziness++;
+            }
+
+            // find person using fuzzy (edit distance) query
+            assertSearchFindsOneOf(
                     index,
                     ImmutableSearch.builder() //
-                            .query(query) //
+                            .query(
+                                    ImmutableFuzzyQuery.builder() //
+                                            .fieldName("lastName") //
+                                            .fuzziness(Integer.toString(fuzziness)) //
+                                            .transpositions(true) //
+                                            .value(fuzzy.toString()) //
+                                            .build()) //
                             .build(),
-                    0);
-        });
-    }
-
-    @Test
-    public void testMoreLikeThisQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // bermuda triangle
-            final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
-                    .name("my_morelikethis") //
-                    .boost(2.0f) //
-                    .addLikeText("four score and seven years ago") //
-                    .addLikeItem(ImmutableItem.builder().id("id").build()) //
-                    .minTermFrequency(10) //
-                    .minDocFrequency(10) //
-                    .maxDocFrequency(0) //
-                    .minWordLength(10) //
-                    .maxWordLength(0) //
-                    .maxQueryTerms(0) //
-                    .minimumShouldMatch("100%") //
-                    .build();
-
-            // just a syntax check, no people should be found
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(query) //
-                            .build(),
-                    0);
+                    person);
         });
     }
 
@@ -239,68 +225,54 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     }
 
     @Test
-    public void testExistsQuery() throws IOException {
+    public void testGeoPolygonQuery() throws IOException {
         withPeople(10, (index, people) -> {
-            // all people should have a last name
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableExistsQuery.builder() //
-                                            .name("my_exists_filter") //
-                                            .boost(2.0f) //
-                                            .fieldName("lastName") //
-                                            .build()) //
-                            .build(),
-                    10);
+            // bermuda triangle
+            final GeoPolygonQuery query = ImmutableGeoPolygonQuery.builder() //
+                    .name("my_geopolygon_query") //
+                    .boost(2.0f) //
+                    .fieldName("location") //
+                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                    .addPoint(GeoPoint.of(-80.19, 25.76)) //
+                    .addPoint(GeoPoint.of(-66.09, 18.43)) //
+                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                    .build();
 
-            // no people should have a value for this field
+            // just a syntax check, no people should be found
             assertSearchFinds(
                     index,
                     ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableExistsQuery.builder() //
-                                            .name("my_exists_filter") //
-                                            .boost(2.0f) //
-                                            .fieldName(ALWAYS_EMPTY_FIELD) //
-                                            .build()) //
+                            .query(query) //
                             .build(),
                     0);
         });
     }
 
     @Test
-    public void testFuzzyQuery() throws IOException {
+    public void testGeoShapeQuery() throws IOException {
         withPeople(10, (index, people) -> {
-            // pick first person
-            final Person person = people.get(0);
+            final GeoShapeQuery query = ImmutableGeoShapeQuery.builder() //
+                    .name("my_geoshape_query") //
+                    .boost(2.0f) //
+                    .fieldName("shape") //
+                    .shape(
+                            ImmutableShape.builder() //
+                                    .type(GeoShapeType.LINESTRING) //
+                                    .addCoordinate(Coordinate.of(102.0, 2.0)) //
+                                    .addCoordinate(Coordinate.of(103.0, 2.0)) //
+                                    .build())
+                    .relation(ShapeRelation.CONTAINS) //
+                    .strategy(SpatialStrategy.RECURSIVE) //
+                    .build();
 
-            // build regular expression that matches last name
-            int fuzziness = 0;
-            final String lastname = person.getLastName().toLowerCase();
-            final StringBuilder fuzzy = new StringBuilder(lastname);
-            for (int i = 0, length = lastname.length(); i + 1 < length && fuzziness < 2; i += 2) {
-                // swap letters
-                final char ch = lastname.charAt(i);
-                final char ch2 = lastname.charAt(i + 1);
-                fuzzy.setCharAt(i, ch2);
-                fuzzy.setCharAt(i + 1, ch);
-                fuzziness++;
-            }
-
-            // find person using fuzzy (edit distance) query
-            assertSearchFindsOneOf(
+            // just a syntax check, no people should be found
+            assertSearchFinds(
                     index,
                     ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableFuzzyQuery.builder() //
-                                            .fieldName("lastName") //
-                                            .fuzziness(Integer.toString(fuzziness)) //
-                                            .transpositions(true) //
-                                            .value(fuzzy.toString()) //
-                                            .build()) //
+                            .query(query) //
                             .build(),
-                    person);
+                    0);
         });
     }
 
@@ -350,6 +322,34 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                                             .build())
                             .build(),
                     person);
+        });
+    }
+
+    @Test
+    public void testMoreLikeThisQuery() throws IOException {
+        withPeople(10, (index, people) -> {
+            // bermuda triangle
+            final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
+                    .name("my_morelikethis") //
+                    .boost(2.0f) //
+                    .addLikeText("four score and seven years ago") //
+                    .addLikeItem(ImmutableItem.builder().id("id").build()) //
+                    .minTermFrequency(10) //
+                    .minDocFrequency(10) //
+                    .maxDocFrequency(0) //
+                    .minWordLength(10) //
+                    .maxWordLength(0) //
+                    .maxQueryTerms(0) //
+                    .minimumShouldMatch("100%") //
+                    .build();
+
+            // just a syntax check, no people should be found
+            assertSearchFinds(
+                    index,
+                    ImmutableSearch.builder() //
+                            .query(query) //
+                            .build(),
+                    0);
         });
     }
 
@@ -447,7 +447,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
     public void testRegexpQuery() throws IOException {
         withPeople(10, (index, people) -> {
             // pick person with longest name
-            Optional<Person> person = people.stream() //
+            final Optional<Person> person = people.stream() //
                     .max(Comparator.comparingInt(p -> p.getLastName().length()));
 
             // build regular expression that matches last name

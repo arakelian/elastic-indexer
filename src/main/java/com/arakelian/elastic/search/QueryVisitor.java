@@ -65,7 +65,7 @@ public interface QueryVisitor {
         return true;
     }
 
-    public default boolean enterGeoShapeQuery(GeoShapeQuery geoShapeQuery) {
+    public default boolean enterGeoShapeQuery(final GeoShapeQuery geoShapeQuery) {
         return true;
     }
 

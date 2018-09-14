@@ -46,6 +46,11 @@ public interface Search extends Serializable {
     @Nullable
     public Integer getBatchedReduceSize();
 
+    @Value.Default
+    public default List<String> getFields() {
+        return ImmutableList.of();
+    }
+
     @Nullable
     public Integer getFrom();
 
@@ -75,11 +80,6 @@ public interface Search extends Serializable {
         return ImmutableList.of();
     }
 
-    @Value.Default
-    public default List<String> getFields() {
-        return ImmutableList.of();
-    }
-
     @Nullable
     public SourceFilter getSourceFilter();
 
@@ -93,6 +93,22 @@ public interface Search extends Serializable {
     @Nullable
     public Integer getTerminateAfter();
 
+    /**
+     * Returns the explicit operation timeout, e.g. "20s"
+     *
+     * @return the explicit operation timeout
+     */
+    @Nullable
+    public String getTimeout();
+
+    /**
+     * Returns true if an error should be returned if there is a partial search failure or timeout
+     *
+     * @return true if an error should be returned if there is a partial search failure or timeout
+     */
+    @Nullable
+    public Boolean isAllowPartialSearchResults();
+
     @Nullable
     public Boolean isExplain();
 
@@ -104,9 +120,6 @@ public interface Search extends Serializable {
      */
     @Nullable
     public Boolean isRequestCache();
-
-    @Nullable
-    public Boolean isVersion();
 
     /**
      * Returns true to calculate and return scores even if they are not used for sorting
@@ -124,19 +137,6 @@ public interface Search extends Serializable {
     @Nullable
     public Boolean isTrackTotalHits();
 
-    /**
-     * Returns true if an error should be returned if there is a partial search failure or timeout
-     *
-     * @return true if an error should be returned if there is a partial search failure or timeout
-     */
     @Nullable
-    public Boolean isAllowPartialSearchResults();
-
-    /**
-     * Returns the explicit operation timeout, e.g. "20s"
-     *
-     * @return the explicit operation timeout
-     */
-    @Nullable
-    public String getTimeout();
+    public Boolean isVersion();
 }

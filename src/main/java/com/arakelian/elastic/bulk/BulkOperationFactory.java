@@ -24,15 +24,6 @@ import com.arakelian.elastic.bulk.BulkOperation.Action;
 
 public interface BulkOperationFactory {
     /**
-     * Returns true if this factory supports the given document.
-     *
-     * @param document
-     *            document to be indexed
-     * @return true if this factory supports the given document
-     */
-    public boolean supports(final Object document);
-
-    /**
      * Returns a list of bulk operations to perform, which may include operations that affect
      * different indexes.
      *
@@ -47,4 +38,13 @@ public interface BulkOperationFactory {
      */
     public List<BulkOperation> createBulkOperations(final Object document, final Action action)
             throws IOException;
+
+    /**
+     * Returns true if this factory supports the given document.
+     *
+     * @param document
+     *            document to be indexed
+     * @return true if this factory supports the given document
+     */
+    public boolean supports(final Object document);
 }

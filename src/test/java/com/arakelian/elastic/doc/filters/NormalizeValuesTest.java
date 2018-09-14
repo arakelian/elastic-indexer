@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableList;
 public class NormalizeValuesTest {
     public static enum TestEnum {
         ONE, TWO;
-        public static TestEnum fromString(String value) {
+        public static TestEnum fromString(final String value) {
             if ("1".equals(value)) {
                 return ONE;
             }
@@ -53,22 +53,6 @@ public class NormalizeValuesTest {
             .caseSensitive(false) //
             .build();
 
-    private List<String> test(NormalizeValues tokenFilter, final String input) {
-        return tokenFilter.accept(input, new TokenCollector()).get();
-    }
-
-    @Test
-    public void testJackson() throws IOException {
-        JacksonTestUtils.testReadWrite(GENDER, NormalizeValues.class);
-        JacksonTestUtils.testReadWrite(ENUM, NormalizeValues.class);
-    }
-
-    @Test
-    public void testSerializable() {
-        SerializableTestUtils.testSerializable(GENDER, NormalizeValues.class);
-        SerializableTestUtils.testSerializable(ENUM, NormalizeValues.class);
-    }
-
     @Test
     public void testCodes() {
         Assert.assertEquals(ImmutableList.of(), test(GENDER, null));
@@ -88,5 +72,21 @@ public class NormalizeValuesTest {
         Assert.assertEquals(ImmutableList.of(" "), test(ENUM, " "));
         Assert.assertEquals(ImmutableList.of("ONE"), test(ENUM, "1"));
         Assert.assertEquals(ImmutableList.of("TWO"), test(ENUM, "2"));
+    }
+
+    @Test
+    public void testJackson() throws IOException {
+        JacksonTestUtils.testReadWrite(GENDER, NormalizeValues.class);
+        JacksonTestUtils.testReadWrite(ENUM, NormalizeValues.class);
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(GENDER, NormalizeValues.class);
+        SerializableTestUtils.testSerializable(ENUM, NormalizeValues.class);
+    }
+
+    private List<String> test(final NormalizeValues tokenFilter, final String input) {
+        return tokenFilter.accept(input, new TokenCollector()).get();
     }
 }

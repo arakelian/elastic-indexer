@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableFloatRange.class)
 @JsonDeserialize(builder = ImmutableFloatRange.Builder.class)
 @JsonPropertyOrder({ "gte", "lte" })

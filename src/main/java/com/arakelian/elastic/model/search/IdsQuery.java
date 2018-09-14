@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableSortedSet;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableIdsQuery.class)
 @JsonDeserialize(builder = ImmutableIdsQuery.Builder.class)
 @JsonTypeName(Query.IDS_QUERY)

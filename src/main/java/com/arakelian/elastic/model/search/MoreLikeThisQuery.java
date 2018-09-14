@@ -74,20 +74,6 @@ public interface MoreLikeThisQuery extends StandardQuery {
         public String getType();
     }
 
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterMoreLikeThisQuery(this)) {
-                visitor.leaveMoreLikeThisQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
-
     /**
      * Returns the analyzer that is used to analyze the free form text. Defaults to the analyzer
      * associated with the first field in fields
@@ -243,11 +229,6 @@ public interface MoreLikeThisQuery extends StandardQuery {
         return ImmutableList.of();
     }
 
-    @Override
-    default boolean isEmpty() {
-        return false;
-    }
-
     /**
      * Returns true if query should fail (throw an exception) if any of the specified fields are not
      * of the supported types (text or keyword'). Set this to `false to ignore the field and
@@ -269,4 +250,23 @@ public interface MoreLikeThisQuery extends StandardQuery {
     @Nullable
     @JsonProperty("include")
     public Boolean isInclude();
+
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterMoreLikeThisQuery(this)) {
+                visitor.leaveMoreLikeThisQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
+    @Override
+    default boolean isEmpty() {
+        return false;
+    }
 }

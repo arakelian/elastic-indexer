@@ -195,10 +195,6 @@ public abstract class Field implements Serializable {
         return another instanceof ImmutableField && equalTo((ImmutableField) another);
     }
 
-    private boolean equalTo(final ImmutableField another) {
-        return getName().equals(another.getName());
-    }
-
     /**
      * Returns a list of fields that should be targeted by {@link ElasticDocBuilder} whenever this
      * field is targeted.
@@ -300,6 +296,14 @@ public abstract class Field implements Serializable {
 
     @Value.Default
     @Value.Auxiliary
+    @JsonProperty("exclude_plugins")
+    @JsonView(Enhancement.class)
+    public Set<String> getExcludePlugins() {
+        return ImmutableSet.of();
+    }
+
+    @Value.Default
+    @Value.Auxiliary
     @JsonProperty("fields")
     @JsonSerialize(contentUsing = SubfieldSerializer.class)
     @JsonDeserialize(contentUsing = FieldDeserializer.class)
@@ -341,6 +345,14 @@ public abstract class Field implements Serializable {
         // - ignore_above has a default value of 2^31-1 on keyword fields
         // - The default dynamic mappings for strings has ignore_above: 256.
         return Integer.valueOf(256);
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    @JsonProperty("include_plugins")
+    @JsonView(Enhancement.class)
+    public Set<String> getIncludePlugins() {
+        return ImmutableSet.of();
     }
 
     /**
@@ -389,11 +401,28 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public abstract String getNullValue();
 
+    /**
+     * Returns how to interpret vertex order for polygons / multipolygons.
+     *
+     * @return how to interpret vertex order for polygons / multipolygons.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("orientation")
+    @JsonView(Elastic.class)
+    public abstract Orientation getOrientation();
+
     @Nullable
     @Value.Auxiliary
     @JsonProperty("position_increment_gap")
     @JsonView(Elastic.class)
     public abstract Integer getPositionIncrementGap();
+
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("precision")
+    @JsonView(Elastic.class)
+    public abstract String getPrecision();
 
     @Nullable
     @Value.Default
@@ -409,6 +438,17 @@ public abstract class Field implements Serializable {
     @JsonProperty("search_analyzer")
     @JsonView(Elastic.class)
     public abstract String getSearchAnalyzer();
+
+    /**
+     * Returns the approach for how to represent shapes at indexing and search time.
+     *
+     * @return the approach for how to represent shapes at indexing and search time.
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("strategy")
+    @JsonView(Elastic.class)
+    public abstract SpatialStrategy getStrategy();
 
     /**
      * Returns setting that determines what information is added to the inverted index.
@@ -433,6 +473,25 @@ public abstract class Field implements Serializable {
     }
 
     @Nullable
+    @Value.Auxiliary
+    @JsonProperty("tree")
+    @JsonView(Elastic.class)
+    public abstract Tree getTree();
+
+    /**
+     * Returns maximum number of layers to be used by the PrefixTree. This can be used to control
+     * the precision of shape representations and therefore how many terms are indexed. Defaults to
+     * the default value of the chosen PrefixTree implementation
+     *
+     * @return maximum number of layers to be used by the PrefixTree
+     */
+    @Nullable
+    @Value.Auxiliary
+    @JsonProperty("tree_levels")
+    @JsonView(Elastic.class)
+    public abstract String getTreeLevels();
+
+    @Nullable
     @Value.Default
     @JsonProperty("type")
     @JsonView(Elastic.class)
@@ -453,7 +512,7 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isDocValues() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
         return Boolean.TRUE.equals(isIndex()) && !(type == Type.TEXT || //
@@ -507,22 +566,6 @@ public abstract class Field implements Serializable {
     @JsonView(Enhancement.class)
     public abstract Boolean isIgnoreGlobalTokenFilters();
 
-    @Value.Default
-    @Value.Auxiliary
-    @JsonProperty("exclude_plugins")
-    @JsonView(Enhancement.class)
-    public Set<String> getExcludePlugins() {
-        return ImmutableSet.of();
-    }
-
-    @Value.Default
-    @Value.Auxiliary
-    @JsonProperty("include_plugins")
-    @JsonView(Enhancement.class)
-    public Set<String> getIncludePlugins() {
-        return ImmutableSet.of();
-    }
-
     /**
      * Returns true if this field should ignore illegal values detected when building Elastic
      * document.
@@ -535,59 +578,6 @@ public abstract class Field implements Serializable {
     @JsonProperty("ignore_malformed")
     @JsonView(Elastic.class)
     public abstract Boolean isIgnoreMalformed();
-
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("tree")
-    @JsonView(Elastic.class)
-    public abstract Tree getTree();
-
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("precision")
-    @JsonView(Elastic.class)
-    public abstract String getPrecision();
-
-    /**
-     * Returns maximum number of layers to be used by the PrefixTree. This can be used to control
-     * the precision of shape representations and therefore how many terms are indexed. Defaults to
-     * the default value of the chosen PrefixTree implementation
-     *
-     * @return maximum number of layers to be used by the PrefixTree
-     */
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("tree_levels")
-    @JsonView(Elastic.class)
-    public abstract String getTreeLevels();
-
-    /**
-     * Returns the approach for how to represent shapes at indexing and search time.
-     *
-     * @return the approach for how to represent shapes at indexing and search time.
-     */
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("strategy")
-    @JsonView(Elastic.class)
-    public abstract SpatialStrategy getStrategy();
-
-    /**
-     * Returns how to interpret vertex order for polygons / multipolygons.
-     *
-     * @return how to interpret vertex order for polygons / multipolygons.
-     */
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("orientation")
-    @JsonView(Elastic.class)
-    public abstract Orientation getOrientation();
-
-    @Nullable
-    @Value.Auxiliary
-    @JsonProperty("points_only")
-    @JsonView(Elastic.class)
-    public abstract Boolean isPointsOnly();
 
     /**
      * Returns true (default) if three dimension points will be accepted (stored in source) but only
@@ -619,7 +609,7 @@ public abstract class Field implements Serializable {
     @JsonView(Version5.class)
     public Boolean isIncludeInAll() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
 
@@ -649,7 +639,7 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isIndex() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
         return type != Type.BINARY;
@@ -672,6 +662,12 @@ public abstract class Field implements Serializable {
 
     @Nullable
     @Value.Auxiliary
+    @JsonProperty("points_only")
+    @JsonView(Elastic.class)
+    public abstract Boolean isPointsOnly();
+
+    @Nullable
+    @Value.Auxiliary
     @JsonProperty("sort_tokens")
     @JsonView(Enhancement.class)
     public abstract Boolean isSortTokens();
@@ -691,9 +687,13 @@ public abstract class Field implements Serializable {
     @JsonView(Elastic.class)
     public Boolean isStore() {
         final Type type = getType();
-        if (type == null || isMetaField() || type == Type.COMPLETION || type==Type.GEO_SHAPE) {
+        if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
         return type == Type.BINARY;
+    }
+
+    private boolean equalTo(final ImmutableField another) {
+        return getName().equals(another.getName());
     }
 }

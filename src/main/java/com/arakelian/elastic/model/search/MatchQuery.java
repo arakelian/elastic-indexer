@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableMatchQuery.class)
 @JsonDeserialize(builder = ImmutableMatchQuery.Builder.class)
 @JsonTypeName(Query.MATCH_QUERY)

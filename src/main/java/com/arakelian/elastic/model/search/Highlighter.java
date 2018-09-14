@@ -60,7 +60,7 @@ public interface Highlighter extends Serializable {
         DEFAULT, HTML;
     }
 
-    @Value.Immutable(copy=false)
+    @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableField.class)
     @JsonDeserialize(builder = ImmutableField.Builder.class)
     @JsonPropertyOrder({ "name" })
@@ -113,7 +113,7 @@ public interface Highlighter extends Serializable {
         SIMPLE, SPAN;
     }
 
-    @Value.Immutable(copy=false)
+    @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableHighlight.class)
     @JsonDeserialize(builder = ImmutableHighlight.Builder.class)
     public interface Highlight extends Highlighter {

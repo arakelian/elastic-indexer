@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableList;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/significant/SignificantTextAggregationBuilder.java">https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/significant/SignificantTextAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSignificantTextAggregation.class)
 @JsonDeserialize(builder = ImmutableSignificantTextAggregation.Builder.class)
 @JsonTypeName(Aggregation.SIGNIFICANT_TEXT_AGGREGATION)

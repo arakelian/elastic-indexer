@@ -153,7 +153,7 @@ public class WriteSearchVisitor extends AbstractVisitor {
             }
         }
 
-        List<String> fields = search.getFields();
+        final List<String> fields = search.getFields();
         if (fields.size() != 0) {
             writer.writeFieldName("fields");
             writer.writeStartArray();

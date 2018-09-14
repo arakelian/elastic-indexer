@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/valuecount/ValueCountAggregationBuilder.java">ValueCountAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableValueCountAggregation.class)
 @JsonDeserialize(builder = ImmutableValueCountAggregation.Builder.class)
 @JsonTypeName(Aggregation.VALUE_COUNT_AGGREGATION)

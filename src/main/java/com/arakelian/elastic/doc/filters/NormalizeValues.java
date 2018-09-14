@@ -175,7 +175,7 @@ public abstract class NormalizeValues implements TokenFilter, Serializable {
 
         // use factory method
         try {
-            Object result = method.invoke(null, new Object[] { input });
+            final Object result = method.invoke(null, new Object[] { input });
 
             final String normalized = Objects.toString(result, null);
             if (StringUtils.isEmpty(normalized)) {

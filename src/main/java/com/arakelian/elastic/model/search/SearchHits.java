@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableList;
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/SearchHit.java">Search
  *      Hits</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearchHits.class)
 @JsonDeserialize(builder = ImmutableSearchHits.Builder.class)
 @JsonPropertyOrder({ "total", "max_score", "hits" })

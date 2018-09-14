@@ -145,6 +145,11 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
         doc.put(field, digest);
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
     protected MessageDigest getMessageDigest() throws NoSuchAlgorithmException, NoSuchProviderException {
         final String provider = config.getProvider();
         if (StringUtils.isEmpty(provider)) {
@@ -152,11 +157,6 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
         } else {
             return MessageDigest.getInstance(config.getAlgorithm(), provider);
         }
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     protected void traverse(

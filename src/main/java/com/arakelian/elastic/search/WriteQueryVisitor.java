@@ -88,34 +88,6 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
     }
 
     @Override
-    public boolean enterMoreLikeThisQuery(MoreLikeThisQuery moreLikeThis) {
-        try {
-            writer.writeFieldName("more_like_this");
-            writer.writeStartObject();
-            writeStandardFields(moreLikeThis);
-            writeFieldValue("like", moreLikeThis.getLike());
-            writeFieldValue("unlike", moreLikeThis.getUnlike());
-            writeFieldValue("fields", moreLikeThis.getFields());
-            writeFieldValue("max_query_terms", moreLikeThis.getMaxQueryTerms());
-            writeFieldValue("min_term_freq", moreLikeThis.getMinTermFrequency());
-            writeFieldValue("min_doc_freq", moreLikeThis.getMinDocFrequency());
-            writeFieldValue("max_doc_freq", moreLikeThis.getMaxDocFrequency());
-            writeFieldValue("min_word_length", moreLikeThis.getMinWordLength());
-            writeFieldValue("max_word_length", moreLikeThis.getMaxWordLength());
-            writeFieldValue("stop_words", moreLikeThis.getStopWords());
-            writeFieldValue("analyzer", moreLikeThis.getAnalyzer());
-            writeFieldValue("minimum_should_match", moreLikeThis.getMinimumShouldMatch());
-            writeFieldValue("fail_on_unsupported_field", moreLikeThis.isFailOnUnsupportedField());
-            writeFieldValue("boost_terms", moreLikeThis.getBoostTerms());
-            writeFieldValue("include", moreLikeThis.isInclude());
-            writer.writeEndObject(); // more_like_this
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return false;
-    }
-
-    @Override
     public boolean enterFuzzyQuery(final FuzzyQuery fuzzy) {
         try {
             writer.writeFieldName("fuzzy");
@@ -170,7 +142,7 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
     }
 
     @Override
-    public boolean enterGeoDistanceQuery(GeoDistanceQuery geoDistance) {
+    public boolean enterGeoDistanceQuery(final GeoDistanceQuery geoDistance) {
         try {
             writer.writeFieldName("geo_distance");
             writer.writeStartObject();
@@ -290,6 +262,34 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
                 writer.writeEndObject(); // field
             }
             writer.writeEndObject(); // prefix
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterMoreLikeThisQuery(final MoreLikeThisQuery moreLikeThis) {
+        try {
+            writer.writeFieldName("more_like_this");
+            writer.writeStartObject();
+            writeStandardFields(moreLikeThis);
+            writeFieldValue("like", moreLikeThis.getLike());
+            writeFieldValue("unlike", moreLikeThis.getUnlike());
+            writeFieldValue("fields", moreLikeThis.getFields());
+            writeFieldValue("max_query_terms", moreLikeThis.getMaxQueryTerms());
+            writeFieldValue("min_term_freq", moreLikeThis.getMinTermFrequency());
+            writeFieldValue("min_doc_freq", moreLikeThis.getMinDocFrequency());
+            writeFieldValue("max_doc_freq", moreLikeThis.getMaxDocFrequency());
+            writeFieldValue("min_word_length", moreLikeThis.getMinWordLength());
+            writeFieldValue("max_word_length", moreLikeThis.getMaxWordLength());
+            writeFieldValue("stop_words", moreLikeThis.getStopWords());
+            writeFieldValue("analyzer", moreLikeThis.getAnalyzer());
+            writeFieldValue("minimum_should_match", moreLikeThis.getMinimumShouldMatch());
+            writeFieldValue("fail_on_unsupported_field", moreLikeThis.isFailOnUnsupportedField());
+            writeFieldValue("boost_terms", moreLikeThis.getBoostTerms());
+            writeFieldValue("include", moreLikeThis.isInclude());
+            writer.writeEndObject(); // more_like_this
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

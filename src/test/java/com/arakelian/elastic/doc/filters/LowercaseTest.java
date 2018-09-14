@@ -34,11 +34,6 @@ public class LowercaseTest {
     }
 
     @Test
-    public void testSerializable() {
-        SerializableTestUtils.testSerializable(FILTER, Lowercase.class);
-    }
-
-    @Test
     public void testLowercase() {
         Assert.assertEquals(null, FILTER.apply(null));
         Assert.assertEquals("", FILTER.apply(""));
@@ -46,5 +41,10 @@ public class LowercaseTest {
         Assert.assertEquals("hello", FILTER.apply("hello"));
         Assert.assertEquals("hello", FILTER.apply("heLLo"));
         Assert.assertEquals("hello", FILTER.apply("HEllO"));
+    }
+
+    @Test
+    public void testSerializable() {
+        SerializableTestUtils.testSerializable(FILTER, Lowercase.class);
     }
 }

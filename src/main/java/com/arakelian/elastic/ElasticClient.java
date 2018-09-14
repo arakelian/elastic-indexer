@@ -36,7 +36,7 @@ import com.arakelian.elastic.model.search.SearchResponse;
 
 /**
  * Elastic API
- * 
+ *
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/tree/77d2dd203eac1bbf529fb1c5740d54c20ec197d7/rest-api-spec/src/main/resources/rest-api-spec/api">Elastic
  *      Rest API specification</a>

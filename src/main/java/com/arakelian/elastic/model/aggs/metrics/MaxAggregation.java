@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/max/MaxAggregationBuilder.java">MaxAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableMaxAggregation.class)
 @JsonDeserialize(builder = ImmutableMaxAggregation.Builder.class)
 @JsonTypeName(Aggregation.MAX_AGGREGATION)

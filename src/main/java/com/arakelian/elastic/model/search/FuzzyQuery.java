@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  *      Query</a>
  *
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableFuzzyQuery.class)
 @JsonDeserialize(builder = ImmutableFuzzyQuery.Builder.class)
 @JsonTypeName(Query.FUZZY_QUERY)

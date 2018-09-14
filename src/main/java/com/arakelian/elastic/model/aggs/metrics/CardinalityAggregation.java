@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/metrics/cardinality/CardinalityAggregationBuilder.java">CardinalityAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableCardinalityAggregation.class)
 @JsonDeserialize(builder = ImmutableCardinalityAggregation.Builder.class)
 @JsonTypeName(Aggregation.CARDINALITY_AGGREGATION)

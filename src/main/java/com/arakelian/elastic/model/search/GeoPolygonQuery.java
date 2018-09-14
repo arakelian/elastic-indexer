@@ -43,6 +43,19 @@ import com.google.common.collect.ImmutableList;
 @JsonPropertyOrder({ "_name", "boost", "field", "points", "validation_method" })
 @JsonTypeName(Query.GEO_POLYGON_QUERY)
 public interface GeoPolygonQuery extends StandardQuery {
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @JsonProperty("points")
+    @Value.Default
+    public default List<GeoPoint> getPoints() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    @JsonProperty("validation_method")
+    public ValidationMethod getValidationMethod();
+
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -55,19 +68,6 @@ public interface GeoPolygonQuery extends StandardQuery {
         } finally {
             visitor.leave(this);
         }
-    }
-
-    @Nullable
-    @JsonProperty("validation_method")
-    public ValidationMethod getValidationMethod();
-
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @JsonProperty("points")
-    @Value.Default
-    public default List<GeoPoint> getPoints() {
-        return ImmutableList.of();
     }
 
     @Override

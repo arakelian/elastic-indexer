@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableSet;
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/RegexpQueryBuilder.java">Regexp
  *      Query</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableRegexpQuery.class)
 @JsonDeserialize(builder = ImmutableRegexpQuery.Builder.class)
 @JsonTypeName(Query.REGEXP_QUERY)

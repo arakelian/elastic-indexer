@@ -21,7 +21,7 @@ import com.arakelian.elastic.doc.ElasticDoc;
 import com.arakelian.elastic.doc.ElasticDocException;
 
 public interface ElasticDocBuilderPlugin {
-    public String getName();
-
     public void completed(final ElasticDoc doc) throws ElasticDocException;
+
+    public String getName();
 }

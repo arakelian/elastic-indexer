@@ -35,17 +35,17 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableNodes.class)
 @JsonDeserialize(builder = ImmutableNodes.Builder.class)
 @JsonPropertyOrder({ "_nodes", "cluster_name", "nodes" })
 public interface Nodes extends Serializable {
-    @Value.Immutable(copy=false)
+    @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableNodeInfo.class)
     @JsonDeserialize(builder = ImmutableNodeInfo.Builder.class)
     @JsonIgnoreProperties(value = { "master", "data" }, allowGetters = true)
     public interface NodeInfo extends Serializable {
-        @Value.Immutable(copy=false)
+        @Value.Immutable(copy = false)
         @JsonSerialize(as = ImmutableHttp.class)
         @JsonDeserialize(builder = ImmutableHttp.Builder.class)
         @JsonPropertyOrder({ "bound_address", "publish_address", "max_content_length_in_bytes" })
@@ -71,13 +71,13 @@ public interface Nodes extends Serializable {
         public String getBuildFlavor();
 
         @Nullable
+        @JsonProperty("build_hash")
+        public String getBuildHash();
+
+        @Nullable
         @JsonProperty("build_type")
         @JsonView(Version63.class)
         public String getBuildType();
-
-        @Nullable
-        @JsonProperty("build_hash")
-        public String getBuildHash();
 
         public String getHost();
 

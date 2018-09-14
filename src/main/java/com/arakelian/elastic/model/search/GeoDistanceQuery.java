@@ -39,6 +39,23 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableGeoDistanceQuery.Builder.class)
 @JsonTypeName(Query.GEO_DISTANCE_QUERY)
 public interface GeoDistanceQuery extends StandardQuery {
+    @JsonProperty("distance")
+    public String getDistance();
+
+    @Nullable
+    @JsonProperty("distance_type")
+    public DistanceType getDistanceType();
+
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @JsonProperty("point")
+    public GeoPoint getPoint();
+
+    @Nullable
+    @JsonProperty("validation_method")
+    public ValidationMethod getValidationMethod();
+
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -57,21 +74,4 @@ public interface GeoDistanceQuery extends StandardQuery {
     default boolean isEmpty() {
         return false;
     }
-
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Nullable
-    @JsonProperty("validation_method")
-    public ValidationMethod getValidationMethod();
-
-    @JsonProperty("distance")
-    public String getDistance();
-
-    @Nullable
-    @JsonProperty("distance_type")
-    public DistanceType getDistanceType();
-
-    @JsonProperty("point")
-    public GeoPoint getPoint();
 }

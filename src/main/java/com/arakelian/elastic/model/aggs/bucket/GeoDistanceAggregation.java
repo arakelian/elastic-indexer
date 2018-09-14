@@ -50,7 +50,7 @@ import com.google.common.collect.ImmutableList;
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/search/aggregations/bucket/range/GeoDistanceAggregationBuilder.java">GeoDistanceAggregationBuilder.java</a>
  */
-@Value.Immutable(copy=false)
+@Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableGeoDistanceAggregation.class)
 @JsonDeserialize(builder = ImmutableGeoDistanceAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEO_DISTANCE_AGGREGATION)

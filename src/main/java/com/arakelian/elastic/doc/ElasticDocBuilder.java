@@ -188,36 +188,6 @@ public class ElasticDocBuilder {
         }
     }
 
-    /**
-     * Returns the Elastic document as a simple map.
-     *
-     * Field names are will be ordered as they are in the mapping, and values are listed in the
-     * order they were added to the document.
-     *
-     * @return the document as a simple map.
-     */
-    protected Map<String, Object> getDocumentAsMap() {
-        final Map<String, Object> map = Maps.newLinkedHashMap();
-
-        // add fields in the order that they appear in the mapping
-        final Map<String, Field> properties = config.getMapping().getProperties();
-        final Set<String> mappingFields = properties.keySet();
-        for (final String fieldName : mappingFields) {
-            if (document.containsKey(fieldName)) {
-                buildDocumentMap(fieldName, map);
-            }
-        }
-
-        // add fields that do not appear in mapping
-        for (final String fieldName : document.keys()) {
-            if (!mappingFields.contains(fieldName)) {
-                buildDocumentMap(fieldName, map);
-            }
-        }
-
-        return map;
-    }
-
     private Object getFieldValues(final String fieldName) {
         final Collection<Object> values = document.get(fieldName);
         if (values.size() == 0) {
@@ -294,6 +264,64 @@ public class ElasticDocBuilder {
         return sorted;
     }
 
+    private void putCharSequence(final Field field, final Object obj) {
+        // flush token filters which buffer
+        final TokenFilter tokenFilter = getTokenFilter(field);
+        tokenFilter.accept(null, token -> {
+            // discard tokens
+        });
+
+        tokenFilter.accept(obj.toString(), token -> {
+            // we only store non-empty strings in document
+            if (!StringUtils.isEmpty(token)) {
+                document.put(field.getName(), token);
+            }
+        });
+
+        // null value is used to flush token filters that buffer
+        for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
+            tokenFilter.accept(null, token -> {
+                if (!StringUtils.isEmpty(token)) {
+                    document.put(field.getName(), token);
+                    changed.set(true);
+                }
+            });
+            if (!changed.get()) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Returns the Elastic document as a simple map.
+     *
+     * Field names are will be ordered as they are in the mapping, and values are listed in the
+     * order they were added to the document.
+     *
+     * @return the document as a simple map.
+     */
+    protected Map<String, Object> getDocumentAsMap() {
+        final Map<String, Object> map = Maps.newLinkedHashMap();
+
+        // add fields in the order that they appear in the mapping
+        final Map<String, Field> properties = config.getMapping().getProperties();
+        final Set<String> mappingFields = properties.keySet();
+        for (final String fieldName : mappingFields) {
+            if (document.containsKey(fieldName)) {
+                buildDocumentMap(fieldName, map);
+            }
+        }
+
+        // add fields that do not appear in mapping
+        for (final String fieldName : document.keys()) {
+            if (!mappingFields.contains(fieldName)) {
+                buildDocumentMap(fieldName, map);
+            }
+        }
+
+        return map;
+    }
+
     protected TokenFilter getTokenFilter(final Field field) {
         if (tokenFilters.containsKey(field)) {
             // use cached value
@@ -335,34 +363,6 @@ public class ElasticDocBuilder {
 
         // store object
         document.put(field.getName(), obj);
-    }
-
-    private void putCharSequence(final Field field, final Object obj) {
-        // flush token filters which buffer
-        final TokenFilter tokenFilter = getTokenFilter(field);
-        tokenFilter.accept(null, token -> {
-            // discard tokens
-        });
-
-        tokenFilter.accept(obj.toString(), token -> {
-            // we only store non-empty strings in document
-            if (!StringUtils.isEmpty(token)) {
-                document.put(field.getName(), token);
-            }
-        });
-
-        // null value is used to flush token filters that buffer
-        for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
-            tokenFilter.accept(null, token -> {
-                if (!StringUtils.isEmpty(token)) {
-                    document.put(field.getName(), token);
-                    changed.set(true);
-                }
-            });
-            if (!changed.get()) {
-                break;
-            }
-        }
     }
 
     /**
