@@ -19,14 +19,39 @@ package com.arakelian.elastic.model.search;
 
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
+import com.arakelian.jackson.model.GeoPointTest;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class GeoBoundingBoxQueryTest {
     public static final GeoBoundingBoxQuery MINIMAL = ImmutableGeoBoundingBoxQuery.builder() //
+            .fieldName("field") //
+            .topLeft(GeoPointTest.POINT) //
+            .bottomRight(GeoPointTest.POINT) //
             .build();
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegal1() {
+        Assert.assertNull(
+                ImmutableGeoBoundingBoxQuery.builder() //
+                        .fieldName("field") //
+                        .topLeft(GeoPointTest.POINT) //
+                        .bottomLeft(GeoPointTest.POINT) //
+                        .build());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegal2() {
+        Assert.assertNull(
+                ImmutableGeoBoundingBoxQuery.builder() //
+                        .fieldName("field") //
+                        .topRight(GeoPointTest.POINT) //
+                        .bottomRight(GeoPointTest.POINT) //
+                        .build());
+    }
 
     @Test
     public void testJackson() throws IOException {

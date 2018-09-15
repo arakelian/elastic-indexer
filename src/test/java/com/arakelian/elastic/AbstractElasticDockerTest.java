@@ -93,6 +93,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     public static final String DEFAULT_TYPE = "test";
 
+    /**
+     * Returns list of Elastic versions that we want to test
+     * 
+     * @return list of Elastic versions that we want to test
+     * @see <a href="https://www.docker.elastic.co">Docker Images</a>
+     */
     @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
@@ -100,7 +106,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
-                // "5.6.8", //
+                // "5.6.11", //
                 // "6.0.1", //
                 // "6.1.4", //
                 // "6.2.4", //
