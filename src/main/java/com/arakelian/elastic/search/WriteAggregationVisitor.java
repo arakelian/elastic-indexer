@@ -28,6 +28,7 @@ import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.arakelian.elastic.model.aggs.bucket.BucketOrder;
 import com.arakelian.elastic.model.aggs.bucket.DateHistogramAggregation;
 import com.arakelian.elastic.model.aggs.bucket.DateRangeAggregation;
+import com.arakelian.elastic.model.aggs.bucket.GeoHashGridAggregation;
 import com.arakelian.elastic.model.aggs.bucket.HistogramAggregation;
 import com.arakelian.elastic.model.aggs.bucket.IpRangeAggregation;
 import com.arakelian.elastic.model.aggs.bucket.MissingAggregation;
@@ -92,6 +93,22 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writeFieldValue("interval", agg.getInterval());
             writeFieldValue("min_doc_count", agg.getMinDocCount());
             writer.writeEndObject(); // date_histogram
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoHashGrid(GeoHashGridAggregation agg) {
+        try {
+            writer.writeFieldName("geohash_grid");
+            writer.writeStartObject();
+            writeValueSource(agg);
+            writeFieldValue("precision", agg.getPrecision());
+            writeFieldValue("size", agg.getRequiredSize());
+            writeFieldValue("shard_size", agg.getShardSize());
+            writer.writeEndObject(); // geohash_grid
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

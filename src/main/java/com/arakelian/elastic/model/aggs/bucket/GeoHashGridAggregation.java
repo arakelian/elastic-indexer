@@ -22,7 +22,9 @@ import org.immutables.value.Value;
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
+import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.arakelian.elastic.search.AggregationVisitor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -53,14 +55,17 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize(as = ImmutableGeoHashGridAggregation.class)
 @JsonDeserialize(builder = ImmutableGeoHashGridAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEOHASH_GRID_AGGREGATION)
-public interface GeoHashGridAggregation extends BucketAggregation {
+public interface GeoHashGridAggregation extends BucketAggregation, ValuesSourceAggregation {
     @Nullable
+    @JsonProperty("precision")
     public Integer getPrecision();
 
     @Nullable
+    @JsonProperty("size")
     public Integer getRequiredSize();
 
     @Nullable
+    @JsonProperty("shard_size")
     public Integer getShardSize();
 
     @Override
