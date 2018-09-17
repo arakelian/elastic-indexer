@@ -90,6 +90,7 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writeFieldValue("keyed", agg.isKeyed());
             writeFieldValue("offset", agg.getOffset());
             writeFieldValue("interval", agg.getInterval());
+            writeFieldValue("min_doc_count", agg.getMinDocCount());
             writer.writeEndObject(); // date_histogram
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -130,6 +131,7 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writer.writeFieldName("geo_bounds");
             writer.writeStartObject();
             writeValueSource(agg);
+            writeFieldValue("wrap_longitude", agg.isWrapLongitude());
             writer.writeEndObject(); // geo_bounds
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

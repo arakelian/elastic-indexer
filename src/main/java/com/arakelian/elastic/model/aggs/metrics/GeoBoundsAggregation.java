@@ -19,6 +19,7 @@ package com.arakelian.elastic.model.aggs.metrics;
 
 import org.immutables.value.Value;
 
+import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.MetricAggregation;
 import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
@@ -52,4 +53,7 @@ public interface GeoBoundsAggregation extends MetricAggregation, ValuesSourceAgg
             visitor.leave(this);
         }
     }
+
+    @Nullable
+    public Boolean isWrapLongitude();
 }

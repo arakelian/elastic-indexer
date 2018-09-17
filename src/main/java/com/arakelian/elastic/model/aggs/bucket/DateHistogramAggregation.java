@@ -65,7 +65,7 @@ public interface DateHistogramAggregation extends BucketAggregation, ValuesSourc
     public Long getExtendedBoundsMin();
 
     @Nullable
-    public Long getInterval();
+    public String getInterval();
 
     /**
      * Returns the minimum number of hits required before returning a term.
