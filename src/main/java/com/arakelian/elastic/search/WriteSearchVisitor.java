@@ -19,6 +19,7 @@ package com.arakelian.elastic.search;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.aggs.Aggregation;
@@ -153,11 +154,11 @@ public class WriteSearchVisitor extends AbstractVisitor {
             }
         }
 
-        final List<String> fields = search.getFields();
-        if (fields.size() != 0) {
-            writer.writeFieldName("fields");
+        final Set<String> storedFields = search.getStoredFields();
+        if (storedFields.size() != 0) {
+            writer.writeFieldName("stored_fields");
             writer.writeStartArray();
-            for (final String field : fields) {
+            for (final String field : storedFields) {
                 writer.writeString(field);
             }
             writer.writeEndArray();

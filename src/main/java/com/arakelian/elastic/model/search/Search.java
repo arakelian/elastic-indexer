@@ -19,6 +19,7 @@ package com.arakelian.elastic.model.search;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 import org.immutables.value.Value;
 
@@ -26,16 +27,19 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.enums.SearchType;
 import com.arakelian.elastic.model.search.Highlighter.Highlight;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSearch.class)
 @JsonDeserialize(builder = ImmutableSearch.Builder.class)
-@JsonPropertyOrder({ "scroll", "scrollId", "from", "size", "searchType", "terminateAfter", "sourceFilter",
-        "fields", "query", "sort", "aggregation", "version", "explain", "batchedReduceSize", "preference" })
+@JsonPropertyOrder({ "scroll", "scrollId", "from", "size", "searchType", "terminateAfter", "_source",
+        "stored_fields", "query", "sort", "aggregation", "version", "explain", "batchedReduceSize",
+        "preference" })
 @Value.Style(from = "using", get = { "is*", "get*" }, depluralize = true)
 public interface Search extends Serializable {
     @Value.Default
@@ -46,9 +50,28 @@ public interface Search extends Serializable {
     @Nullable
     public Integer getBatchedReduceSize();
 
+    /**
+     * Returns a list of JSON fields that are explicitly stored in the mapping and should be
+     * returned with search hits. Elastic recommends using source filtering instead to select
+     * subsets of the original source document to be returned.
+     *
+     * <ul>
+     * <li><code>*</code> can be used to load all stored fields from the document.</li>
+     * <li><code>_none_</code> can be used to disable returning stored fields and metadata fields
+     * entirely</li>
+     * <li>An empty array will cause only the _id and _type for each hit to be returned</li>
+     * <li>Only leaf fields can be returned; object fields can't be returned and such requests will
+     * fail.</li>
+     * </ul>
+     *
+     * @return a list of JSON fields that are explicitly stored in the mapping and should be
+     *         returned with search hits
+     */
+    @Nullable
     @Value.Default
-    public default List<String> getFields() {
-        return ImmutableList.of();
+    @JsonProperty("stored_fields")
+    public default Set<String> getStoredFields() {
+        return ImmutableSet.of();
     }
 
     @Nullable
@@ -81,6 +104,7 @@ public interface Search extends Serializable {
     }
 
     @Nullable
+    @JsonProperty("_source")
     public SourceFilter getSourceFilter();
 
     /**

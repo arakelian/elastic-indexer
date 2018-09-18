@@ -23,6 +23,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.search.QueryVisitor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -34,24 +35,29 @@ import com.google.common.collect.ImmutableList;
 @JsonTypeName(Query.BOOL_QUERY)
 public interface BoolQuery extends StandardQuery {
     @Value.Default
+    @JsonProperty("filter")
     public default List<Query> getFilterClauses() {
         return ImmutableList.of();
     }
 
     @Nullable
+    @JsonProperty("minimum_should_match")
     public String getMinimumShouldMatch();
 
     @Value.Default
+    @JsonProperty("must")
     public default List<Query> getMustClauses() {
         return ImmutableList.of();
     }
 
     @Value.Default
+    @JsonProperty("must_not")
     public default List<Query> getMustNotClauses() {
         return ImmutableList.of();
     }
 
     @Value.Default
+    @JsonProperty("should")
     public default List<Query> getShouldClauses() {
         return ImmutableList.of();
     }
