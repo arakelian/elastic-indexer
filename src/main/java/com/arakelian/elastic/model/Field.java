@@ -28,7 +28,6 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
-import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.Mapping.FieldDeserializer;
 import com.arakelian.elastic.model.enums.Orientation;
@@ -196,11 +195,11 @@ public abstract class Field implements Serializable {
     }
 
     /**
-     * Returns a list of fields that should be targeted by {@link ElasticDocBuilder} whenever this
-     * field is targeted.
+     * Returns a list of fields that should be targeted by
+     * {@link com.arakelian.elastic.doc.ElasticDocBuilder} whenever this field is targeted.
      *
-     * @return list of fields that should be targeted by {@link ElasticDocBuilder} whenever this
-     *         field is targeted.
+     * @return list of fields that should be targeted by
+     *         {@link com.arakelian.elastic.doc.ElasticDocBuilder} whenever this field is targeted.
      */
     @Value.Default
     @Value.Auxiliary

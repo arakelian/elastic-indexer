@@ -59,7 +59,7 @@ public interface PercentilesAggregation extends MetricAggregation, ValuesSourceA
 
     /**
      * Returns the compression. Higher values improve accuracy but also memory usage. Only relevant
-     * when using {@link Method#TDIGEST}.
+     * when using {@link com.arakelian.elastic.model.aggs.metrics.PercentileRanksAggregation.Method#TDIGEST}.
      *
      * @return the compression
      *
@@ -82,7 +82,7 @@ public interface PercentilesAggregation extends MetricAggregation, ValuesSourceA
 
     /**
      * Returns the number of significant digits in the values. Only relevant when using
-     * {@link Method#HDR}.
+     * {@link com.arakelian.elastic.model.aggs.metrics.PercentileRanksAggregation.Method#HDR}.
      *
      * @return the number of significant digits in the values
      */
