@@ -218,7 +218,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 .shutdownTimeout(1) //
                 .shutdownTimeoutUnit(TimeUnit.DAYS) //
                 .build();
-        return new BulkIndexer(config, getRefreshLimiter());
+        return new BulkIndexer(getElasticClient(), config, getRefreshLimiter());
     }
 
     public SimpleBulkOperationFactory<Person> createPersonBulkOperationFactory(final Index index) {

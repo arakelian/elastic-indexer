@@ -136,7 +136,7 @@ public class RefreshLimiterTest {
         networkBehavior.setFailurePercent(networkFailures ? 100 : 0);
 
         final String index = "test";
-        try (RefreshLimiter refreshLimiter = new RefreshLimiter(config, elasticClient)) {
+        try (DefaultRefreshLimiter refreshLimiter = new DefaultRefreshLimiter(config, elasticClient)) {
             final int duration = durationMillis;
             final long stopTime = System.currentTimeMillis() + duration;
             while (System.currentTimeMillis() < stopTime) {
@@ -197,7 +197,7 @@ public class RefreshLimiterTest {
         final String index = "test";
         int attempts = 0;
         int successful = 0;
-        try (RefreshLimiter refreshLimiter = new RefreshLimiter(config, elasticClient)) {
+        try (DefaultRefreshLimiter refreshLimiter = new DefaultRefreshLimiter(config, elasticClient)) {
             final int duration = durationMillis;
             final long stopTime = System.currentTimeMillis() + duration;
             while (System.currentTimeMillis() < stopTime) {

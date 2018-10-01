@@ -373,12 +373,13 @@ public class BulkIndexer implements Closeable {
     private final Thread shutdownHook;
 
     @SuppressWarnings("FutureReturnValueIgnored")
-    public BulkIndexer(final BulkIndexerConfig config, final RefreshLimiter refreshLimiter) {
-        Preconditions.checkArgument(config != null, "config must not be null");
-        Preconditions.checkArgument(refreshLimiter != null, "elasticClient must not be null");
-        this.config = config;
-        this.refreshLimiter = refreshLimiter;
-        this.elasticClient = refreshLimiter.getElasticClient();
+    public BulkIndexer(
+            final ElasticClient elasticClient,
+            final BulkIndexerConfig config,
+            final RefreshLimiter refreshLimiter) {
+        this.config = Preconditions.checkNotNull(config, "config must be non-null");
+        this.elasticClient = Preconditions.checkNotNull(elasticClient, "elasticClient must be non-null");
+        this.refreshLimiter = Preconditions.checkNotNull(refreshLimiter, "refreshLimiter must be non-null");
 
         // we queue flushes when waiting for Elastic
         // determine what to do when queue is full

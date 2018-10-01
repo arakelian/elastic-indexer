@@ -44,6 +44,7 @@ import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
 import com.arakelian.elastic.refresh.RefreshLimiter;
+import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 
@@ -54,11 +55,11 @@ public abstract class AbstractElasticTest {
 
     public static final String DEFAULT_TYPE = "test";
 
-    private RefreshLimiter refreshLimiter;
+    private DefaultRefreshLimiter refreshLimiter;
 
     @Before
     public final void createRefreshLimiter() {
-        refreshLimiter = new RefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
+        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
                 .coreThreads(1) //
                 .maximumThreads(1) //
                 .defaultPermitsPerSecond(1.0) //
