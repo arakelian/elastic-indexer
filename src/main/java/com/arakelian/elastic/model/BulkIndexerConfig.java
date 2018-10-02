@@ -90,6 +90,11 @@ public abstract class BulkIndexerConfig {
     }
 
     @Value.Default
+    public int getMaxRetries() {
+        return 10;
+    }
+
+    @Value.Default
     @Value.Auxiliary
     public Retryer<BulkResponse> getRetryer() {
         return ElasticClientUtils.createElasticRetryer();
