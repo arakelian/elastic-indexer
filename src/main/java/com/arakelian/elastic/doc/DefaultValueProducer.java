@@ -18,6 +18,7 @@
 package com.arakelian.elastic.doc;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -122,11 +123,13 @@ public class DefaultValueProducer implements ValueProducer {
             }
 
             // we support a wide variety of text formats, and always encoding in UTC
-            final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(asText(field, node));
-            if (value == null) {
-                malformed(field, node, null);
-            } else {
-                consumer.accept(value);
+            try {
+                final ZonedDateTime value = DateUtils.toZonedDateTimeUtcChecked(asText(field, node));
+                if (value != null) {
+                    consumer.accept(value);
+                }
+            } catch (DateTimeParseException e) {
+                malformed(field, node, e);
             }
         }
     }
