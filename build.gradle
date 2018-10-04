@@ -66,10 +66,10 @@ dependencies {
     // the gradle plugin uses latest.release which breaks reproducibility
     errorprone 'com.google.errorprone:error_prone_core:2.3.1'
     
-    compile 'com.arakelian:more-commons:1.9.5'
-    compile 'com.arakelian:jackson-utils:1.9.8'
+    compile 'com.arakelian:more-commons:1.9.6'
+    compile 'com.arakelian:jackson-utils:1.10.1'
     compile 'com.arakelian:json-filter:1.9.1'
-    compile 'com.arakelian:key-value-store:1.9.6'
+    compile 'com.arakelian:key-value-store:1.9.7'
     compile 'com.github.ben-manes.caffeine:caffeine:2.6.2'
 
     // shadow Guava due to frequent downstream incompatibility issues
@@ -83,7 +83,7 @@ dependencies {
     }
 
     // shadow stuff we use very little of, to reduce dependencies
-    shadow  'org.apache.commons:commons-lang3:3.8'
+    shadow  'org.apache.commons:commons-lang3:3.8.1'
     shadow  'com.github.rholder:guava-retrying:2.0.0'
     shadow  ('com.jayway.jsonpath:json-path:2.4.0') { exclude module: 'slf4j-api' }
 
@@ -107,9 +107,9 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.31.1'
-    testCompile 'com.arakelian:more-commons:1.9.5:tests'
-    testCompile 'com.arakelian:jackson-utils:1.9.7:tests'
+    testCompile 'com.arakelian:more-commons:1.9.6:tests'
+    testCompile 'com.arakelian:jackson-utils:1.10.1:tests'
     testCompile 'com.arakelian:docker-junit-rule:2.2.2'
-    testCompile 'com.arakelian:faker:2.2.1'
+    testCompile 'com.arakelian:faker:2.2.5'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.4.0'
 }
