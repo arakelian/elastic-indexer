@@ -169,12 +169,16 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                                     LOGGER.info(pretty.indexOf('\n') == -1 ? "{}" : "\n{}", pretty);
                                 }
                             }).setLevel(Level.BODY)) //
+                    .addInterceptor(new GzipRequestInterceptor()) //
                     .build();
 
             // create API-specific elastic client
             final VersionComponents version = waitForElasticReady(client);
-            elasticClient = ElasticClientUtils
-                    .createElasticClient(elasticUrl, client, JacksonUtils.getObjectMapper(), version);
+            elasticClient = ElasticClientUtils.createElasticClient(
+                    elasticUrl, //
+                    client, //
+                    JacksonUtils.getObjectMapper(), //
+                    version);
             elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
             success = true;
         } finally {
