@@ -169,7 +169,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("booleans", JsonSelector.of("/booleans/true")) //
                 .build();
-        final String actual = new ElasticDocBuilder(config).build(sampleJson);
+        final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
         Assert.assertEquals( //
                 "{\"booleans\":true}", //
                 actual);
@@ -298,7 +298,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
-        final String actual = new ElasticDocBuilder(config).build(sampleJson);
+        final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
         Assert.assertEquals( //
                 "{\"numbers\":[-128.0,0.0,127.0,-32768.0,32767.0,-2.14748365E9,2.14748365E9,-9.223372E18,9.223372E18,3.14,2.718,6.67E-11]}",
                 actual);

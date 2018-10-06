@@ -165,8 +165,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                     .addInterceptor( //
                             new HttpLoggingInterceptor(message -> {
                                 if (!StringUtils.isEmpty(message)) {
-                                    final String pretty = JsonFilter.prettyifyQuietly(message);
-                                    LOGGER.info(pretty.indexOf('\n') == -1 ? "{}" : "\n{}", pretty);
+                                    final CharSequence pretty = JsonFilter.prettyifyQuietly(message);
+                                    LOGGER.info("{}", pretty);
                                 }
                             }).setLevel(Level.BODY)) //
                     .addInterceptor(new GzipRequestInterceptor()) //

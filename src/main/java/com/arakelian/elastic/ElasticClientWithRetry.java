@@ -63,7 +63,7 @@ public class ElasticClientWithRetry implements ElasticClient {
     }
 
     @Override
-    public BulkResponse bulk(final String operations, final Boolean pretty) throws ElasticException {
+    public BulkResponse bulk(final CharSequence operations, final Boolean pretty) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.bulk(operations, pretty);
         });
@@ -164,7 +164,7 @@ public class ElasticClientWithRetry implements ElasticClient {
             final String name,
             final String type,
             final String id,
-            final String document) throws ElasticException {
+            final CharSequence document) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.indexDocument(name, type, id, document);
         });
@@ -175,7 +175,7 @@ public class ElasticClientWithRetry implements ElasticClient {
             final String name,
             final String type,
             final String id,
-            final String document,
+            final CharSequence document,
             final long epochMillisUtc) throws ElasticException {
         return executeWithRetry(() -> {
             return delegate.indexDocument(name, type, id, document, epochMillisUtc);

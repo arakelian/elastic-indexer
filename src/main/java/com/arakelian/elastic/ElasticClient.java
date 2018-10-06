@@ -44,7 +44,7 @@ import com.arakelian.elastic.model.search.SearchResponse;
 public interface ElasticClient {
     About about() throws ElasticException;
 
-    BulkResponse bulk(String operations, Boolean pretty) throws ElasticException;
+    BulkResponse bulk(CharSequence operations, Boolean pretty) throws ElasticException;
 
     ClusterHealth clusterHealth() throws ElasticException;
 
@@ -125,7 +125,7 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    IndexedDocument indexDocument(String name, String type, String id, String document)
+    IndexedDocument indexDocument(String name, String type, String id, CharSequence document)
             throws ElasticException;
 
     /**
@@ -158,7 +158,7 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    IndexedDocument indexDocument(String name, String type, String id, String document, long epochMillisUtc)
+    IndexedDocument indexDocument(String name, String type, String id, CharSequence document, long epochMillisUtc)
             throws ElasticException;
 
     /**

@@ -54,7 +54,7 @@ public interface OkHttpElasticApi {
 
     @POST("/_bulk")
     @Headers("Content-Type: application/x-ndjson")
-    Call<BulkResponse> bulk(@Body String operations, @Query("pretty") Boolean pretty);
+    Call<BulkResponse> bulk(@Body CharSequence operations, @Query("pretty") Boolean pretty);
 
     @GET("/_cluster/health")
     Call<ClusterHealth> clusterHealth();
@@ -155,7 +155,7 @@ public interface OkHttpElasticApi {
             @Path("name") String name,
             @Path("type") String type,
             @Path("id") String id,
-            @Body String document);
+            @Body CharSequence document);
 
     /**
      * Indexes a document using an external versioning scheme, based upon milliseconds since epoch
@@ -191,7 +191,7 @@ public interface OkHttpElasticApi {
             @Path("name") String name,
             @Path("type") String type,
             @Path("id") String id,
-            @Body String document,
+            @Body CharSequence document,
             @Query("version") long epochMillisUtc);
 
     /**
@@ -224,5 +224,5 @@ public interface OkHttpElasticApi {
             @Query("scroll") String scroll,
             @Query("search_type") SearchType searchType,
             @Query("request_cache") Boolean requestCache,
-            @Body String query);
+            @Body CharSequence query);
 }

@@ -17,19 +17,80 @@
 
 package com.arakelian.elastic;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okio.BufferedSink;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class DefaultOkHttpElasticApiFactory implements OkHttpElasticApiFactory {
+    public final static class CharSequenceConverterFactory extends Converter.Factory {
+        private static final class CharSequenceConverter implements Converter<CharSequence, RequestBody> {
+            static final CharSequenceConverter INSTANCE = new CharSequenceConverter();
+
+            @Override
+            public RequestBody convert(final CharSequence value) {
+                return new RequestBody() {
+                    @Override
+                    public MediaType contentType() {
+                        return null;
+                    }
+
+                    @Override
+                    public void writeTo(final BufferedSink sink) throws IOException {
+                        if (value == null) {
+                            return;
+                        }
+
+                        try (OutputStreamWriter writer = new OutputStreamWriter(new OutputStream() {
+                            @Override
+                            public void write(int b) throws IOException {
+                                sink.writeByte(b);
+                            }
+                        }, Charsets.UTF_8)) {
+                            for (int i = 0; i < value.length(); i++) {
+                                final char ch = value.charAt(i);
+                                writer.write(ch);
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        public static CharSequenceConverterFactory create() {
+            return new CharSequenceConverterFactory();
+        }
+
+        private CharSequenceConverterFactory() {
+        }
+
+        @Override
+        public Converter<?, RequestBody> requestBodyConverter(
+                final Type type,
+                final Annotation[] parameterAnnotations,
+                final Annotation[] methodAnnotations,
+                final Retrofit retrofit) {
+            if (type instanceof Class && ((Class<?>) type) == CharSequence.class) {
+                return CharSequenceConverter.INSTANCE;
+            }
+            return null;
+        }
+    }
+
     public final static class EnumConverterFactory extends Converter.Factory {
         private static final class EnumConverter implements Converter<Enum, String> {
             static final EnumConverter INSTANCE = new EnumConverter();
@@ -72,6 +133,7 @@ public class DefaultOkHttpElasticApiFactory implements OkHttpElasticApiFactory {
                 .client(client) //
                 .baseUrl(elasticUrl) //
                 .addConverterFactory(EnumConverterFactory.create()) //
+                .addConverterFactory(CharSequenceConverterFactory.create()) //
                 .addConverterFactory(ScalarsConverterFactory.create()) //
                 .addConverterFactory(JacksonConverterFactory.create(mapper)) //
                 .build();

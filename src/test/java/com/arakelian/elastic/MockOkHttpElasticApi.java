@@ -73,7 +73,7 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
     }
 
     @Override
-    public Call<BulkResponse> bulk(final String operations, final Boolean pretty) {
+    public Call<BulkResponse> bulk(final CharSequence operations, final Boolean pretty) {
         throw new UnsupportedOperationException();
     }
 
@@ -143,7 +143,7 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
             final String name,
             final String type,
             final String id,
-            final String document) {
+            final CharSequence document) {
         throw new UnsupportedOperationException();
     }
 
@@ -152,7 +152,7 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
             final String name,
             final String type,
             final String id,
-            final String document,
+            final CharSequence document,
             final long epochMillisUtc) {
         throw new UnsupportedOperationException();
     }
@@ -184,7 +184,7 @@ public class MockOkHttpElasticApi implements OkHttpElasticApi {
             final String scroll,
             final SearchType searchType,
             final Boolean requestCache,
-            final String query) {
+            final CharSequence query) {
         throw new UnsupportedOperationException();
     }
 }

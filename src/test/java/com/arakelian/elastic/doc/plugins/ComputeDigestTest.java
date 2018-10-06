@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.io.input.CharSequenceReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -109,12 +110,12 @@ public class ComputeDigestTest {
         Assert.assertEquals(
                 expected,
                 mapper //
-                        .readTree(builder.build("{\n" + //
+                        .readTree(new CharSequenceReader(builder.build("{\n" + //
                                 "   \"name\":\"Greg Arakelian\",\n" + //
                                 "   \"street\":\"123 Main Street\",\n" + //
                                 "   \"zip\":\"20001\",\n" + //
                                 "   \"" + EXCLUDE_FIELD + "\":\"bob smith\"\n" + //
-                                "}"))
+                                "}")))
                         .path(CRC_FIELD) //
                         .asText());
 
@@ -122,12 +123,12 @@ public class ComputeDigestTest {
         Assert.assertEquals(
                 expected,
                 mapper //
-                        .readTree(builder.build("{\n" + //
+                        .readTree(new CharSequenceReader(builder.build("{\n" + //
                                 "   \"" + EXCLUDE_FIELD + "\":\"bob smith\"\n," + //
                                 "   \"zip\":\"20001\",\n" + //
                                 "   \"street\":\"123 Main Street\",\n" + //
                                 "   \"name\":\"Greg Arakelian\"" + //
-                                "}"))
+                                "}")))
                         .path(CRC_FIELD) //
                         .asText());
     }

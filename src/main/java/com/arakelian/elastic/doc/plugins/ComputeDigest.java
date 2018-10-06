@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
@@ -117,8 +118,8 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
         // we will compute digest on serialized Elastic document
         JsonNode root;
         try {
-            final String json = doc.writeDocumentAsJson();
-            root = doc.getConfig().getObjectMapper().readValue(json, JsonNode.class);
+            final CharSequence json = doc.writeDocumentAsJson();
+            root = doc.getConfig().getObjectMapper().readValue(new CharSequenceReader(json), JsonNode.class);
         } catch (final IOException e) {
             throw new ElasticDocException("Unable to parse Elastic document", e);
         }

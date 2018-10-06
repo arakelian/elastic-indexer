@@ -175,7 +175,7 @@ public class OkHttpElasticClient implements ElasticClient {
     }
 
     @Override
-    public BulkResponse bulk(final String operations, final Boolean pretty) throws ElasticException {
+    public BulkResponse bulk(final CharSequence operations, final Boolean pretty) throws ElasticException {
         return execute(() -> {
             return new DelegatingCall<>(BulkResponse.class, getVersionedApi().bulk(operations, pretty));
         });
@@ -287,7 +287,7 @@ public class OkHttpElasticClient implements ElasticClient {
             final String name,
             final String type,
             final String id,
-            final String document) throws ElasticException {
+            final CharSequence document) throws ElasticException {
         return execute(() -> {
             return new DelegatingCall<>(IndexedDocument.class,
                     getVersionedApi().indexDocument(name, type, id, document));
@@ -299,7 +299,7 @@ public class OkHttpElasticClient implements ElasticClient {
             final String name,
             final String type,
             final String id,
-            final String document,
+            final CharSequence document,
             final long epochMillisUtc) throws ElasticException {
         return execute(() -> {
             return new DelegatingCall<>(IndexedDocument.class,
@@ -345,7 +345,7 @@ public class OkHttpElasticClient implements ElasticClient {
     public SearchResponse search(final String name, final Search search) {
         final ObjectMapper mapper = getVersionedObjectMapper();
 
-        final String query = JacksonUtils.toString(writer -> {
+        final CharSequence query = JacksonUtils.toCharSequence(writer -> {
             new WriteSearchVisitor(writer, version).writeSearch(search);
         }, mapper, true);
 

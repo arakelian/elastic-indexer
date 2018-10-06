@@ -175,7 +175,7 @@ public class IndexTest extends AbstractElasticModelTest {
         final ObjectMapper newMapper = JacksonUtils.getObjectMapper().copy();
         ElasticClientUtils.configureIndexSerialization(newMapper);
 
-        final String withoutName = JsonFilter.prettyify(newMapper.writeValueAsString(MINIMAL));
+        final String withoutName = JsonFilter.prettyify(newMapper.writeValueAsString(MINIMAL)).toString();
         switch (version.getMajor()) {
         case 5:
             assertJsonEquals(VERSION5, withoutName);

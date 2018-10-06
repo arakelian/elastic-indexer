@@ -43,7 +43,7 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
             final Action action,
             final String type,
             final String id,
-            final String source,
+            final CharSequence source,
             final Long version) {
         return ImmutableBulkOperation.builder() //
                 .action(action) //
@@ -107,7 +107,7 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
         }
 
         // document
-        final String source;
+        final CharSequence source;
         if (action.hasSource()) {
             final String documentJson = getJson().apply(document);
             source = getElasticDocument().apply(documentJson);
@@ -142,14 +142,14 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
     public abstract ElasticDocBuilder getElasticDocBuilder();
 
     @Value.Default
-    public Function<String, String> getElasticDocument() {
+    public Function<CharSequence, CharSequence> getElasticDocument() {
         return documentJson -> {
             final ElasticDocBuilder elasticDocBuilder = getElasticDocBuilder();
             if (elasticDocBuilder == null) {
                 return documentJson;
             }
 
-            final String elasticJson = elasticDocBuilder.build(documentJson);
+            final CharSequence elasticJson = elasticDocBuilder.build(documentJson);
             return elasticJson;
         };
     }

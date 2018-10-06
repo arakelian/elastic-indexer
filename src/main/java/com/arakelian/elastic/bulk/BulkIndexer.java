@@ -76,6 +76,14 @@ import com.google.common.util.concurrent.MoreExecutors;
  * Index API.
  */
 public class BulkIndexer implements Closeable {
+    private static final int ONE_KB = 1024;
+
+    public static int roundAllocation(int bytes) {
+        // JVM will have an easier time with free blocks if they're
+        // the same size
+        return ((bytes + (ONE_KB - 1)) / ONE_KB) * ONE_KB;
+    }
+
     /**
      * Represents a single, asynchronous flushing of bulk operations to the Elastic Bulk API.
      */
@@ -111,7 +119,7 @@ public class BulkIndexer implements Closeable {
             }
 
             LOGGER.info("Sending {}", this);
-            final String ops = buildPayload();
+            final CharSequence ops = buildPayload();
 
             try {
                 // we assume Retryer verifies that result.isSuccessful() is true
@@ -144,16 +152,23 @@ public class BulkIndexer implements Closeable {
          *
          * We compute this by concatenating all of the individual operations being performed on each
          * document.
+         * 
+         * Note that we never convert the StringBuilder to a String to unnecessarily allocate extra
+         * RAM.
          *
          * @return payload for the Elastic bulk API endpoint.
          */
-        private String buildPayload() {
-            final StringBuilder buf = new StringBuilder(totalBytes);
+        private CharSequence buildPayload() {
+            // to reduce memory fragmentation when indexing billions of records, let's round up
+            // memory allocation
+            int size = roundAllocation(totalBytes);
+
+            // allocate a string
+            final StringBuilder buf = new StringBuilder(size);
             for (final BulkOperation op : operations) {
                 buf.append(op.getOperation());
             }
-            final String ops = buf.toString();
-            return ops;
+            return buf;
         }
 
         private void failed(final Throwable t) {
@@ -779,7 +794,7 @@ public class BulkIndexer implements Closeable {
             ensureOpen();
 
             // add to queue
-            final String operation = bulkOperation.getOperation();
+            final CharSequence operation = bulkOperation.getOperation();
             Preconditions.checkState(
                     operation.charAt(operation.length() - 1) == '\n',
                     "Bulk operations must end with newline");

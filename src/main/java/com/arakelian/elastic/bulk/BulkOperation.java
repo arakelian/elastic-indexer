@@ -102,9 +102,9 @@ public abstract class BulkOperation {
     @Nullable
     @Value.Derived
     @Value.Auxiliary
-    public String getCompactSource() {
-        final String source = getSource();
-        if (source != null && source.indexOf('\n') != -1) {
+    public CharSequence getCompactSource() {
+        final CharSequence source = getSource();
+        if (source != null && StringUtils.indexOf(source, '\n') != -1) {
             return JsonFilter.compactQuietly(source);
         }
         return source;
@@ -130,13 +130,25 @@ public abstract class BulkOperation {
 
     @Value.Derived
     @Value.Auxiliary
-    public String getOperation() {
-        final StringBuilder buf = new StringBuilder();
-        addActionAndMetadata(buf);
+    public CharSequence getOperation() {
+        final CharSequence source;
         if (getAction().hasSource()) {
-            buf.append(getCompactSource()).append('\n');
+            source = getCompactSource();
+        } else {
+            source = null;
         }
-        return buf.toString();
+
+        // try to pre-allocate buffer large enough to hold operation
+        final int size = BulkIndexer.roundAllocation(128 + //
+                (source != null ? source.length() : 0));
+
+        final StringBuilder buf = new StringBuilder(size);
+        addActionAndMetadata(buf);
+
+        if (source != null) {
+            buf.append(source).append('\n');
+        }
+        return buf;
     }
 
     /**
@@ -146,7 +158,7 @@ public abstract class BulkOperation {
      */
     @Nullable
     @Value.Auxiliary
-    public abstract String getSource();
+    public abstract CharSequence getSource();
 
     /**
      * Returns mapping type within index.
@@ -201,10 +213,10 @@ public abstract class BulkOperation {
     @Value.Check
     protected void checkSource() {
         if (getAction().hasSource()) {
-            final String source = getCompactSource();
+            final CharSequence source = getCompactSource();
             Preconditions.checkState(source != null && source.length() != 0, "Source must be non-empty");
             Preconditions.checkState(
-                    source.indexOf('\n') == -1,
+                    StringUtils.indexOf(source, '\n') == -1,
                     "Newlines are not allowed in source JSON document when using Elastic bulk API");
             Preconditions.checkState(
                     !StringUtils.equals(getType(), Mapping._DEFAULT_),

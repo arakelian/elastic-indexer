@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,9 +44,9 @@ import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
 import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
 import com.arakelian.elastic.refresh.RefreshLimiter;
-import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 
@@ -56,6 +58,9 @@ public abstract class AbstractElasticTest {
     public static final String DEFAULT_TYPE = "test";
 
     private DefaultRefreshLimiter refreshLimiter;
+
+    @Rule
+    public TestName testName = new TestName();
 
     @Before
     public final void createRefreshLimiter() {
@@ -70,6 +75,11 @@ public abstract class AbstractElasticTest {
     @After
     public final void destroyRefreshLimiter() {
         refreshLimiter.close();
+    }
+
+    @Before
+    public final void startTest() {
+        LOGGER.info("Starting test: {}", testName.getMethodName());
     }
 
     protected final void assertCreateIndex(final Index index) {

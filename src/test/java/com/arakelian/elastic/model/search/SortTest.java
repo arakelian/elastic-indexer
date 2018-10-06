@@ -73,9 +73,9 @@ public class SortTest {
 
     @Test
     public void testSorts() {
-        final String actual = JacksonUtils.toString(
-                writer -> new WriteSearchVisitor(writer, VersionComponents.of(5, 0))
-                        .writeSorts(COMPLEX_SORT));
+        final String actual = JacksonUtils.toCharSequence(
+                writer -> new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSorts(COMPLEX_SORT))
+                .toString();
         JsonAssert.assertJsonEquals(
                 "[\"field\",\"field\",{\"field\":\"desc\"},{\"field\":{\"order\":\"desc\",\"mode\":\"max\"}}]",
                 actual);

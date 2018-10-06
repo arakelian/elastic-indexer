@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.elastic.doc.filters.TokenChain;
@@ -99,7 +100,7 @@ public class ElasticDocBuilder {
         }
 
         @Override
-        public String writeDocumentAsJson() {
+        public CharSequence writeDocumentAsJson() {
             return ElasticDocBuilder.this.writeDocumentAsJson(false);
         }
     }
@@ -134,7 +135,7 @@ public class ElasticDocBuilder {
                 .build();
     }
 
-    public String build(final JsonNode root) throws ElasticDocException {
+    public CharSequence build(final JsonNode root) throws ElasticDocException {
         lock.lock();
         try {
             final ElasticDocImpl doc = new ElasticDocImpl();
@@ -157,7 +158,7 @@ public class ElasticDocBuilder {
                     plugin.completed(doc);
                 }
 
-                final String json = writeDocumentAsJson(config.isCompact());
+                final CharSequence json = writeDocumentAsJson(config.isCompact());
                 return json;
             } catch (final IllegalArgumentException | IllegalStateException e) {
                 throw new ElasticDocException("Unable to build document", e);
@@ -169,11 +170,11 @@ public class ElasticDocBuilder {
         }
     }
 
-    public String build(final String json) throws ElasticDocException {
+    public CharSequence build(final CharSequence json) throws ElasticDocException {
         JsonNode node;
         try {
             Preconditions.checkArgument(json != null, "json must be non-null");
-            node = mapper.readTree(json);
+            node = mapper.readTree(new CharSequenceReader(json));
         } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
             throw new ElasticDocException("Unable to parse source document", e);
         }
@@ -380,7 +381,7 @@ public class ElasticDocBuilder {
         });
     }
 
-    protected String writeDocumentAsJson(final boolean compact) throws ElasticDocException {
+    protected CharSequence writeDocumentAsJson(final boolean compact) throws ElasticDocException {
         try {
             // note: we convert document to a "regular" map so that single-value fields are not
             // rendered as arrays; for cosmetic purposes, we also rearrange the map keys to align

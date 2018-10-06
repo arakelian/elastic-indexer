@@ -71,5 +71,5 @@ public interface ElasticDoc {
      *
      * @return a rendering of the current Elastic document in JSON format.
      */
-    public String writeDocumentAsJson();
+    public CharSequence writeDocumentAsJson();
 }
