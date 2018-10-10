@@ -161,11 +161,7 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
     @Value.Default
     public Function<T, String> getJson() {
         return document -> {
-            try {
-                return JacksonUtils.toString(document, false);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            return JacksonUtils.toStringSafe(document, false);
         };
     }
 

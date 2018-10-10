@@ -76,14 +76,6 @@ import com.google.common.util.concurrent.MoreExecutors;
  * Index API.
  */
 public class BulkIndexer implements Closeable {
-    private static final int ONE_KB = 1024;
-
-    public static int roundAllocation(int bytes) {
-        // JVM will have an easier time with free blocks if they're
-        // the same size
-        return ((bytes + (ONE_KB - 1)) / ONE_KB) * ONE_KB;
-    }
-
     /**
      * Represents a single, asynchronous flushing of bulk operations to the Elastic Bulk API.
      */
@@ -152,7 +144,7 @@ public class BulkIndexer implements Closeable {
          *
          * We compute this by concatenating all of the individual operations being performed on each
          * document.
-         * 
+         *
          * Note that we never convert the StringBuilder to a String to unnecessarily allocate extra
          * RAM.
          *
@@ -161,7 +153,7 @@ public class BulkIndexer implements Closeable {
         private CharSequence buildPayload() {
             // to reduce memory fragmentation when indexing billions of records, let's round up
             // memory allocation
-            int size = roundAllocation(totalBytes);
+            final int size = roundAllocation(totalBytes);
 
             // allocate a string
             final StringBuilder buf = new StringBuilder(size);
@@ -339,9 +331,17 @@ public class BulkIndexer implements Closeable {
         }
     }
 
+    private static final int ONE_KB = 1024;
+
     private static final AtomicInteger BULK_ID = new AtomicInteger(0);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkIndexer.class);
+
+    public static int roundAllocation(final int bytes) {
+        // JVM will have an easier time with free blocks if they're
+        // the same size
+        return (bytes + ONE_KB - 1) / ONE_KB * ONE_KB;
+    }
 
     /** Configuration **/
     private final BulkIndexerConfig config;
@@ -562,7 +562,26 @@ public class BulkIndexer implements Closeable {
      */
     public Optional<ListenableFuture<List<BulkResponse>>> delete(final Object document)
             throws RejectedExecutionException, IOException {
-        return combineFutures(add(document, DELETE, false, null));
+        return delete(document, false);
+    }
+
+    /**
+     * Delete specified document from Elastic index.
+     *
+     * @param document
+     *            document to be deleted
+     * @param forceFlush
+     *            true to force an immediate flush of data to Elastic
+     * @return an optional future for retrieving bulk responses associated with this request
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Optional<ListenableFuture<List<BulkResponse>>> delete(
+            final Object document,
+            final boolean forceFlush) throws RejectedExecutionException, IOException {
+        return combineFutures(add(document, DELETE, forceFlush, null));
     }
 
     /**
@@ -642,7 +661,26 @@ public class BulkIndexer implements Closeable {
      */
     public Optional<ListenableFuture<List<BulkResponse>>> index(final Object document)
             throws RejectedExecutionException, IOException {
-        return combineFutures(add(document, INDEX, false, null));
+        return index(document, false);
+    }
+
+    /**
+     * Adds a document to the Elastic index.
+     *
+     * @param document
+     *            document to be indexed
+     * @param forceFlush
+     *            true to force an immediate flush of data to Elastic
+     * @return an optional Future for retrieving bulk responses associated with this request.
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Optional<ListenableFuture<List<BulkResponse>>> index(
+            final Object document,
+            final boolean forceFlush) throws RejectedExecutionException, IOException {
+        return combineFutures(add(document, INDEX, forceFlush, null));
     }
 
     /**
@@ -670,7 +708,7 @@ public class BulkIndexer implements Closeable {
      * @param action
      *            action to be performed on document
      * @param forceFlush
-     *            TODO
+     *            true to force an immediate flush of data to Elastic
      * @throws RejectedExecutionException
      *             if indexer is closed or background queue is full
      * @throws IOException

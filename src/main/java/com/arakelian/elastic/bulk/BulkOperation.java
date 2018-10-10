@@ -165,7 +165,11 @@ public abstract class BulkOperation {
      *
      * @return mapping type within index.
      */
-    public abstract String getType();
+    @Value.Default
+    public String getType() {
+        // not meaningful for Elastic 7+
+        return "_doc";
+    }
 
     @Nullable
     public abstract Long getVersion();

@@ -50,7 +50,7 @@ public class ComputeDigestTest {
     private ComputeDigest plugin;
 
     @Before
-    public void createBuilder() throws IOException {
+    public void createBuilder() {
         plugin = new ComputeDigest(ImmutableComputeDigestConfig.builder() //
                 .algorithm("MD5") //
                 .fieldName(CRC_FIELD) //
@@ -63,7 +63,7 @@ public class ComputeDigestTest {
                 .addField(ImmutableField.builder().name(EXCLUDE_FIELD).build()) //
                 .build();
 
-        LOGGER.info("Mapping: \n{}", JacksonUtils.toString(mapping, true));
+        LOGGER.info("Mapping: \n{}", JacksonUtils.toStringSafe(mapping, true));
     }
 
     @Test

@@ -337,14 +337,14 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected void assertIndexWithInternalVersion(
             final Index index,
             final Person person,
-            final long expectedVersion) throws IOException {
+            final long expectedVersion) {
         // test default versioning
         final IndexedDocument response = assertSuccessful( //
                 elasticClient.indexDocument(
                         index.getName(), //
                         DEFAULT_TYPE, //
                         person.getId(), //
-                        JacksonUtils.toString(person, false)));
+                        JacksonUtils.toStringSafe(person, false)));
 
         assertEquals(index.getName(), response.getIndex());
         assertEquals(DEFAULT_TYPE, response.getType());
