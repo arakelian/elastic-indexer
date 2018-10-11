@@ -22,6 +22,7 @@ import java.io.Serializable;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.enums.SortMode;
 import com.arakelian.elastic.model.enums.SortOrder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -33,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableSort.class)
 @JsonDeserialize(builder = ImmutableSort.Builder.class)
-@JsonPropertyOrder({ "field", "order", "mode" })
+@JsonPropertyOrder({ "field", "order", "unmapped_type", "mode" })
 public interface Sort extends Serializable {
     public static Sort of(final String name) {
         return ImmutableSort.builder().fieldName(name).build();
@@ -49,6 +50,17 @@ public interface Sort extends Serializable {
     @Nullable
     public SortMode getMode();
 
+    /**
+     * Returns the field type to emit when there is no mapping associated with a field.
+     * 
+     * Counterintuitively, this can happen when the Elastic index is empty.
+     * 
+     * @return the field type to emit when there is no mapping associated with a field.
+     */
+    @Nullable
+    @JsonProperty("unmapped_type")
+    public Field.Type getUnmappedType();
+
     @Value.Default
     public default SortOrder getOrder() {
         return SortOrder.ASC;
@@ -58,6 +70,6 @@ public interface Sort extends Serializable {
     @Value.Derived
     @Value.Auxiliary
     public default boolean isDefaults() {
-        return getOrder() == SortOrder.ASC && getMode() == null;
+        return getOrder() == SortOrder.ASC && getMode() == null && getUnmappedType() == null;
     }
 }

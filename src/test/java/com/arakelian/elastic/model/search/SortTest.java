@@ -21,9 +21,12 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.enums.SortMode;
 import com.arakelian.elastic.model.enums.SortOrder;
 import com.arakelian.elastic.search.WriteSearchVisitor;
@@ -34,6 +37,8 @@ import com.google.common.collect.ImmutableList;
 import net.javacrumbs.jsonunit.JsonAssert;
 
 public class SortTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SortTest.class);
+
     public static final Sort FIELD_ONLY = ImmutableSort.builder() //
             .fieldName("field") //
             .build();
@@ -52,6 +57,7 @@ public class SortTest {
             .fieldName("field") //
             .order(SortOrder.DESC) //
             .mode(SortMode.MAX) //
+            .unmappedType(Type.DATE) //
             .build();
 
     @SuppressWarnings("MutableConstantField")
@@ -76,8 +82,20 @@ public class SortTest {
         final String actual = JacksonUtils.toCharSequence(
                 writer -> new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSorts(COMPLEX_SORT))
                 .toString();
-        JsonAssert.assertJsonEquals(
-                "[\"field\",\"field\",{\"field\":\"desc\"},{\"field\":{\"order\":\"desc\",\"mode\":\"max\"}}]",
-                actual);
+        LOGGER.info("Search visitor: {}", actual);
+        JsonAssert.assertJsonEquals("[\n" + //
+                "   \"field\",\n" + //
+                "   \"field\",\n" + //
+                "   {\n" + //
+                "      \"field\":\"desc\"\n" + //
+                "   },\n" + //
+                "   {\n" + //
+                "      \"field\":{\n" + //
+                "         \"order\":\"desc\",\n" + //
+                "         \"mode\":\"max\",\n" + //
+                "         \"unmapped_type\":\"date\"\n" + //
+                "      }\n" + //
+                "   }\n" + //
+                "]", actual);
     }
 }
