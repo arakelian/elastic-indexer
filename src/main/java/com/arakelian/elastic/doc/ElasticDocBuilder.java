@@ -135,16 +135,33 @@ public class ElasticDocBuilder {
                 .build();
     }
 
-    public CharSequence build(final JsonNode root) throws ElasticDocException {
+    public CharSequence build(final CharSequence json) throws ElasticDocException {
+        JsonNode node;
+        try {
+            Preconditions.checkArgument(json != null, "json must be non-null");
+            node = mapper.readTree(new CharSequenceReader(json));
+        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
+            throw new ElasticDocException("Unable to parse source document", e);
+        }
+
+        return build(node);
+    }
+
+    public CharSequence build(final JsonNode raw) throws ElasticDocException {
         lock.lock();
         try {
             final ElasticDocImpl doc = new ElasticDocImpl();
             final List<ElasticDocBuilderPlugin> plugins = config.getPlugins();
             try {
+                // give plugins a chance to modify raw JSON, or initialize document
+                for (final ElasticDocBuilderPlugin plugin : plugins) {
+                    plugin.before(raw, doc);
+                }
+
                 // map document fields to one or more index fields
                 for (final JsonSelector sourcePath : config.getSourcePaths()) {
                     final JsonPath jsonPath = sourcePath.getJsonPath();
-                    final JsonNode node = jsonPath.read(root, jsonPathConfig);
+                    final JsonNode node = jsonPath.read(raw, jsonPathConfig);
 
                     // we've arrived at path! put values into document
                     final Collection<Field> targets = config.getFieldsTargetedBy(sourcePath);
@@ -155,7 +172,7 @@ public class ElasticDocBuilder {
 
                 // give plugins a chance to augment document
                 for (final ElasticDocBuilderPlugin plugin : plugins) {
-                    plugin.completed(doc);
+                    plugin.after(raw, doc);
                 }
 
                 final CharSequence json = writeDocumentAsJson(config.isCompact());
@@ -168,18 +185,6 @@ public class ElasticDocBuilder {
         } finally {
             lock.unlock();
         }
-    }
-
-    public CharSequence build(final CharSequence json) throws ElasticDocException {
-        JsonNode node;
-        try {
-            Preconditions.checkArgument(json != null, "json must be non-null");
-            node = mapper.readTree(new CharSequenceReader(json));
-        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
-            throw new ElasticDocException("Unable to parse source document", e);
-        }
-
-        return build(node);
     }
 
     private void buildDocumentMap(final String fieldName, final Map<String, Object> map) {

@@ -114,7 +114,7 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
     }
 
     @Override
-    public void completed(final ElasticDoc doc) throws ElasticDocException {
+    public void after(final JsonNode raw, final ElasticDoc doc) throws ElasticDocException {
         // we will compute digest on serialized Elastic document
         JsonNode root;
         try {

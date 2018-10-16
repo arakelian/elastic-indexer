@@ -19,9 +19,15 @@ package com.arakelian.elastic.doc.plugins;
 
 import com.arakelian.elastic.doc.ElasticDoc;
 import com.arakelian.elastic.doc.ElasticDocException;
+import com.fasterxml.jackson.databind.JsonNode;
 
+@SuppressWarnings("unused")
 public interface ElasticDocBuilderPlugin {
-    public void completed(final ElasticDoc doc) throws ElasticDocException;
+    public default void before(final JsonNode raw, final ElasticDoc doc) {
+    }
+
+    public default void after(final JsonNode raw, final ElasticDoc doc) throws ElasticDocException {
+    }
 
     public String getName();
 }
