@@ -92,16 +92,19 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
         final String id = getId().apply(document);
 
         // version
-        ZonedDateTime versionDate = getVersion().apply(document);
+        final ZonedDateTime versionDate;
+        if (action == Action.DELETE) {
+            versionDate = getDeleteVersion().apply(document);
+        } else {
+            versionDate = getVersion().apply(document);
+        }
 
         final Long version;
         if (versionDate == null) {
             // versioning is disabled
             version = null;
         } else {
-            if (action == Action.DELETE) {
-                versionDate = getDeleteVersion().apply(document);
-            }
+            // convert the version date provided to UTC Epoch milliseconds
             final ZonedDateTime utc = DateUtils.toUtc(versionDate);
             version = Long.valueOf(utc.toInstant().toEpochMilli());
         }
