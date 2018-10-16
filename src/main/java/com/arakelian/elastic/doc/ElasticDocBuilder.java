@@ -136,14 +136,7 @@ public class ElasticDocBuilder {
     }
 
     public CharSequence build(final CharSequence json) throws ElasticDocException {
-        JsonNode node;
-        try {
-            Preconditions.checkArgument(json != null, "json must be non-null");
-            node = mapper.readTree(new CharSequenceReader(json));
-        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
-            throw new ElasticDocException("Unable to parse source document", e);
-        }
-
+        final JsonNode node = readValue(json);
         return build(node);
     }
 
@@ -296,6 +289,18 @@ public class ElasticDocBuilder {
                 break;
             }
         }
+    }
+
+    private JsonNode readValue(final CharSequence json) {
+        Preconditions.checkArgument(json != null, "json must be non-null");
+
+        JsonNode node;
+        try {
+            node = mapper.readTree(new CharSequenceReader(json));
+        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
+            throw new ElasticDocException("Unable to parse source document", e);
+        }
+        return node;
     }
 
     /**
