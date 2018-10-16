@@ -188,7 +188,7 @@ public class BulkIndexer implements Closeable {
 
     /**
      * Callback that handles response from a single {@link Batch}. This listener must iterate the
-     * batch and ensure that all operaions are marked as successful or failed. It may also elect to
+     * batch and ensure that all operations are marked as successful or failed. It may also elect to
      * retry an individual operation if it's possible.
      */
     private final class BatchListener implements Runnable {
@@ -234,14 +234,14 @@ public class BulkIndexer implements Closeable {
                 if (status >= 200 && status < 300) {
                     // operation was successful
                     successful.incrementAndGet();
-                    listener.onSuccess(op);
+                    listener.onSuccess(op, status);
                     continue;
                 }
 
                 // ignore certain 404 errors
                 if (op.getAction() == DELETE && status == 404) {
                     successful.incrementAndGet();
-                    listener.onSuccess(op);
+                    listener.onSuccess(op, status);
                     continue;
                 }
 
@@ -249,6 +249,9 @@ public class BulkIndexer implements Closeable {
                 if (isClosed() || !ElasticClientUtils.retryIfResponse(status)) {
                     // operation failed and is not retryable
                     failed.incrementAndGet();
+                    if (status == 409) {
+                        versionConflicts.incrementAndGet();
+                    }
                     listener.onFailure(op, response);
                     continue;
                 }
@@ -387,6 +390,9 @@ public class BulkIndexer implements Closeable {
 
     /** Number of documents that failed indexing **/
     private final AtomicInteger failed = new AtomicInteger();
+
+    /** Number of documents that failed indexing due to version conflicts **/
+    private final AtomicInteger versionConflicts = new AtomicInteger();
 
     /** Shutdown hook **/
     private final Thread shutdownHook;
@@ -618,6 +624,7 @@ public class BulkIndexer implements Closeable {
                 .totalBytes(totalBytes.get()) //
                 .successful(successful.get()) //
                 .failed(failed.get()) //
+                .versionConflicts(versionConflicts.get()) //
                 .build();
     }
 
