@@ -24,7 +24,6 @@ import com.arakelian.core.utils.ExecutorUtils;
 import com.arakelian.elastic.bulk.BulkOperation;
 import com.arakelian.elastic.bulk.event.IndexerEvent.Status;
 import com.arakelian.elastic.model.BulkIndexerStats;
-import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 import com.google.common.base.Preconditions;
 import com.lmax.disruptor.BlockingWaitStrategy;
@@ -79,46 +78,46 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
 
     @Override
     public void onFailure(final BulkOperation op, final BulkOperationResponse response) {
-        failed(op);
-    }
-
-    @Override
-    public void onFailure(final BulkOperation op, final BulkResponse result) {
-        failed(op);
+        failed(op, response.getStatus());
     }
 
     @Override
     public void onFailure(final BulkOperation op, final Throwable t) {
-        failed(op);
+        failed(op, null);
     }
 
     @Override
-    public void onSuccess(final BulkOperation op) {
+    public void onSuccess(BulkOperation op, int statusCode) {
         Preconditions.checkArgument(op != null, "op must be non-null");
         final long sequence = ringBuffer.next();
         try {
             final IndexerEvent event = ringBuffer.get(sequence);
-            initialize(event, op, Status.SUCCEEDED);
+            initialize(event, op, Status.SUCCEEDED, statusCode);
         } finally {
             ringBuffer.publish(sequence);
         }
     }
 
-    private void failed(final BulkOperation op) {
+    private void failed(final BulkOperation op, final Integer statusCode) {
         Preconditions.checkArgument(op != null, "op must be non-null");
         final long sequence = ringBuffer.next();
         try {
             final IndexerEvent event = ringBuffer.get(sequence);
-            initialize(event, op, Status.FAILED);
+            initialize(event, op, Status.FAILED, statusCode);
         } finally {
             ringBuffer.publish(sequence);
         }
     }
 
-    private void initialize(final IndexerEvent event, final BulkOperation op, final Status status) {
+    private void initialize(
+            final IndexerEvent event,
+            final BulkOperation op,
+            final Status status,
+            final Integer statusCode) {
         // status will get set by caller
         event.reset();
         event.setStatus(status);
+        event.setStatusCode(statusCode);
         event.setAction(op.getAction());
         event.setId(op.getId());
         event.setIndex(op.getIndex());

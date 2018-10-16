@@ -21,7 +21,6 @@ import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkOperation;
 import com.arakelian.elastic.model.BulkIndexerConfig;
 import com.arakelian.elastic.model.BulkIndexerStats;
-import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 
 /**
@@ -53,21 +52,6 @@ public interface IndexerListener {
     void onFailure(BulkOperation op, BulkOperationResponse response);
 
     /**
-     * Invoked when a {@code BulkOperation} fails because the entire request to the Elastic Bulk API
-     * failed, always returning an HTTP status code outside the 2xx range.
-     *
-     * Note: The bulk API request would been retried according to configured
-     * {@link BulkIndexerConfig#getRetryer()} policy.
-     *
-     * @param op
-     *            bulk operation that failed
-     * @param result
-     *            the response from the Elastic Bulk API, always with status code outside the 2xx
-     *            range.
-     */
-    void onFailure(BulkOperation op, BulkResponse result);
-
-    /**
      * Invoked when a {@code BulkOperation} fails because the entire request failed, usually due to
      * an IOException. It's possible that the Elastic Bulk API never received the request.
      *
@@ -88,6 +72,8 @@ public interface IndexerListener {
      *
      * @param op
      *            bulk operation
+     * @param statusCode
+     *            HTTP status code
      */
-    void onSuccess(BulkOperation op);
+    void onSuccess(BulkOperation op, int statusCode);
 }

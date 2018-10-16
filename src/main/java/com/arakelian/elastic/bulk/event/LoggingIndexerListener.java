@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.bulk.BulkOperation;
 import com.arakelian.elastic.model.BulkIndexerStats;
-import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.BulkResponse.BulkOperationResponse;
 
 public final class LoggingIndexerListener implements IndexerListener {
@@ -47,17 +46,12 @@ public final class LoggingIndexerListener implements IndexerListener {
     }
 
     @Override
-    public void onFailure(final BulkOperation op, final BulkResponse result) {
-        LOGGER.debug("Bulk operation failed: {}", op);
-    }
-
-    @Override
     public void onFailure(final BulkOperation op, final Throwable t) {
         LOGGER.debug("Bulk operation failed: {}", op);
     }
 
     @Override
-    public void onSuccess(final BulkOperation op) {
-        LOGGER.debug("Bulk operation succeeded: {}", op);
+    public void onSuccess(BulkOperation op, int statusCode) {
+        LOGGER.debug("Bulk operation succeeded ({}): {}", statusCode, op);
     }
 }

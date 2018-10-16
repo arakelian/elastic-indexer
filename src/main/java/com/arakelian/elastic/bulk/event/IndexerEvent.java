@@ -34,6 +34,7 @@ public class IndexerEvent {
     private Long version;
     private VersionType versionType;
     private Status status;
+    private Integer statusCode;
 
     public final Action getAction() {
         return action;
@@ -49,6 +50,10 @@ public class IndexerEvent {
 
     public final Status getStatus() {
         return status;
+    }
+
+    public final Integer getStatusCode() {
+        return statusCode;
     }
 
     public final String getType() {
@@ -71,6 +76,7 @@ public class IndexerEvent {
         version = null;
         versionType = null;
         status = null;
+        statusCode = null;
     }
 
     public final void setAction(final Action action) {
@@ -87,6 +93,10 @@ public class IndexerEvent {
 
     public final void setStatus(final Status status) {
         this.status = status;
+    }
+
+    public final void setStatusCode(final Integer statusCode) {
+        this.statusCode = statusCode;
     }
 
     public final void setType(final String type) {
@@ -111,6 +121,7 @@ public class IndexerEvent {
                 .add("version", version) //
                 .add("versionType", versionType) //
                 .add("status", status) //
+                .add("statusCode", statusCode) //
                 .toString();
     }
 }
