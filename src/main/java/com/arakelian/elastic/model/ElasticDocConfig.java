@@ -144,7 +144,7 @@ public abstract class ElasticDocConfig {
             if (!skip.contains(path)) {
                 result.put(path, field);
             } else {
-                LOGGER.info(
+                LOGGER.trace(
                         "SKIPPING target '{}' selector '{}' since another field has it along with copy_to:'{}'",
                         field.getName(),
                         path.getSelector(),
