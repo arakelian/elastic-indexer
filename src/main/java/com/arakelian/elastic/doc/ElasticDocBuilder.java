@@ -291,7 +291,7 @@ public class ElasticDocBuilder {
         }
     }
 
-    private JsonNode readValue(final CharSequence json) {
+    public JsonNode readValue(final CharSequence json) {
         Preconditions.checkArgument(json != null, "json must be non-null");
 
         JsonNode node;
