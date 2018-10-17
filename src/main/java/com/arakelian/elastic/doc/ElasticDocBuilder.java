@@ -42,6 +42,7 @@ import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
@@ -66,7 +67,7 @@ public class ElasticDocBuilder {
                     config.getMapping().hasField(field),
                     "Field \"%s\" is not part of mapping",
                     field);
-            return document.get(field);
+            return Collections.unmodifiableCollection(document.get(field));
         }
 
         @Override
@@ -76,12 +77,15 @@ public class ElasticDocBuilder {
 
         @Override
         public Map<String, Object> getDocumentAsMap() {
-            return ElasticDocBuilder.this.getDocumentAsMap();
+            // modification should be via 'put'
+            return Collections.unmodifiableMap(ElasticDocBuilder.this.getDocumentAsMap());
         }
 
         @Override
         public Set<String> getFields() {
-            return document.keySet();
+            // we make a copy so that if client loops over it, and make modifications to document,
+            // that we don't get a ConcurrentModificationException
+            return ImmutableSet.copyOf(document.keySet());
         }
 
         @Override

@@ -109,8 +109,8 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
     }
 
     public ComputeDigest(final ComputeDigestConfig config, final String name) {
-        this.config = Preconditions.checkNotNull(config);
-        this.name = Preconditions.checkNotNull(name);
+        this.config = Preconditions.checkNotNull(config,"config must be non-null");
+        this.name = Preconditions.checkNotNull(name,"name must be non-null");
     }
 
     @Override
