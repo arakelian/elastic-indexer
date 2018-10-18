@@ -128,7 +128,7 @@ public class DefaultValueProducer implements ValueProducer {
                 if (value != null) {
                     consumer.accept(value);
                 }
-            } catch (DateTimeParseException e) {
+            } catch (final DateTimeParseException e) {
                 malformed(field, node, e);
             }
         }

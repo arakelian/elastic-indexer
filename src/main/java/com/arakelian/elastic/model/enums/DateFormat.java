@@ -285,15 +285,15 @@ public enum DateFormat {
     private static final Map<String, DateFormat> NAMES;
 
     static {
-        Map<String, DateFormat> names = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (DateFormat df : DateFormat.values()) {
+        final Map<String, DateFormat> names = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (final DateFormat df : DateFormat.values()) {
             names.put(df.name(), df);
             names.put(df.name().replaceAll("_", ""), df);
         }
         NAMES = names;
     }
 
-    public static DateFormat of(String value) {
+    public static DateFormat of(final String value) {
         Preconditions.checkArgument(NAMES.containsKey(value), "No DateFormat with name %s", value);
         return NAMES.get(value);
     }

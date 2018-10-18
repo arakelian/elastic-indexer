@@ -87,7 +87,7 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
     }
 
     @Override
-    public void onSuccess(BulkOperation op, int statusCode) {
+    public void onSuccess(final BulkOperation op, final int statusCode) {
         Preconditions.checkArgument(op != null, "op must be non-null");
         final long sequence = ringBuffer.next();
         try {

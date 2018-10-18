@@ -158,8 +158,12 @@ public interface ElasticClient {
      * @throws ElasticException
      *             if there an exception making HTTP request
      */
-    IndexedDocument indexDocument(String name, String type, String id, CharSequence document, long epochMillisUtc)
-            throws ElasticException;
+    IndexedDocument indexDocument(
+            String name,
+            String type,
+            String id,
+            CharSequence document,
+            long epochMillisUtc) throws ElasticException;
 
     /**
      * Checks to see if specified index exists

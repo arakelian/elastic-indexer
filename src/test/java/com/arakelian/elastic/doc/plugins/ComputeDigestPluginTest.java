@@ -39,19 +39,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
 
-public class ComputeDigestTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ComputeDigestTest.class);
+public class ComputeDigestPluginTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ComputeDigestPluginTest.class);
 
     private static final String CRC_FIELD = "_crc";
     private static final String EXCLUDE_FIELD = "exclude";
 
     private Mapping mapping;
 
-    private ComputeDigest plugin;
+    private ComputeDigestPlugin plugin;
 
     @Before
     public void createBuilder() {
-        plugin = new ComputeDigest(ImmutableComputeDigestConfig.builder() //
+        plugin = new ComputeDigestPlugin(ImmutableComputeDigestConfig.builder() //
                 .algorithm("MD5") //
                 .fieldName(CRC_FIELD) //
                 .addExcludeField(EXCLUDE_FIELD) //

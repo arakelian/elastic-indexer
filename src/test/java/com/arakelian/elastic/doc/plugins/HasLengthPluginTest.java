@@ -36,22 +36,25 @@ import com.arakelian.json.JsonFilter;
 
 import net.javacrumbs.jsonunit.JsonAssert;
 
-public class LengthyTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LengthyTest.class);
+public class HasLengthPluginTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HasLengthPluginTest.class);
 
     private static final String INDICATOR_FIELD = "_indicator";
 
     private Mapping mapping;
 
-    private Lengthy plugin;
+    private HasLengthPlugin plugin;
 
     private ElasticDocBuilder docBuilder;
 
     @Before
     public void createBuilder() {
-        plugin = new Lengthy(ImmutableLengthyConfig.builder() //
-                .indicator(INDICATOR_FIELD) //
-                .build());
+        plugin = new HasLengthPlugin( //
+                ImmutableHasLengthConfig.builder() //
+                        .indicator(INDICATOR_FIELD) //
+                        .predicate(field -> Boolean.TRUE.equals(field.isDocValues())) //
+                        .length(50) //
+                        .build());
 
         mapping = ImmutableMapping.builder() //
                 .addField(
@@ -108,8 +111,8 @@ public class LengthyTest {
     public void testLengthyCity() throws IOException {
         assertLengthyEquals( //
                 "{\"_indicator\" : [\n" + //
-                        "    \"HAS_LENGTHY\",\n" + //
-                        "    \"HAS_LENGTHY_CITY\"\n" + //
+                        "    \"HAS_LENGTH_50\",\n" + //
+                        "    \"HAS_LENGTH_50__CITY\"\n" + //
                         "  ]}", //
                 "{\n" + //
                         "   \"name\":\"123456789+123456789+123456789+123456789+123456789+\",\n" + //
@@ -137,9 +140,9 @@ public class LengthyTest {
     public void testMultipleLengthy() throws IOException {
         assertLengthyEquals( //
                 "{\"_indicator\" : [\n" + //
-                        "    \"HAS_LENGTHY\",\n" + //
-                        "    \"HAS_LENGTHY_CITY\",\n" + //
-                        "    \"HAS_LENGTHY_NAME\"\n" + //
+                        "    \"HAS_LENGTH_50\",\n" + //
+                        "    \"HAS_LENGTH_50__CITY\",\n" + //
+                        "    \"HAS_LENGTH_50__NAME\"\n" + //
                         "  ]}", //
                 "{\n" + //
                         "   \"name\":\"123456789+123456789+123456789+123456789+123456789+123456789\",\n" + //

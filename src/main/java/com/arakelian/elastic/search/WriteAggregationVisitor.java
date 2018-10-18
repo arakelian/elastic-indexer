@@ -100,22 +100,6 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
     }
 
     @Override
-    public boolean enterGeoHashGrid(GeoHashGridAggregation agg) {
-        try {
-            writer.writeFieldName("geohash_grid");
-            writer.writeStartObject();
-            writeValueSource(agg);
-            writeFieldValue("precision", agg.getPrecision());
-            writeFieldValue("size", agg.getRequiredSize());
-            writeFieldValue("shard_size", agg.getShardSize());
-            writer.writeEndObject(); // geohash_grid
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return false;
-    }
-
-    @Override
     public boolean enterDateRange(final DateRangeAggregation agg) {
         try {
             writer.writeFieldName("date_range");
@@ -163,6 +147,22 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writer.writeStartObject();
             writeValueSource(agg);
             writer.writeEndObject(); // geo_centroid
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enterGeoHashGrid(final GeoHashGridAggregation agg) {
+        try {
+            writer.writeFieldName("geohash_grid");
+            writer.writeStartObject();
+            writeValueSource(agg);
+            writeFieldValue("precision", agg.getPrecision());
+            writeFieldValue("size", agg.getRequiredSize());
+            writeFieldValue("shard_size", agg.getShardSize());
+            writer.writeEndObject(); // geohash_grid
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

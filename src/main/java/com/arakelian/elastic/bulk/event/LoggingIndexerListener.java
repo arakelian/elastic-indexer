@@ -51,7 +51,7 @@ public final class LoggingIndexerListener implements IndexerListener {
     }
 
     @Override
-    public void onSuccess(BulkOperation op, int statusCode) {
+    public void onSuccess(final BulkOperation op, final int statusCode) {
         LOGGER.debug("Bulk operation succeeded ({}): {}", statusCode, op);
     }
 }

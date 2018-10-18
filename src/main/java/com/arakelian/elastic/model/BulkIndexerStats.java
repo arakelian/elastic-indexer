@@ -23,8 +23,6 @@ import org.immutables.value.Value;
 public interface BulkIndexerStats {
     public int getFailed();
 
-    public int getVersionConflicts();
-
     public int getRetries();
 
     public int getSubmitted();
@@ -37,4 +35,6 @@ public interface BulkIndexerStats {
     }
 
     public long getTotalBytes();
+
+    public int getVersionConflicts();
 }

@@ -40,6 +40,6 @@ public final class NullIndexerListener implements IndexerListener {
     }
 
     @Override
-    public void onSuccess(BulkOperation op, int statusCode) {
+    public void onSuccess(final BulkOperation op, final int statusCode) {
     }
 }

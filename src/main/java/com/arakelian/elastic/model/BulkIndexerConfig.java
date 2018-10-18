@@ -79,6 +79,11 @@ public abstract class BulkIndexerConfig {
     }
 
     @Value.Default
+    public int getMaxRetries() {
+        return 10;
+    }
+
+    @Value.Default
     public int getQueueSize() {
         // if each flush is 1MB in size, this represents approximately 100MB of RAM
         return 100;
@@ -87,11 +92,6 @@ public abstract class BulkIndexerConfig {
     @Value.Default
     public int getRetryDelayMillis() {
         return 5000;
-    }
-
-    @Value.Default
-    public int getMaxRetries() {
-        return 10;
     }
 
     @Value.Default

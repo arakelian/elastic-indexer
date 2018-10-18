@@ -50,21 +50,21 @@ public interface Sort extends Serializable {
     @Nullable
     public SortMode getMode();
 
+    @Value.Default
+    public default SortOrder getOrder() {
+        return SortOrder.ASC;
+    }
+
     /**
      * Returns the field type to emit when there is no mapping associated with a field.
-     * 
+     *
      * Counterintuitively, this can happen when the Elastic index is empty.
-     * 
+     *
      * @return the field type to emit when there is no mapping associated with a field.
      */
     @Nullable
     @JsonProperty("unmapped_type")
     public Field.Type getUnmappedType();
-
-    @Value.Default
-    public default SortOrder getOrder() {
-        return SortOrder.ASC;
-    }
 
     @JsonIgnore
     @Value.Derived

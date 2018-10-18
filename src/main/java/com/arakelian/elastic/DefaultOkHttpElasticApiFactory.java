@@ -84,7 +84,7 @@ public class DefaultOkHttpElasticApiFactory implements OkHttpElasticApiFactory {
                 final Annotation[] parameterAnnotations,
                 final Annotation[] methodAnnotations,
                 final Retrofit retrofit) {
-            if (type instanceof Class && ((Class<?>) type) == CharSequence.class) {
+            if (type instanceof Class && (Class<?>) type == CharSequence.class) {
                 return CharSequenceConverter.INSTANCE;
             }
             return null;

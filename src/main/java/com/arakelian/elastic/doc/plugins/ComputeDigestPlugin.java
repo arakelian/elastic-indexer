@@ -46,7 +46,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
-public class ComputeDigest implements ElasticDocBuilderPlugin {
+public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
     @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableComputeDigestConfig.class)
     @JsonDeserialize(builder = ImmutableComputeDigestConfig.Builder.class)
@@ -56,6 +56,11 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
             return "MD5";
         }
 
+        /**
+         * Returns a list of field names that should be excluded from the plugin.
+         * 
+         * @return a list of field names that should be excluded from the plugin.
+         */
         @Value.Default
         public default Set<String> getExcludeFields() {
             return ImmutableSet.copyOf(Field.META_FIELDS);
@@ -63,6 +68,11 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
 
         public String getFieldName();
 
+        /**
+         * Returns a list of field names that should be included by the plugin.
+         * 
+         * @return a list of field names that should be included by the plugin.
+         */
         @Value.Default
         public default Set<String> getIncludeFields() {
             return ImmutableSet.of();
@@ -104,13 +114,13 @@ public class ComputeDigest implements ElasticDocBuilderPlugin {
     private final String name;
     private final ComputeDigestConfig config;
 
-    public ComputeDigest(final ComputeDigestConfig config) {
+    public ComputeDigestPlugin(final ComputeDigestConfig config) {
         this(config, "digest");
     }
 
-    public ComputeDigest(final ComputeDigestConfig config, final String name) {
-        this.config = Preconditions.checkNotNull(config,"config must be non-null");
-        this.name = Preconditions.checkNotNull(name,"name must be non-null");
+    public ComputeDigestPlugin(final ComputeDigestConfig config, final String name) {
+        this.config = Preconditions.checkNotNull(config, "config must be non-null");
+        this.name = Preconditions.checkNotNull(name, "name must be non-null");
     }
 
     @Override
