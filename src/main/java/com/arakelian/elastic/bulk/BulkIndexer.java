@@ -361,12 +361,6 @@ public class BulkIndexer implements Closeable {
     /** Executor for automatic flushes **/
     private final ScheduledExecutorService flushExecutor;
 
-    /** Executor for Elastic bulk API call **/
-    private final ListeningExecutorService batchExecutor;
-
-    /** Executor for processing Elastic bulk API response and retrying if needed **/
-    private final ListeningExecutorService bulkResponseExecutor;
-
     /** Bulk operations waiting to be flushed **/
     private final List<BulkOperation> pendingOperations = Lists.newArrayList();
 
@@ -397,6 +391,24 @@ public class BulkIndexer implements Closeable {
     /** Shutdown hook **/
     private final Thread shutdownHook;
 
+    /** Batches that waiting to be processed **/
+    private final LinkedBlockingQueue<Runnable> batchWorkQueue;
+
+    /** Bulk responses that have not been processed **/
+    private final LinkedBlockingQueue<Runnable> bulkResponseWorkQueue;
+
+    /** Executor for Elastic bulk API call **/
+    private final ThreadPoolExecutor batchExecutor;
+
+    /** Wrapper around {@link #batchExecutor} that adds listening capabilities **/
+    private final ListeningExecutorService listeningBatchExecutor;
+
+    /** Executor for processing Elastic bulk API response and retrying if needed **/
+    private final ThreadPoolExecutor bulkResponseExecutor;
+
+    /** Wrapper around {@link #bulkResponseExecutor} that adds listening capabilities **/
+    private final ListeningExecutorService listeningBulkResponseExecutor;
+
     @SuppressWarnings("FutureReturnValueIgnored")
     public BulkIndexer(
             final ElasticClient elasticClient,
@@ -412,22 +424,24 @@ public class BulkIndexer implements Closeable {
                 config.isBlockingQueue() ? new BlockCallerPolicy() : new ThreadPoolExecutor.AbortPolicy();
 
         // calls to Elastic bulk API are asynchronous
-        final ThreadPoolExecutor bulkExecutor = new ThreadPoolExecutor( //
+        batchWorkQueue = new LinkedBlockingQueue<>(config.getQueueSize());
+        batchExecutor = new ThreadPoolExecutor( //
                 1, config.getMaximumThreads(), //
                 0L, TimeUnit.MILLISECONDS, //
-                new LinkedBlockingQueue<>(config.getQueueSize()), //
+                batchWorkQueue, //
                 ExecutorUtils.newThreadFactory(getClass(), "-batch", false), // daemon
                 rejectedExecutionHandler);
-        this.batchExecutor = MoreExecutors.listeningDecorator(bulkExecutor);
+        this.listeningBatchExecutor = MoreExecutors.listeningDecorator(batchExecutor);
 
         // processing of Elastic bulk API responses are asynchronous
-        final ThreadPoolExecutor bulkResponseExecutor = new ThreadPoolExecutor( //
+        bulkResponseWorkQueue = new LinkedBlockingQueue<>(config.getQueueSize());
+        bulkResponseExecutor = new ThreadPoolExecutor( //
                 1, config.getMaximumThreads(), //
                 0L, TimeUnit.MILLISECONDS, //
-                new LinkedBlockingQueue<>(config.getQueueSize()), //
+                bulkResponseWorkQueue, //
                 ExecutorUtils.newThreadFactory(getClass(), "-response", true), // daemon
                 rejectedExecutionHandler);
-        this.bulkResponseExecutor = MoreExecutors.listeningDecorator(bulkResponseExecutor);
+        this.listeningBulkResponseExecutor = MoreExecutors.listeningDecorator(bulkResponseExecutor);
 
         // schedule automatic flushes
         final int automaticFlushMillis = config.getAutomaticFlushMillis();
@@ -500,7 +514,7 @@ public class BulkIndexer implements Closeable {
 
         if (shutdown) {
             // no more flushes allowed
-            final int timeout = config.getShutdownTimeout();
+            final long timeout = config.getShutdownTimeout();
             final TimeUnit unit = config.getShutdownTimeoutUnit();
             if (flushExecutor != null) {
                 ExecutorUtils.shutdown(flushExecutor, timeout, unit, true);
@@ -508,10 +522,10 @@ public class BulkIndexer implements Closeable {
 
             // shutdown batch executor first; we want to ensure that bulk executor queue is
             // emptied before we shutdown the response executor
-            ExecutorUtils.shutdown(batchExecutor, timeout, unit, true);
+            ExecutorUtils.shutdown(listeningBatchExecutor, timeout, unit, true);
 
             // make sure we process any responses
-            ExecutorUtils.shutdown(bulkResponseExecutor, timeout, unit, true);
+            ExecutorUtils.shutdown(listeningBulkResponseExecutor, timeout, unit, true);
 
             // shutdown hook is last thing to go
             ExecutorUtils.removeShutdownHook(shutdownHook);
@@ -697,6 +711,20 @@ public class BulkIndexer implements Closeable {
      */
     public boolean isClosed() {
         return closed.get();
+    }
+
+    /**
+     * Returns true if bulk indexer is currently idle
+     *
+     * @return true if bulk indexer is currently idle
+     */
+    public boolean isIdle() {
+        // testing queues is a little faster, so we do that first
+        final boolean idle = batchWorkQueue.isEmpty() //
+                && bulkResponseWorkQueue.isEmpty() //
+                && batchExecutor.getActiveCount() == 0 //
+                && bulkResponseExecutor.getActiveCount() == 0;
+        return idle;
     }
 
     @Override
@@ -886,7 +914,7 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Submits a batch of bulk updates to the {@link #batchExecutor}.
+     * Submits a batch of bulk updates to the {@link #listeningBatchExecutor}.
      *
      * @param batch
      *            batch to be submitted
@@ -904,7 +932,7 @@ public class BulkIndexer implements Closeable {
         final Stopwatch queued = Stopwatch.createStarted();
         final ListenableFuture<BulkResponse> future;
         try {
-            future = batchExecutor.submit(batch);
+            future = listeningBatchExecutor.submit(batch);
         } catch (final RejectedExecutionException e) {
             // batch is lost and cannot be recovered; increase the queue size, or enable blocking
             // queue in the configuration
@@ -913,7 +941,7 @@ public class BulkIndexer implements Closeable {
         }
 
         // process responses asynchronously too
-        future.addListener(new BatchListener(future, batch, queued), bulkResponseExecutor);
+        future.addListener(new BatchListener(future, batch, queued), listeningBulkResponseExecutor);
         return future;
     }
 }
