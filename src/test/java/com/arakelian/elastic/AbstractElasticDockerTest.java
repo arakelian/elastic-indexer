@@ -106,12 +106,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "5.3.3", //
                 // "5.4.3", //
                 // "5.5.3", //
-                // "5.6.11", //
+                // "5.6.12", //
                 // "6.0.1", //
                 // "6.1.4", //
                 // "6.2.4", //
                 // "6.3.2", //
-                "6.4.0" //
+                "6.4.2" //
         };
     }
 
