@@ -24,11 +24,39 @@ plugins {
 
     // useful utilities
     id "com.arakelian.multitool" version "1.5.3"
+    
+    // for antlr tasks
+    id 'antlr'
 }
 
 group   = 'com.arakelian'
 
 task wrapper(type: Wrapper) { gradleVersion = '4.10' }
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ["src/main/java", "src/lexer/java", "src/parser/java"]
+        }
+    }
+    lexer {
+        antlr {
+            srcDirs = ['src/lexer/antlr']
+        }
+    }
+}
+
+generateGrammarSource {
+    // overwrites anything in src/parser/java!
+    outputDirectory = new File(projectDir, 'src/parser/java')
+    arguments += ["-visitor","-lib","src/lexer/java/com/arakelian/elastic/search/parser"]
+}
+
+generateLexerGrammarSource {
+    outputDirectory = new File(projectDir, 'src/lexer/java')
+}
+
+generateGrammarSource.dependsOn generateLexerGrammarSource
 
 multitool {
     relocates += [
@@ -67,7 +95,7 @@ dependencies {
     errorprone 'com.google.errorprone:error_prone_core:2.3.1'
     
     compile 'com.arakelian:more-commons:1.9.7'
-    compile 'com.arakelian:jackson-utils:1.10.4'
+    compile 'com.arakelian:jackson-utils:1.10.5'
     compile 'com.arakelian:json-filter:2.0.0'
     compile 'com.arakelian:key-value-store:1.9.8'
     compile 'com.github.ben-manes.caffeine:caffeine:2.6.2'
@@ -97,6 +125,9 @@ dependencies {
     compile 'com.squareup.okhttp3:logging-interceptor:3.10.0'
     compile 'com.lmax:disruptor:3.4.2'
 
+    antlr   'org.antlr:antlr4:4.7.1'
+    compile 'org.antlr:antlr4-runtime:4.7.1'
+    
     // logging
     testCompile 'org.apache.logging.log4j:log4j-api:2.9.1'
     testCompile 'org.apache.logging.log4j:log4j-core:2.9.1'
@@ -109,7 +140,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:1.31.1'
     testCompile 'com.arakelian:more-commons:1.9.7:tests'
-    testCompile 'com.arakelian:jackson-utils:1.10.3:tests'
+    testCompile 'com.arakelian:jackson-utils:1.10.5:tests'
     testCompile 'com.arakelian:docker-junit-rule:2.2.2'
     testCompile 'com.arakelian:faker:2.3.1'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.4.0'
