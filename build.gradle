@@ -36,7 +36,7 @@ task wrapper(type: Wrapper) { gradleVersion = '4.10' }
 sourceSets {
     main {
         java {
-            srcDirs = ["src/main/java", "src/lexer/java", "src/parser/java"]
+            srcDirs = ["src/main/java", "src/parser/java"]
         }
     }
     lexer {
@@ -66,6 +66,10 @@ multitool {
         'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
         'com.github.rholder.retry'    : 'repackaged.com.arakelian.elastic.${prefix}com.github.rholder.retry',
 
+        // antlr
+        'org.stringtemplate'          : 'repackaged.com.arakelian.elastic.${prefix}org.stringtemplate',
+        'org.antlr.v4'                : 'repackaged.com.arakelian.elastic.${prefix}org.antlr.v4',
+        
         // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)
         'com.jayway.jsonpath'         : 'repackaged.com.arakelian.elastic.${prefix}com.jayway.jsonpath',
         'net.minidev.asm'             : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.asm',
@@ -126,7 +130,7 @@ dependencies {
     compile 'com.lmax:disruptor:3.4.2'
 
     antlr   'org.antlr:antlr4:4.7.1'
-    compile 'org.antlr:antlr4-runtime:4.7.1'
+    shadow  'org.antlr:antlr4-runtime:4.7.1'
     
     // logging
     testCompile 'org.apache.logging.log4j:log4j-api:2.9.1'
