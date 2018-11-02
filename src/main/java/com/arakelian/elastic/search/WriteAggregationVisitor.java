@@ -352,8 +352,25 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writeFieldValue("show_term_doc_count_error", agg.isShowTermDocCountError());
             writeFieldValue("size", agg.getSize());
             writeFieldValue("shard_size", agg.getShardSize());
-            writeFieldValue("include", agg.getInclude());
-            writeFieldValue("exclude", agg.getExclude());
+
+            final String include = agg.getInclude();
+            if (include != null) {
+                // regex
+                writeFieldValue("include", include);
+            } else {
+                // set of values
+                writeFieldValue("include", agg.getIncludeValues());
+            }
+
+            final String exclude = agg.getExclude();
+            if (exclude != null) {
+                // regex
+                writeFieldValue("exclude", exclude);
+            } else {
+                // set of values
+                writeFieldValue("exclude", agg.getExcludeValues());
+            }
+
             writeOrder(agg.getOrder());
             writer.writeEndObject(); // terms
         } catch (final IOException e) {

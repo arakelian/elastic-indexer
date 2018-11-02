@@ -48,8 +48,11 @@ public interface TermsAggregation extends BucketAggregation, ValuesSourceAggrega
     @Nullable
     public CollectMode getCollectMode();
 
+    @Nullable
+    public String getExclude();
+
     @Value.Default
-    public default List<Object> getExclude() {
+    public default List<Object> getExcludeValues() {
         return ImmutableList.of();
     }
 
@@ -61,8 +64,11 @@ public interface TermsAggregation extends BucketAggregation, ValuesSourceAggrega
     @Nullable
     public ExecutionHint getExecutionHint();
 
+    @Nullable
+    public String getInclude();
+
     @Value.Default
-    public default List<Object> getInclude() {
+    public default List<Object> getIncludeValues() {
         return ImmutableList.of();
     }
 

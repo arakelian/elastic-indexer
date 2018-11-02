@@ -318,7 +318,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
                                     .minDocCount(1L) //
                                     .shardMinDocCount(1L) //
                                     .size(Integer.MAX_VALUE) //
-                                    .addInclude(Gender.MALE.name(), Gender.FEMALE.name()) //
+                                    .addIncludeValues(Gender.MALE.name(), Gender.FEMALE.name()) //
                                     .addOrder(BucketOrder.KEY_DESC) //
                                     .showTermDocCountError(true) //
                                     .build()) //
