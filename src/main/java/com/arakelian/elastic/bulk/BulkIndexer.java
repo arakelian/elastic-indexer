@@ -536,7 +536,7 @@ public class BulkIndexer implements Closeable {
             listener.closed(stats);
 
             // throw exception if indexer failed
-            final int expected = stats.getSubmitted() + stats.getRetries();
+            final long expected = stats.getSubmitted() + stats.getRetries();
             if (stats.getSuccessful() != expected) {
                 throw new BulkIndexerFailed(stats);
             }

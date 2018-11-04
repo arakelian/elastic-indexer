@@ -63,7 +63,7 @@ public abstract class SearchHits implements Serializable {
     }
 
     @Value.Default
-    public int getTotal() {
+    public long getTotal() {
         return 0;
     }
 

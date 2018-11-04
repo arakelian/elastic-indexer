@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableIntegerRange.Builder.class)
 @JsonPropertyOrder({ "gte", "lte" })
 public interface IntegerRange extends Serializable {
-    public int getGte();
+    public long getGte();
 
-    public int getLte();
+    public long getLte();
 }

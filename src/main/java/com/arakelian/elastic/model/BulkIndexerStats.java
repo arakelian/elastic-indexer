@@ -21,20 +21,20 @@ import org.immutables.value.Value;
 
 @Value.Immutable(copy = false)
 public interface BulkIndexerStats {
-    public int getFailed();
+    public long getFailed();
 
-    public int getRetries();
+    public long getRetries();
 
-    public int getSubmitted();
+    public long getSubmitted();
 
-    public int getSuccessful();
+    public long getSuccessful();
 
     @Value.Derived
-    public default int getTotal() {
+    public default long getTotal() {
         return getSubmitted() + getRetries();
     }
 
     public long getTotalBytes();
 
-    public int getVersionConflicts();
+    public long getVersionConflicts();
 }

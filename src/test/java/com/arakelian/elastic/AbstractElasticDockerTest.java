@@ -357,18 +357,18 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected SearchResponse assertSearchFinds(
             final Index index,
             final Search search,
-            final int expectedTotal) {
+            final long expectedTotal) {
         final SearchResponse response = search(index, search);
 
         // verify we have a match
         final SearchHits hits = response.getHits();
-        final int total = hits.getTotal();
+        final long total = hits.getTotal();
         if (expectedTotal > 0) {
             assertEquals(expectedTotal, total);
         } else {
-            final int leastExpected = -expectedTotal;
+            final long leastExpected = -expectedTotal;
             assertTrue(
-                    "Expected at least " + Integer.toString(leastExpected) + " but found " + total,
+                    "Expected at least " + Long.toString(leastExpected) + " but found " + total,
                     total >= leastExpected);
         }
         return response;
