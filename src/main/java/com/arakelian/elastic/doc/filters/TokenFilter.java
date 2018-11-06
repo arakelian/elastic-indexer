@@ -46,6 +46,7 @@ public interface TokenFilter {
     public static final String UPPERCASE = "uppercase";
     public static final String TRUNCATE = "truncate";
     public static final String NORMALIZE_PUNCTUATION = "normalize_punctuation";
+    public static final String REPLACE_CONTROL_CHARACTERS = "replace_control_characters";
     public static final String STRIP_WHITESPACE = "strip_whitespace";
     public static final String TRIM_WHITESPACE = "trim_whitespace";
     public static final String REDUCE_WHITESPACE = "reduce_whitespace";
