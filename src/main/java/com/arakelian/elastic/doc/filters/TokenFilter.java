@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ //
         @JsonSubTypes.Type(name = TokenFilter.LENGTH_FILTER, value = LengthFilter.class), //
         @JsonSubTypes.Type(name = TokenFilter.LOWERCASE, value = Lowercase.class),
+        @JsonSubTypes.Type(name = TokenFilter.REPLACE_CONTROL_CHARACTERS, value = ReplaceControlCharacters.class), //
         @JsonSubTypes.Type(name = TokenFilter.NORMALIZE_PUNCTUATION, value = NormalizePunctuation.class), //
         @JsonSubTypes.Type(name = TokenFilter.NORMALIZE_VALUES, value = NormalizeValues.class), //
         @JsonSubTypes.Type(name = TokenFilter.PATTERN_CAPTURE, value = PatternCapture.class), //
