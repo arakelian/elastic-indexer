@@ -289,7 +289,7 @@ public class BulkIndexer implements Closeable {
                 final Batch retryBatch = new Batch( //
                         ImmutableList.copyOf(retryable), //
                         totalBytes, //
-                        config.getRetryDelayMillis(), batch.attempt + 1);
+                        config.getPartialRetryDelayMillis(), batch.attempt + 1);
 
                 // there is no need to check if we are closed, as we will get a
                 // RejectedExecutionException.
@@ -922,7 +922,7 @@ public class BulkIndexer implements Closeable {
      *             if background queue is full
      */
     private ListenableFuture<BulkResponse> submitBatch(final Batch batch) throws RejectedExecutionException {
-        final int maxRetries = config.getMaxRetries();
+        final int maxRetries = config.getMaxPartialRetries();
         if (batch.attempt > maxRetries) {
             throw new RejectedExecutionException(
                     "Bulk indexer rejected after " + maxRetries + " attempts: " + batch);

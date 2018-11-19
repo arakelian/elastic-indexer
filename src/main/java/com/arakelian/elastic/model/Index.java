@@ -47,23 +47,22 @@ public interface Index extends Serializable {
 
     @Value.Check
     public default void checkMappings() {
-        // must have _default_ mapping
+        // must have _doc mapping
         final Map<String, Mapping> mappings = getMappings();
-        final Mapping mapping = mappings != null ? mappings.get(Mapping._DEFAULT_) : null;
-        Preconditions.checkState(
-                mapping != null,
-                "Index \"" + getName() + "\" does not contain _default_ mapping");
+        final Mapping mapping = mappings != null ? mappings.get(Mapping._DOC) : null;
+        Preconditions
+                .checkState(mapping != null, "Index \"" + getName() + "\" does not contain _doc mapping");
     }
 
     @JsonIgnore
     @Value.Auxiliary
     public default Mapping getDefaultMapping() {
-        return getMapping(Mapping._DEFAULT_);
+        return getMapping(Mapping._DOC);
     }
 
     public default Mapping getMapping(final String name) {
-        // use _default_ mapping if type does not have custom mapping
-        final Mapping mapping = getMappings().get(Mapping._DEFAULT_);
+        // use _doc mapping if type does not have custom mapping
+        final Mapping mapping = getMappings().get(Mapping._DOC);
         Preconditions.checkState(
                 mapping != null,
                 "Index \"" + getName() + "\" does not contain mapping \"" + name + "\"");

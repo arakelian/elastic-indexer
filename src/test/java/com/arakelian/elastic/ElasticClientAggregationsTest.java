@@ -416,7 +416,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
     private void indexGeoPointDocuments(final Index index) {
         assertIndexDocuments(
                 index,
-                DEFAULT_TYPE, //
+                _DOC, //
                 "{\"location\": \"52.374081,4.912350\", \"city\": \"Amsterdam\", \"name\": \"NEMO Science Museum\"}",
                 "{\"location\": \"52.369219,4.901618\", \"city\": \"Amsterdam\", \"name\": \"Museum Het Rembrandthuis\"}",
                 "{\"location\": \"52.371667,4.914722\", \"city\": \"Amsterdam\", \"name\": \"Nederlands Scheepvaartmuseum\"}",

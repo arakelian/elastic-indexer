@@ -26,6 +26,10 @@ import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.StopStrategy;
+import com.github.rholder.retry.WaitStrategies;
+import com.github.rholder.retry.WaitStrategy;
 import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)
@@ -45,6 +49,31 @@ public abstract class BulkIndexerConfig {
 
     @Value.Auxiliary
     public abstract BulkOperationFactory getBulkOperationFactory();
+
+    /**
+     * Returns the default strategy for determining when to stop retrying network requests to
+     * Elastic.
+     *
+     * @return the default strategy for determining when to stop retrying network requests to
+     *         Elastic.
+     */
+    public StopStrategy getDefaultStopStrategy() {
+        return StopStrategies.stopAfterDelay(10, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Returns the default strategy for determining how long to wait before retrying network
+     * requests to Elastic.
+     *
+     * NOTE: This wait strategy is only used for network-level events, not for partial retries. See
+     * {@link #getPartialRetryDelayMillis()}.
+     *
+     * @return the default strategy for determining how long to wait before retrying network
+     *         requests to Elastic.
+     */
+    public WaitStrategy getDefaultWaitStrategy() {
+        return WaitStrategies.exponentialWait(30, TimeUnit.SECONDS);
+    }
 
     @Value.Default
     @Value.Auxiliary
@@ -78,9 +107,24 @@ public abstract class BulkIndexerConfig {
         return 2;
     }
 
+    /**
+     * Returns the fixed number of times to perform partial retries.
+     *
+     * @return the fixed number of times to perform partial retries.
+     */
     @Value.Default
-    public int getMaxRetries() {
+    public int getMaxPartialRetries() {
         return 10;
+    }
+
+    /**
+     * Returns the fixed delay before attempting partial retries.
+     *
+     * @return the fixed delay before attempting partial retries.
+     */
+    @Value.Default
+    public int getPartialRetryDelayMillis() {
+        return 5000;
     }
 
     @Value.Default
@@ -89,11 +133,13 @@ public abstract class BulkIndexerConfig {
         return 100;
     }
 
-    @Value.Default
-    public int getRetryDelayMillis() {
-        return 5000;
-    }
-
+    /**
+     * Returns a retryer, which executes a call to Elastic, and retries it until it succeeds, or a
+     * stop strategy decides to stop retrying.
+     *
+     * @return a retryer, which executes a call to Elastic, and retries it until it succeeds, or a
+     *         stop strategy decides to stop retrying.
+     */
     @Value.Default
     @Value.Auxiliary
     public Retryer<BulkResponse> getRetryer() {

@@ -91,7 +91,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @ClassRule
     public static final DockerRule elastic = new DockerRule();
 
-    public static final String DEFAULT_TYPE = "test";
+    public static final String _DOC = Mapping._DOC;
 
     /**
      * Returns list of Elastic versions that we want to test
@@ -195,12 +195,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         final Document document = assertSuccessful( //
                 elasticClientWithRetry.getDocument( //
                         index.getName(), //
-                        DEFAULT_TYPE, //
+                        _DOC, //
                         expectedPerson.getId(), //
                         null));
 
         assertEquals(index.getName(), document.getIndex());
-        assertEquals(DEFAULT_TYPE, document.getType());
+        assertEquals(_DOC, document.getType());
         assertEquals(expectedPerson.getId(), document.getId());
         if (expectedVersion != null) {
             assertEquals(expectedVersion, document.getVersion());
@@ -228,7 +228,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     public SimpleBulkOperationFactory<Person> createPersonBulkOperationFactory(final Index index) {
         final SimpleBulkOperationFactory<Person> bulkOperationFactory = //
                 ImmutableSimpleBulkOperationFactory.<Person> builder() //
-                        .type(person -> DEFAULT_TYPE) //
+                        .type(person -> _DOC) //
                         .documentClass(Person.class) //
                         .index(index) //
                         .id(person -> person.getId()) //
@@ -342,12 +342,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         final IndexedDocument response = assertSuccessful( //
                 elasticClient.indexDocument(
                         index.getName(), //
-                        DEFAULT_TYPE, //
+                        _DOC, //
                         person.getId(), //
                         JacksonUtils.toStringSafe(person, false)));
 
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(_DOC, response.getType());
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(expectedVersion), response.getVersion());

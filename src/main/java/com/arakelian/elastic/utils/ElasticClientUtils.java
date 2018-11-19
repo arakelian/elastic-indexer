@@ -52,7 +52,10 @@ import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.StopStrategy;
 import com.github.rholder.retry.WaitStrategies;
+import com.github.rholder.retry.WaitStrategy;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 
 import okhttp3.OkHttpClient;
@@ -115,10 +118,19 @@ public class ElasticClientUtils {
     }
 
     public static <T> Retryer<T> createElasticRetryer() {
+        final StopStrategy stopStrategy = StopStrategies.stopAfterDelay(10, TimeUnit.MINUTES);
+        final WaitStrategy waitStrategy = WaitStrategies.exponentialWait(30, TimeUnit.SECONDS);
+        return createElasticRetryer(stopStrategy, waitStrategy);
+    }
+
+    public static <T> Retryer<T> createElasticRetryer(
+            final StopStrategy stopStrategy,
+            final WaitStrategy waitStrategy) {
+
         return RetryerBuilder.<T> newBuilder() //
                 .retryIfException(new RetryIoException()) //
-                .withStopStrategy(StopStrategies.stopAfterDelay(1, TimeUnit.MINUTES)) //
-                .withWaitStrategy(WaitStrategies.fixedWait(5, TimeUnit.SECONDS)) //
+                .withStopStrategy(Preconditions.checkNotNull(stopStrategy, "stopStrategy must be non-null")) //
+                .withWaitStrategy(Preconditions.checkNotNull(waitStrategy, "waitStrategy must be non-null")) //
                 .build();
     }
 

@@ -22,7 +22,6 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.model.Index;
-import com.arakelian.elastic.model.Mapping;
 import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Preconditions;
@@ -222,9 +221,6 @@ public abstract class BulkOperation {
             Preconditions.checkState(
                     StringUtils.indexOf(source, '\n') == -1,
                     "Newlines are not allowed in source JSON document when using Elastic bulk API");
-            Preconditions.checkState(
-                    !StringUtils.equals(getType(), Mapping._DEFAULT_),
-                    "It is forbidden to index into the _default_ mapping");
         }
     }
 }

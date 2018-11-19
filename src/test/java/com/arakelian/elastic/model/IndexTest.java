@@ -38,7 +38,7 @@ public class IndexTest extends AbstractElasticModelTest {
             "    \"number_of_shards\" : 5\n" + //
             "  },\n" + //
             "  \"mappings\" : {\n" + //
-            "    \"_default_\" : {\n" + //
+            "    \"_doc\" : {\n" + //
             "      \"_all\" : {\n" + //
             "        \"enabled\" : true\n" + //
             "      },\n" + //
@@ -102,7 +102,7 @@ public class IndexTest extends AbstractElasticModelTest {
             "    \"number_of_shards\" : 5\n" + //
             "  },\n" + //
             "  \"mappings\" : {\n" + //
-            "    \"_default_\" : {\n" + //
+            "    \"_doc\" : {\n" + //
             "      \"_source\" : {\n" + //
             "        \"enabled\" : true\n" + //
             "      },\n" + //
@@ -153,7 +153,7 @@ public class IndexTest extends AbstractElasticModelTest {
             "";
     public static final Index MINIMAL = ImmutableIndex.builder() //
             .name("index_name") //
-            .putMapping(Mapping._DEFAULT_, MappingTest.CONTACT) //
+            .putMapping(Mapping._DOC, MappingTest.CONTACT) //
             .build();
 
     public IndexTest(final String number) {

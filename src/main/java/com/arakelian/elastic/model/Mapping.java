@@ -86,7 +86,7 @@ public interface Mapping extends Serializable {
         }
     }
 
-    String _DEFAULT_ = "_default_";
+    public String _DOC = "_doc";
 
     @Value.Default
     @Value.Auxiliary

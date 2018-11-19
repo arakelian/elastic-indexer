@@ -135,7 +135,7 @@ public abstract class AbstractElasticTest {
     protected final Index newIndex(final String name, final Mapping mapping) {
         final Index index = ImmutableIndex.builder() //
                 .name(name) //
-                .putMapping(Mapping._DEFAULT_, mapping) //
+                .putMapping(Mapping._DOC, mapping) //
                 .build();
         return index;
     }

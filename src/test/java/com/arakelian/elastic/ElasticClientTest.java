@@ -80,7 +80,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         withPersonIndex(index -> {
             // verify can delete non-existant record
             try {
-                elasticClient.deleteDocument(index.getName(), DEFAULT_TYPE, MoreStringUtils.shortUuid());
+                elasticClient.deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
                 Assert.fail("Delete of non-existant document should have thrown 404");
             } catch (final ElasticNotFoundException e) {
                 // successful
@@ -138,7 +138,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
                 builder.addDoc(
                         ImmutableMgetDocument.builder() //
                                 .index(index.getName()) //
-                                .type(DEFAULT_TYPE) //
+                                .type(_DOC) //
                                 .id(person.getId()) //
                                 .build());
             }
@@ -148,7 +148,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
                 builder.addDoc(
                         ImmutableMgetDocument.builder() //
                                 .index(index.getName()) //
-                                .type(DEFAULT_TYPE) //
+                                .type(_DOC) //
                                 .id(MoreStringUtils.shortUuid()) //
                                 .build());
             }
@@ -179,11 +179,11 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         final DeletedDocument deleted = assertSuccessful( //
                 elasticClient.deleteDocument( //
                         index.getName(), //
-                        DEFAULT_TYPE, //
+                        _DOC, //
                         id, //
                         deleteMillis));
         assertEquals(index.getName(), deleted.getIndex());
-        assertEquals(DEFAULT_TYPE, deleted.getType());
+        assertEquals(_DOC, deleted.getType());
         assertEquals(id, deleted.getId());
         assertEquals(id, deleted.getId());
         assertEquals("deleted", deleted.getResult());
@@ -199,14 +199,14 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         final IndexedDocument response = assertSuccessful( //
                 elasticClient.indexDocument( //
                         index.getName(), //
-                        DEFAULT_TYPE, //
+                        _DOC, //
                         person.getId(), //
                         JacksonUtils.toString(person, false), //
                         updateMillis));
 
         // verify response
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(DEFAULT_TYPE, response.getType());
+        assertEquals(_DOC, response.getType());
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(updateMillis), response.getVersion());

@@ -105,12 +105,12 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
             final IndexedDocument response = assertSuccessful( //
                     elasticClient.indexDocument(
                             index.getName(), //
-                            DEFAULT_TYPE, //
+                            _DOC, //
                             id, //
                             JacksonUtils.toString(doc, false)));
 
             assertEquals(index.getName(), response.getIndex());
-            assertEquals(DEFAULT_TYPE, response.getType());
+            assertEquals(_DOC, response.getType());
             assertEquals(id, response.getId());
             assertEquals("created", response.getResult());
             assertEquals(Boolean.TRUE, response.isCreated());

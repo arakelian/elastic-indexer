@@ -58,7 +58,7 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
 
         /**
          * Returns a list of field names that should be excluded from the plugin.
-         * 
+         *
          * @return a list of field names that should be excluded from the plugin.
          */
         @Value.Default
@@ -70,7 +70,7 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
 
         /**
          * Returns a list of field names that should be included by the plugin.
-         * 
+         *
          * @return a list of field names that should be included by the plugin.
          */
         @Value.Default

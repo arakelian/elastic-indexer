@@ -83,7 +83,8 @@ multitool {
     proguardConfiguration {
         keep includedescriptorclasses:true, 'class com.arakelian.** { *; }'
         keep includedescriptorclasses:true, 'class **.fasterxml.jackson.datatype.guava.** { *; }'
-
+        keep includedescriptorclasses:true, 'class **.github.rholder.retry.Retryer.** { *; }'
+        
         dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
         dontnote '**.com.jayway.jsonpath.spi.mapper.GsonMappingProvider'
         dontnote '**.org.apache.commons.lang3.ObjectUtils'
