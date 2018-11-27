@@ -18,13 +18,16 @@
 package com.arakelian.elastic.model;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ImmutableMap;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableShards.class)
@@ -45,4 +48,10 @@ public interface Shards extends Serializable {
     @Nullable
     @JsonProperty("total")
     public Integer getTotal();
+
+    @JsonAnyGetter
+    @Value.Default
+    public default Map<String, Object> getProperties() {
+        return ImmutableMap.of();
+    }
 }
