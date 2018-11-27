@@ -17,13 +17,13 @@ plugins {
     id "net.ltgt.errorprone" version "0.0.16"
 
     // for deployment to Maven Central
-    id "io.codearte.nexus-staging" version "0.11.0"
+    id "io.codearte.nexus-staging" version "0.12.0"
 
     // for building fat jar
     id "com.github.johnrengelman.shadow" version "2.0.4"
 
     // useful utilities
-    id "com.arakelian.multitool" version "1.5.3"
+    id "com.arakelian.multitool" version "1.5.7"
     
     // for antlr tasks
     id 'antlr'
@@ -94,19 +94,19 @@ multitool {
 }
 
 dependencies {
-    processor 'org.immutables:value:2.7.1'
+    processor 'org.immutables:value:2.7.3'
 
     // the gradle plugin uses latest.release which breaks reproducibility
-    errorprone 'com.google.errorprone:error_prone_core:2.3.1'
+    errorprone 'com.google.errorprone:error_prone_core:2.3.2'
     
-    compile 'com.arakelian:more-commons:1.9.8'
-    compile 'com.arakelian:jackson-utils:1.10.5'
-    compile 'com.arakelian:json-filter:2.0.0'
-    compile 'com.arakelian:key-value-store:1.9.8'
+    compile 'com.arakelian:more-commons:1.10.0'
+    compile 'com.arakelian:jackson-utils:1.11.0'
+    compile 'com.arakelian:json-filter:2.2.0'
+    compile 'com.arakelian:key-value-store:1.10.0'
     compile 'com.github.ben-manes.caffeine:caffeine:2.6.2'
 
     // shadow Guava due to frequent downstream incompatibility issues
-    shadow  'com.google.guava:guava:26.0-jre'
+    shadow  'com.google.guava:guava:27.0.1-jre'
 
     // we use Multimap in ElasticDocConfig; we shadow jackson's guava library
     // so we don't add downstream guava dependency
@@ -143,10 +143,10 @@ dependencies {
 
     // for unit testing
     testCompile 'junit:junit:4.12'
-    testCompile 'net.javacrumbs.json-unit:json-unit:1.31.1'
-    testCompile 'com.arakelian:more-commons:1.9.7:tests'
-    testCompile 'com.arakelian:jackson-utils:1.10.5:tests'
-    testCompile 'com.arakelian:docker-junit-rule:2.2.2'
-    testCompile 'com.arakelian:faker:2.3.1'
+    testCompile 'net.javacrumbs.json-unit:json-unit:2.1.1'
+    testCompile 'com.arakelian:more-commons:1.10.0:tests'
+    testCompile 'com.arakelian:jackson-utils:1.11.0:tests'
+    testCompile 'com.arakelian:docker-junit-rule:2.3.0'
+    testCompile 'com.arakelian:faker:2.3.2'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.4.0'
 }
