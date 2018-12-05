@@ -143,7 +143,7 @@ public abstract class BulkIndexerConfig {
     @Value.Default
     @Value.Auxiliary
     public Retryer<BulkResponse> getRetryer() {
-        return ElasticClientUtils.createElasticRetryer();
+        return ElasticClientUtils.createElasticRetryer(getDefaultStopStrategy(), getDefaultWaitStrategy());
     }
 
     @Value.Default
