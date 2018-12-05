@@ -59,7 +59,15 @@ public interface Index extends Serializable {
     @JsonIgnore
     @Value.Auxiliary
     public default Mapping getDefaultMapping() {
-        return getMapping(Mapping._DOC);
+        final Map<String, Mapping> mappings = getMappings();
+
+        // we're suppose to have a single mapping type as we march towards Elastic 7
+        if (mappings.size() == 1) {
+            return mappings.values().iterator().next();
+        }
+
+        // we have more than one, use the _default_
+        return getMapping("_default_");
     }
 
     public default Mapping getMapping(final String name) {
