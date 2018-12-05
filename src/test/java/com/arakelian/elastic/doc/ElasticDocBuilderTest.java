@@ -148,7 +148,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("booleans", JsonSelector.of("/booleans/false")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"booleans\":false}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -170,7 +170,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("booleans", JsonSelector.of("/booleans/true")) //
                 .build();
         final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"booleans\":true}", //
                 actual);
     }
@@ -191,7 +191,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("geopoint", JsonSelector.of("$..location")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"geopoint\":{\"lat\":-3.1352,\"lon\":-25.6319}}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -212,7 +212,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("base64", JsonSelector.of("/base64")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"base64\":[\"aGVsbG8gdGhlcmU=\",\"YXJha2VsaWFu\"]}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -233,7 +233,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128,0,127]}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -256,7 +256,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("dates", JsonSelector.of("/dates")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"dates\":[\"" + date1 + "\",\"" + date2 + "\",\"2016-12-21T16:46:39.830000000Z\"]}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -277,7 +277,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .addIdentityField("numbers") //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128.0,0.0,127.0,-32768.0,32767.0,-2.147483648E9,2.147483647E9,-9.223372036854776E18,9.223372036854776E18,3.14,2.718,6.67E-11]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -299,7 +299,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
         final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128.0,0.0,127.0,-32768.0,32767.0,-2.14748365E9,2.14748365E9,-9.223372E18,9.223372E18,3.14,2.718,6.67E-11]}",
                 actual);
     }
@@ -320,7 +320,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128,0,127,-32768,32767,-2147483648,2147483647]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -341,7 +341,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128,0,127,-32768,32767,-2147483648,2147483647,-9223372036854775808,9223372036854775807]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -362,7 +362,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("numbers", JsonSelector.of("/numbers")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"numbers\":[-128,0,127,-32768,32767]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -383,7 +383,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("price", JsonSelector.of("/store/book/price")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"price\":[8.95,12.99,8.99,22.99]}", //
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -399,7 +399,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("friends", JsonSelector.of("/friends")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"friends\":[\"Moe\",\"Larry\",\"Curly\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -415,7 +415,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTargets("name", JsonSelector.of("/name"), JsonSelector.of("/company/name")) //
                 .build();
-        Assert.assertEquals( //
+        assertEquals( //
                 "{\"name\":[\"Schuyler\",\"Hilll - Kassulke\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -431,7 +431,7 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("address", JsonSelector.of("/address")) //
                 .build();
-        Assert.assertEquals(
+        assertEquals(
                 "{\"address\":[\"Schumm Grove\",\"Apt. 364\",\"East Devin\",\"77081-9341\",\"-3.1352\",\"-25.6319\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -451,7 +451,7 @@ public class ElasticDocBuilderTest {
                 .putTarget("email", JsonSelector.of("/email")) //
                 .putTarget("phone", JsonSelector.of("/phone")) //
                 .build();
-        Assert.assertEquals(
+        assertEquals(
                 "{\"name\":\"Schuyler\",\"email\":\"Schuyler_Bogan_Olson@gmail.com\",\"phone\":\"1-126-999-3806\"}",
                 new ElasticDocBuilder(config).build(sampleJson));
     }
@@ -472,8 +472,12 @@ public class ElasticDocBuilderTest {
                 .mapping(mapping) //
                 .putTarget("tags", JsonSelector.of("/tags")) //
                 .build();
-        Assert.assertEquals(
+        assertEquals(
                 "{\"tags\":[\"USER\",\"PERSON\",\"HUMAN\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
+    }
+
+    private void assertEquals(final String expected, final CharSequence filter) {
+        Assert.assertEquals(expected, filter != null ? filter.toString() : null);
     }
 }
