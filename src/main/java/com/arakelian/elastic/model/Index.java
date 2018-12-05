@@ -49,9 +49,11 @@ public interface Index extends Serializable {
     public default void checkMappings() {
         // must have _doc mapping
         final Map<String, Mapping> mappings = getMappings();
-        final Mapping mapping = mappings != null ? mappings.get(Mapping._DOC) : null;
-        Preconditions
-                .checkState(mapping != null, "Index \"" + getName() + "\" does not contain _doc mapping");
+        Preconditions.checkState(
+                mappings != null && (mappings.size() == 1
+                        || mappings.size() == 2 && mappings.containsKey("_default_")),
+                "Index \"" + getName()
+                        + "\" must contain a single mapping type, or if there are two mapping types one of them must be _default_");
     }
 
     @JsonIgnore
