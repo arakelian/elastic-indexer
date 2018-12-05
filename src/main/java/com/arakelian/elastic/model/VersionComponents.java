@@ -26,7 +26,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.model.ImmutableVersionComponents.Builder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -57,7 +56,7 @@ public abstract class VersionComponents implements Serializable {
     }
 
     public static VersionComponents of(final String number) {
-        final Builder builder = ImmutableVersionComponents.builder() //
+        final ImmutableVersionComponents.Builder builder = ImmutableVersionComponents.builder() //
                 .number(number);
 
         if (number != null) {
