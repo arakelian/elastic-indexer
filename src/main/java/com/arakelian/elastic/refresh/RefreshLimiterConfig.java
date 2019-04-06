@@ -24,10 +24,10 @@ import org.immutables.value.Value;
 
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.utils.ElasticClientUtils.RetryIoException;
-import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
+import com.arakelian.retry.Retryer;
+import com.arakelian.retry.RetryerBuilder;
+import com.arakelian.retry.StopStrategies;
+import com.arakelian.retry.WaitStrategies;
 import com.google.common.util.concurrent.RateLimiter;
 
 @Value.Immutable(copy = false)

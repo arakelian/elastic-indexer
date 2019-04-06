@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.MoreStringUtils;
-import com.github.rholder.retry.Attempt;
-import com.github.rholder.retry.RetryListener;
+import com.arakelian.retry.Attempt;
+import com.arakelian.retry.RetryListener;
 
 public final class RefreshRetryListener implements RetryListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefreshRetryListener.class);

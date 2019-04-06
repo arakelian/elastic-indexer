@@ -25,11 +25,11 @@ import com.arakelian.elastic.bulk.BulkOperationFactory;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
 import com.arakelian.elastic.utils.ElasticClientUtils;
-import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.StopStrategy;
-import com.github.rholder.retry.WaitStrategies;
-import com.github.rholder.retry.WaitStrategy;
+import com.arakelian.retry.Retryer;
+import com.arakelian.retry.StopStrategies;
+import com.arakelian.retry.StopStrategy;
+import com.arakelian.retry.WaitStrategies;
+import com.arakelian.retry.WaitStrategy;
 import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)

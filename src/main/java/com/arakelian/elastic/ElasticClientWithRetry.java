@@ -38,8 +38,8 @@ import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.utils.ElasticClientUtils;
-import com.github.rholder.retry.RetryException;
-import com.github.rholder.retry.Retryer;
+import com.arakelian.retry.RetryException;
+import com.arakelian.retry.Retryer;
 import com.google.common.base.Preconditions;
 
 public class ElasticClientWithRetry implements ElasticClient {

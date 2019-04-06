@@ -66,7 +66,6 @@ multitool {
         'com.google.common'           : 'repackaged.com.arakelian.elastic.${prefix}com.google.common',
         'com.google.thirdparty'       : 'repackaged.com.arakelian.elastic.${prefix}com.google.thirdparty',
         'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
-        'com.github.rholder.retry'    : 'repackaged.com.arakelian.elastic.${prefix}com.github.rholder.retry',
 
         // antlr
         'org.stringtemplate'          : 'repackaged.com.arakelian.elastic.${prefix}org.stringtemplate',
@@ -89,13 +88,20 @@ multitool {
     proguardConfiguration {
         keep includedescriptorclasses:true, 'class com.arakelian.** { *; }'
         keep includedescriptorclasses:true, 'class **.fasterxml.jackson.datatype.guava.** { *; }'
-        keep includedescriptorclasses:true, 'class **.github.rholder.retry.Retryer.** { *; }'
         keep includedescriptorclasses:true, 'class **.com.jayway.** { *; }'
+        keep includedescriptorclasses:true, 'class **.com.google.common.util.concurrent.TimeLimiter { *; }'
+        
+        // referenced by jayway but not used
+        dontwarn 'org.codehaus.jettison.json.**'
+        dontwarn 'com.google.gson.**'
+        dontwarn 'org.json.**'
+        dontwarn 'org.apache.tapestry5.json.**'
+        dontwarn '**.com.jayway.jsonpath.spi.json.JettisonProvider'
         
         dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
-        dontnote '**.com.jayway.jsonpath.spi.mapper.GsonMappingProvider'
         dontnote '**.org.apache.commons.lang3.ObjectUtils'
-
+        dontnote '**.com.google.common.util.concurrent.TimeLimiter'
+        
         optimizationpasses 2
     }
 }
@@ -113,6 +119,9 @@ dependencies {
     compile 'com.arakelian:jackson-utils:2.0.0'
     compile 'com.arakelian:json-filter:3.0.0'
     compile 'com.arakelian:key-value-store:2.0.0'
+    compile 'com.arakelian:retry:3.2.0'
+    
+    // caching
     compile 'com.github.ben-manes.caffeine:caffeine:2.7.0'
 
     // shadow Guava due to frequent downstream incompatibility issues
@@ -128,7 +137,6 @@ dependencies {
     // shadow stuff we use very little of, to reduce dependencies
     shadow  'org.apache.commons:commons-lang3:3.8.1'
     shadow  'commons-io:commons-io:2.6'
-    shadow  'com.github.rholder:guava-retrying:2.0.0'
     shadow  ('com.jayway.jsonpath:json-path:2.4.0') { exclude module: 'slf4j-api' }
 
     // third party
@@ -136,7 +144,7 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-scalars:2.5.0'
     compile 'com.squareup.retrofit2:converter-jackson:2.5.0'
     compile 'com.squareup.retrofit2:adapter-java8:2.5.0'
-    compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile 'com.squareup.okhttp3:okhttp:3.14.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.10.0'
     compile 'com.lmax:disruptor:3.4.2'
 
