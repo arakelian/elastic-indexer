@@ -39,12 +39,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(name = TokenFilter.TRIM_WHITESPACE, value = TrimWhitespace.class), //
         @JsonSubTypes.Type(name = TokenFilter.TRUNCATE, value = Truncate.class), //
         @JsonSubTypes.Type(name = TokenFilter.UPPERCASE, value = Uppercase.class), //
+        @JsonSubTypes.Type(name = TokenFilter.REVERSE, value = Reverse.class), //
         @JsonSubTypes.Type(name = TokenFilter.NULL, value = NullFilter.class) //
 })
 @FunctionalInterface
 public interface TokenFilter {
     public static final String LOWERCASE = "lowercase";
     public static final String UPPERCASE = "uppercase";
+    public static final String REVERSE = "reverse";
     public static final String TRUNCATE = "truncate";
     public static final String NORMALIZE_PUNCTUATION = "normalize_punctuation";
     public static final String REPLACE_CONTROL_CHARACTERS = "replace_control_characters";
