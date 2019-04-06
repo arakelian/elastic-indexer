@@ -28,27 +28,27 @@ import com.arakelian.elastic.model.search.Query;
  */
 public enum RegexpFlag {
     /**
-     * Enables intersection of the form: <tt>&lt;expression&gt; &amp; &lt;expression&gt;</tt>
+     * Enables intersection of the form: <code>&lt;expression&gt; &amp; &lt;expression&gt;</code>
      */
     INTERSECTION,
 
     /**
-     * Enables complement expression of the form: <tt>~&lt;expression&gt;</tt>
+     * Enables complement expression of the form: <code>~&lt;expression&gt;</code>
      */
     COMPLEMENT,
 
     /**
-     * Enables empty language expression: <tt>#</tt>
+     * Enables empty language expression: <code>#</code>
      */
     EMPTY,
 
     /**
-     * Enables any string expression: <tt>@</tt>
+     * Enables any string expression: <code>@</code>
      */
     ANYSTRING,
 
     /**
-     * Enables numerical interval expression: <tt>&lt;n-m&gt;</tt>
+     * Enables numerical interval expression: <code>&lt;n-m&gt;</code>
      */
     INTERVAL,
 

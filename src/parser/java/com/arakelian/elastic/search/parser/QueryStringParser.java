@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.7.1
+// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.7.2
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class QueryStringParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -35,26 +35,35 @@ public class QueryStringParser extends Parser {
 		RULE_quoted_truncated = 16, RULE_quoted = 17, RULE_modifier = 18, RULE_term_modifier = 19, 
 		RULE_boost = 20, RULE_fuzzy = 21, RULE_not_ = 22, RULE_and_ = 23, RULE_or_ = 24, 
 		RULE_date = 25, RULE_sep = 26;
-	public static final String[] ruleNames = {
-		"mainQ", "clauseDefault", "clauseOr", "clauseAnd", "clauseNot", "clauseBasic", 
-		"atom", "field", "value", "anything", "two_sided_range_term", "range_term", 
-		"range_value", "multi_value", "normal", "truncated", "quoted_truncated", 
-		"quoted", "modifier", "term_modifier", "boost", "fuzzy", "not_", "and_", 
-		"or_", "date", "sep"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"mainQ", "clauseDefault", "clauseOr", "clauseAnd", "clauseNot", "clauseBasic", 
+			"atom", "field", "value", "anything", "two_sided_range_term", "range_term", 
+			"range_value", "multi_value", "normal", "truncated", "quoted_truncated", 
+			"quoted", "modifier", "term_modifier", "boost", "fuzzy", "not_", "and_", 
+			"or_", "date", "sep"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-		null, "'('", "')'", "'['", "']'", "':'", "'+'", null, "'*'", null, "'{'", 
-		"'}'", null, null, "'\"'", "'''", "'TO'"
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", 
-		"STAR", "QMARK", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", "SQUOTE", 
-		"TO", "AND", "OR", "NOT", "WS", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", 
-		"TERM_TRUNCATED", "PHRASE", "PHRASE_ANYTHING", "OPERATOR", "ATOM", "MODIFIER", 
-		"TMODIFIER", "CLAUSE", "FIELD", "FUZZY", "BOOST", "QNORMAL", "QPHRASE", 
-		"QPHRASETRUNC", "QTRUNCATED", "QRANGEIN", "QRANGEEX", "QANYTHING", "QDATE"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+			null, "'('", "')'", "'['", "']'", "':'", "'+'", null, "'*'", null, "'{'", 
+			"'}'", null, null, "'\"'", "'''", "'TO'"
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", 
+			"STAR", "QMARK", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", "SQUOTE", 
+			"TO", "AND", "OR", "NOT", "WS", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", 
+			"TERM_TRUNCATED", "PHRASE", "PHRASE_ANYTHING", "OPERATOR", "ATOM", "MODIFIER", 
+			"TMODIFIER", "CLAUSE", "FIELD", "FUZZY", "BOOST", "QNORMAL", "QPHRASE", 
+			"QPHRASETRUNC", "QTRUNCATED", "QRANGEIN", "QRANGEEX", "QANYTHING", "QDATE"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
@@ -104,6 +113,7 @@ public class QueryStringParser extends Parser {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
+
 	public static class MainQContext extends ParserRuleContext {
 		public ClauseDefaultContext clause;
 		public TerminalNode EOF() { return getToken(QueryStringParser.EOF, 0); }

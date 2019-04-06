@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringLexer.g4 by ANTLR 4.7.1
+// Generated from com/arakelian/elastic/search/parser/QueryStringLexer.g4 by ANTLR 4.7.2
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class QueryStringLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -32,24 +32,33 @@ public class QueryStringLexer extends Lexer {
 		"DEFAULT_MODE"
 	};
 
-	public static final String[] ruleNames = {
-		"LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", "STAR", 
-		"QMARK", "VBAR", "AMPER", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", 
-		"SQUOTE", "TO", "AND", "OR", "NOT", "WS", "INT", "ESC_CHAR", "TERM_START_CHAR", 
-		"TERM_CHAR", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", "TERM_TRUNCATED", 
-		"PHRASE", "PHRASE_ANYTHING"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", "STAR", 
+			"QMARK", "VBAR", "AMPER", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", 
+			"SQUOTE", "TO", "AND", "OR", "NOT", "WS", "INT", "ESC_CHAR", "TERM_START_CHAR", 
+			"TERM_CHAR", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", "TERM_TRUNCATED", 
+			"PHRASE", "PHRASE_ANYTHING"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-		null, "'('", "')'", "'['", "']'", "':'", "'+'", null, "'*'", null, "'{'", 
-		"'}'", null, null, "'\"'", "'''", "'TO'"
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", 
-		"STAR", "QMARK", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", "SQUOTE", 
-		"TO", "AND", "OR", "NOT", "WS", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", 
-		"TERM_TRUNCATED", "PHRASE", "PHRASE_ANYTHING"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+			null, "'('", "')'", "'['", "']'", "':'", "'+'", null, "'*'", null, "'{'", 
+			"'}'", null, null, "'\"'", "'''", "'TO'"
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COLON", "PLUS", "MINUS", 
+			"STAR", "QMARK", "LCURLY", "RCURLY", "CARAT", "TILDE", "DQUOTE", "SQUOTE", 
+			"TO", "AND", "OR", "NOT", "WS", "NUMBER", "DATE_TOKEN", "TERM_NORMAL", 
+			"TERM_TRUNCATED", "PHRASE", "PHRASE_ANYTHING"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
