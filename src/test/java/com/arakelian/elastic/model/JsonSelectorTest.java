@@ -20,21 +20,12 @@ package com.arakelian.elastic.model;
 import java.io.IOException;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
-import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.MissingNode;
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidPathException;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 public class JsonSelectorTest {
     private static final String JSON = "{\n" + //
@@ -74,18 +65,6 @@ public class JsonSelectorTest {
             "    },\n" + //
             "    \"expensive\": 10\n" + //
             "}";
-
-    private Configuration configuration;
-
-    @Before
-    public void setupConfiguration() {
-        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
-
-        configuration = Configuration.builder() //
-                .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
-                .mappingProvider(new JacksonMappingProvider(mapper)) //
-                .build();
-    }
 
     @Test(expected = InvalidPathException.class)
     public void testInvalidPathDollarDot() {
@@ -140,11 +119,6 @@ public class JsonSelectorTest {
     }
 
     private JsonNode read(final String selector) {
-        final JsonPath jsonPath = JsonSelector.of(selector).getJsonPath();
-        try {
-            return jsonPath.read(JSON, configuration);
-        } catch (final PathNotFoundException e) {
-            return MissingNode.getInstance();
-        }
+        return JsonSelector.of(selector).read(JSON);
     }
 }

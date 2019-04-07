@@ -21,7 +21,7 @@ import com.arakelian.core.feature.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "_index", "_type", "_id", "_version" })
+@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "_shards", "_seq_no", "_primary_term" })
 public interface VersionedDocumentId extends DocumentId {
     @Nullable
     @JsonProperty("_version")

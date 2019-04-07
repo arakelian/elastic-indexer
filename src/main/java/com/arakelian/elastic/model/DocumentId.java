@@ -17,10 +17,13 @@
 
 package com.arakelian.elastic.model;
 
+import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views.Elastic.Version6;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 
-@JsonPropertyOrder({ "_index", "_type", "_id" })
+@JsonPropertyOrder({ "_index", "_type", "_id", "_shards", "_seq_no", "_primary_term" })
 public interface DocumentId {
     @JsonProperty("_id")
     public String getId();
@@ -30,4 +33,18 @@ public interface DocumentId {
 
     @JsonProperty("_type")
     public String getType();
+
+    @Nullable
+    @JsonProperty("_seq_no")
+    @JsonView(Version6.class)
+    public Integer getSeqNo();
+
+    @Nullable
+    @JsonProperty("_primary_term")
+    @JsonView(Version6.class)
+    public Integer getPrimaryTerm();
+
+    @Nullable
+    @JsonProperty("_shards")
+    public Shards getShards();
 }

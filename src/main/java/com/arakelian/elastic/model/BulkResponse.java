@@ -23,11 +23,9 @@ import java.util.List;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
-import com.arakelian.elastic.Views.Elastic.Version6;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
@@ -39,8 +37,8 @@ public interface BulkResponse {
     @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableBulkOperationResponse.class)
     @JsonDeserialize(builder = ImmutableBulkOperationResponse.Builder.class)
-    @JsonPropertyOrder({ "_index", "_type", "_id", "_version", "result", "status", "created", "found",
-            "error", "_shards" })
+    @JsonPropertyOrder({ "_index", "_type", "_id", "_version", "_shards", "_seq_no", "_primary_term",
+            "result", "status", "created", "found", "error" })
     public interface BulkOperationResponse extends VersionedDocumentId {
         @Nullable
         @Value.Auxiliary
@@ -57,23 +55,8 @@ public interface BulkResponse {
         public Boolean getFound();
 
         @Nullable
-        @JsonProperty("_primary_term")
-        @JsonView(Version6.class)
-        public Integer getPrimaryTerm();
-
-        @Nullable
         @JsonProperty("result")
         public String getResult();
-
-        @Nullable
-        @JsonProperty("_seq_no")
-        @JsonView(Version6.class)
-        public Integer getSeqNo();
-
-        @Nullable
-        @Value.Auxiliary
-        @JsonProperty("_shards")
-        public Shards getShards();
 
         @JsonProperty("status")
         public int getStatus();

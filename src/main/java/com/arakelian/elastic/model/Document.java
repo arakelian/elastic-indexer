@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableDocument.class)
 @JsonDeserialize(builder = ImmutableDocument.Builder.class)
-@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "found", "_source" })
+@JsonPropertyOrder({ "_index", "_type", "_id", "_version", "_seq_no", "_primary_term", "found", "_source" })
 public interface Document extends VersionedDocumentId {
     @Nullable
     @JsonProperty("_source")

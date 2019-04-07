@@ -24,13 +24,18 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
+import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Splitter;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 @Value.Immutable(copy = false)
 @JsonSerialize(as = ImmutableJsonSelector.class)
@@ -91,6 +96,23 @@ public abstract class JsonSelector implements Serializable {
 
         final String jsonPath = buf.toString();
         return JsonPath.compile(jsonPath, predicates);
+    }
+
+    @SuppressWarnings("TypeParameterUnusedInFormals")
+    public <T> T read(String json) {
+        return getJsonPath().read(json, getConfiguration());
+    }
+
+    @JsonIgnore
+    @Value.Lazy
+    public Configuration getConfiguration() {
+        final ObjectMapper mapper = JacksonUtils.getObjectMapper();
+
+        final Configuration configuration = Configuration.builder() //
+                .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
+                .mappingProvider(new JacksonMappingProvider(mapper)) //
+                .build();
+        return configuration;
     }
 
     public abstract String getSelector();

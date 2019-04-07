@@ -29,7 +29,6 @@ import com.arakelian.elastic.model.enums.GeoShapeType;
 import com.arakelian.elastic.model.enums.Operator;
 import com.arakelian.elastic.model.enums.RegexpFlag;
 import com.arakelian.elastic.model.enums.ShapeRelation;
-import com.arakelian.elastic.model.enums.SpatialStrategy;
 import com.arakelian.elastic.model.enums.ValidationMethod;
 import com.arakelian.elastic.model.search.GeoBoundingBoxQuery;
 import com.arakelian.elastic.model.search.GeoDistanceQuery;
@@ -96,33 +95,35 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
 
     @Test
     public void testExistsQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // all people should have a last name
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableExistsQuery.builder() //
-                                            .name("my_exists_filter") //
-                                            .boost(2.0f) //
-                                            .fieldName("lastName") //
-                                            .build()) //
-                            .build(),
-                    10);
+        withPeople(
+                10,
+                (index, people) -> {
+                    // all people should have a last name
+                    assertSearchFinds(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(
+                                            ImmutableExistsQuery.builder() //
+                                                    .name("my_exists_filter") //
+                                                    .boost(2.0f) //
+                                                    .fieldName("lastName") //
+                                                    .build()) //
+                                    .build(),
+                            10);
 
-            // no people should have a value for this field
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableExistsQuery.builder() //
-                                            .name("my_exists_filter") //
-                                            .boost(2.0f) //
-                                            .fieldName(ALWAYS_EMPTY_FIELD) //
-                                            .build()) //
-                            .build(),
-                    0);
-        });
+                    // no people should have a value for this field
+                    assertSearchFinds(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(
+                                            ImmutableExistsQuery.builder() //
+                                                    .name("my_exists_filter") //
+                                                    .boost(2.0f) //
+                                                    .fieldName(ALWAYS_EMPTY_FIELD) //
+                                                    .build()) //
+                                    .build(),
+                            0);
+                });
     }
 
     @Test
@@ -226,27 +227,29 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
 
     @Test
     public void testGeoPolygonQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // bermuda triangle
-            final GeoPolygonQuery query = ImmutableGeoPolygonQuery.builder() //
-                    .name("my_geopolygon_query") //
-                    .boost(2.0f) //
-                    .fieldName("location") //
-                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
-                    .addPoint(GeoPoint.of(-80.19, 25.76)) //
-                    .addPoint(GeoPoint.of(-66.09, 18.43)) //
-                    .addPoint(GeoPoint.of(-64.73, 32.31)) //
-                    .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
-                    .build();
+        withPeople(
+                10,
+                (index, people) -> {
+                    // bermuda triangle
+                    final GeoPolygonQuery query = ImmutableGeoPolygonQuery.builder() //
+                            .name("my_geopolygon_query") //
+                            .boost(2.0f) //
+                            .fieldName("location") //
+                            .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                            .addPoint(GeoPoint.of(-80.19, 25.76)) //
+                            .addPoint(GeoPoint.of(-66.09, 18.43)) //
+                            .addPoint(GeoPoint.of(-64.73, 32.31)) //
+                            .validationMethod(ValidationMethod.IGNORE_MALFORMED) //
+                            .build();
 
-            // just a syntax check, no people should be found
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(query) //
-                            .build(),
-                    0);
-        });
+                    // just a syntax check, no people should be found
+                    assertSearchFinds(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(query) //
+                                    .build(),
+                            0);
+                });
     }
 
     @Test
@@ -258,12 +261,11 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                     .fieldName("shape") //
                     .shape(
                             ImmutableShape.builder() //
-                                    .type(GeoShapeType.LINESTRING) //
-                                    .addCoordinate(Coordinate.of(102.0, 2.0)) //
-                                    .addCoordinate(Coordinate.of(103.0, 2.0)) //
+                                    .type(GeoShapeType.ENVELOPE) //
+                                    .addCoordinate(Coordinate.of(13.0, 53.0)) //
+                                    .addCoordinate(Coordinate.of(14.0, 52.0)) //
                                     .build())
-                    .relation(ShapeRelation.CONTAINS) //
-                    .strategy(SpatialStrategy.RECURSIVE) //
+                    .relation(ShapeRelation.WITHIN) //
                     .build();
 
             // just a syntax check, no people should be found
@@ -278,79 +280,86 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
 
     @Test
     public void testIdsQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // get first person
-            final Person person = people.get(0);
+        withPeople(
+                10,
+                (index, people) -> {
+                    // get first person
+                    final Person person = people.get(0);
 
-            // find them using their ID
-            final Search search = ImmutableSearch.builder() //
-                    .query(
-                            ImmutableIdsQuery.builder() //
-                                    .name("ids_query") //
-                                    .addValue(person.getId()) //
-                                    .build()) //
-                    .build();
+                    // find them using their ID
+                    final Search search = ImmutableSearch.builder() //
+                            .query(
+                                    ImmutableIdsQuery.builder() //
+                                            .name("ids_query") //
+                                            .addValue(person.getId()) //
+                                            .build()) //
+                            .build();
 
-            // verify returned data matches
-            assertSearchFindsPerson(index, search, person);
-        });
+                    // verify returned data matches
+                    assertSearchFindsPerson(index, search, person);
+                });
     }
 
     @Test
     public void testMatchQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // pick a person
-            final Person person = people.get(0);
+        withPeople(
+                10,
+                (index, people) -> {
+                    // pick a person
+                    final Person person = people.get(0);
 
-            // create a phrase that contains their last name
-            final String phase = "find a person whose last name is " + person.getLastName();
+                    // create a phrase that contains their last name
+                    final String phase = "find a person whose last name is " + person.getLastName();
 
-            // search for a person using the phrase; the phrase should have been analyzed and we
-            // should have a match on the last name
-            assertSearchFindsPerson(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableMatchQuery.builder() //
-                                            .fieldName("lastName") //
-                                            .value(phase) //
-                                            .operator(Operator.OR) //
-                                            .build()) //
-                            .highlight(
-                                    ImmutableHighlight.builder() //
-                                            .addField(Field.of("lastName")) //
-                                            .build())
-                            .build(),
-                    person);
-        });
+                    // search for a person using the phrase; the phrase should have been analyzed
+                    // and we
+                    // should have a match on the last name
+                    assertSearchFindsPerson(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(
+                                            ImmutableMatchQuery.builder() //
+                                                    .fieldName("lastName") //
+                                                    .value(phase) //
+                                                    .operator(Operator.OR) //
+                                                    .build()) //
+                                    .highlight(
+                                            ImmutableHighlight.builder() //
+                                                    .addField(Field.of("lastName")) //
+                                                    .build())
+                                    .build(),
+                            person);
+                });
     }
 
     @Test
     public void testMoreLikeThisQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // bermuda triangle
-            final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
-                    .name("my_morelikethis") //
-                    .boost(2.0f) //
-                    .addLikeText("four score and seven years ago") //
-                    .addLikeItem(ImmutableItem.builder().id("id").build()) //
-                    .minTermFrequency(10) //
-                    .minDocFrequency(10) //
-                    .maxDocFrequency(0) //
-                    .minWordLength(10) //
-                    .maxWordLength(0) //
-                    .maxQueryTerms(0) //
-                    .minimumShouldMatch("100%") //
-                    .build();
+        withPeople(
+                10,
+                (index, people) -> {
+                    // bermuda triangle
+                    final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
+                            .name("my_morelikethis") //
+                            .boost(2.0f) //
+                            .addLikeText("four score and seven years ago") //
+                            .addLikeItem(ImmutableItem.builder().id("id").build()) //
+                            .minTermFrequency(10) //
+                            .minDocFrequency(10) //
+                            .maxDocFrequency(0) //
+                            .minWordLength(10) //
+                            .maxWordLength(0) //
+                            .maxQueryTerms(0) //
+                            .minimumShouldMatch("100%") //
+                            .build();
 
-            // just a syntax check, no people should be found
-            assertSearchFinds(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(query) //
-                            .build(),
-                    0);
-        });
+                    // just a syntax check, no people should be found
+                    assertSearchFinds(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(query) //
+                                    .build(),
+                            0);
+                });
     }
 
     @Test
@@ -411,36 +420,38 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
 
     @Test
     public void testRangeQuery() throws IOException {
-        withPeople(10, (index, people) -> {
-            // pick person
-            final Person person = people.get(0);
+        withPeople(
+                10,
+                (index, people) -> {
+                    // pick person
+                    final Person person = people.get(0);
 
-            // find person using age range
-            assertSearchFindsOneOf(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableRangeQuery.builder() //
-                                            .fieldName("age") //
-                                            .lower(person.getAge() - 1) //
-                                            .upper(person.getAge() + 1) //
-                                            .build()) //
-                            .build(),
-                    person);
+                    // find person using age range
+                    assertSearchFindsOneOf(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(
+                                            ImmutableRangeQuery.builder() //
+                                                    .fieldName("age") //
+                                                    .lower(person.getAge() - 1) //
+                                                    .upper(person.getAge() + 1) //
+                                                    .build()) //
+                                    .build(),
+                            person);
 
-            // find person using date range
-            assertSearchFindsOneOf(
-                    index,
-                    ImmutableSearch.builder() //
-                            .query(
-                                    ImmutableRangeQuery.builder() //
-                                            .fieldName("birthdate") //
-                                            .lower(person.getBirthdate().minusYears(1)) //
-                                            .upper(person.getBirthdate().plusYears(1)) //
-                                            .build()) //
-                            .build(),
-                    person);
-        });
+                    // find person using date range
+                    assertSearchFindsOneOf(
+                            index,
+                            ImmutableSearch.builder() //
+                                    .query(
+                                            ImmutableRangeQuery.builder() //
+                                                    .fieldName("birthdate") //
+                                                    .lower(person.getBirthdate().minusYears(1)) //
+                                                    .upper(person.getBirthdate().plusYears(1)) //
+                                                    .build()) //
+                                    .build(),
+                            person);
+                });
     }
 
     @Test

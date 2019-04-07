@@ -23,7 +23,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version "5.0.0"
 
     // useful utilities
-    id "com.arakelian.multitool" version "2.1.0"
+    id "com.arakelian.multitool" version "2.3.0"
     
     // for antlr tasks
     id 'antlr'
@@ -101,8 +101,6 @@ multitool {
         dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
         dontnote '**.org.apache.commons.lang3.ObjectUtils'
         dontnote '**.com.google.common.util.concurrent.TimeLimiter'
-        
-        optimizationpasses 2
     }
 }
 
@@ -115,11 +113,11 @@ dependencies {
     // configure errorprone version
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
     
-    compile 'com.arakelian:more-commons:2.0.0'
-    compile 'com.arakelian:jackson-utils:2.0.0'
-    compile 'com.arakelian:json-filter:3.0.0'
-    compile 'com.arakelian:key-value-store:2.0.0'
-    compile 'com.arakelian:retry:3.2.0'
+    compile 'com.arakelian:more-commons:2.1.0'
+    compile 'com.arakelian:jackson-utils:2.1.0'
+    compile 'com.arakelian:json-filter:3.1.0'
+    compile 'com.arakelian:key-value-store:2.1.0'
+    compile 'com.arakelian:retry:3.3.0'
     
     // caching
     compile 'com.github.ben-manes.caffeine:caffeine:2.7.0'
@@ -145,7 +143,7 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-jackson:2.5.0'
     compile 'com.squareup.retrofit2:adapter-java8:2.5.0'
     compile 'com.squareup.okhttp3:okhttp:3.14.0'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.10.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.14.0'
     compile 'com.lmax:disruptor:3.4.2'
 
     antlr   'org.antlr:antlr4:4.7.2'
@@ -162,9 +160,9 @@ dependencies {
     // for unit testing
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:2.6.1'
-    testCompile 'com.arakelian:more-commons:2.0.0:tests'
-    testCompile 'com.arakelian:jackson-utils:2.0.0:tests'
-    testCompile 'com.arakelian:docker-junit-rule:3.0.0'
-    testCompile 'com.arakelian:faker:3.0.0'
+    testCompile 'com.arakelian:more-commons:2.1.0:tests'
+    testCompile 'com.arakelian:jackson-utils:2.1.0:tests'
+    testCompile 'com.arakelian:docker-junit-rule:3.2.0'
+    testCompile 'com.arakelian:faker:3.1.0'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.5.0'
 }

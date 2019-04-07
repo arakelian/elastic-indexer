@@ -35,7 +35,7 @@ public interface Mget extends Serializable {
     @Value.Immutable(copy = false)
     @JsonSerialize(as = ImmutableMgetDocument.class)
     @JsonDeserialize(builder = ImmutableMgetDocument.Builder.class)
-    @JsonPropertyOrder({ "_index", "_type", "_id", "_source" })
+    @JsonPropertyOrder({ "_index", "_type", "_id", "_shards", "_seq_no", "_primary_term", "_source" })
     public static interface MgetDocument extends DocumentId {
         @Nullable
         @JsonProperty("_source")

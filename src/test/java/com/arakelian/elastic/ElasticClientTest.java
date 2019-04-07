@@ -42,6 +42,7 @@ import com.arakelian.elastic.model.ImmutableMgetDocument;
 import com.arakelian.elastic.model.Index;
 import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.IndexedDocument;
+import com.arakelian.elastic.model.Mget;
 import com.arakelian.elastic.model.Nodes;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.faker.model.Person;
@@ -154,7 +155,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
             }
 
             // we should have received response for each record, whether found or not
-            final ImmutableMget mget = builder.build();
+            final Mget mget = builder.build();
             final Documents documents = assertSuccessful(elasticClient.getDocuments(mget));
             assertNotNull(documents);
             assertEquals(mget.getDocs().size(), documents.getDocs().size());
