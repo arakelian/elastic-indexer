@@ -114,7 +114,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "6.4.2", //
                 // "6.5.4", //
                 // "6.6.2", //
-                "6.7.1" //
+                // "6.7.2", //
+                // "7.0.1", //
+                // "7.1.1", //
+                // "7.2.1", //
+                // "7.3.1", //
+                "6.8.2" //
         };
     }
 
@@ -163,15 +168,17 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
             LOGGER.info("Elastic host: {}", elasticUrl);
 
+            final HttpLoggingInterceptor logger = new HttpLoggingInterceptor(message -> {
+                if (!StringUtils.isEmpty(message)) {
+                    final CharSequence pretty = JsonFilter.prettyifyQuietly(message);
+                    LOGGER.info("{}", pretty);
+                }
+            });
+            logger.level(Level.BODY);
+
             // configure OkHttp3
             final OkHttpClient client = new OkHttpClient.Builder() //
-                    .addInterceptor( //
-                            new HttpLoggingInterceptor(message -> {
-                                if (!StringUtils.isEmpty(message)) {
-                                    final CharSequence pretty = JsonFilter.prettyifyQuietly(message);
-                                    LOGGER.info("{}", pretty);
-                                }
-                            }).setLevel(Level.BODY)) //
+                    .addInterceptor(logger) //
                     .addInterceptor(new GzipRequestInterceptor()) //
                     .build();
 

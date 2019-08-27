@@ -54,7 +54,7 @@ public class DefaultOkHttpElasticApiFactoryTest {
                             .message("OK") //
                             .protocol(Protocol.HTTP_1_1) //
                             .request(chain.request()) //
-                            .body(ResponseBody.create(MediaType.parse("application/json"), body)) //
+                            .body(ResponseBody.create(body, MediaType.parse("application/json"))) //
                             .build();
                 }) //
                 .build();

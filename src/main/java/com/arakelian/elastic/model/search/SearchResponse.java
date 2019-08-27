@@ -76,7 +76,7 @@ public interface SearchResponse extends Serializable {
     public Shards getShards();
 
     @Nullable
-    public Integer getTook();
+    public Long getTook();
 
     @JsonIgnore
     @Value.Derived

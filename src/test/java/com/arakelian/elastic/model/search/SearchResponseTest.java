@@ -28,7 +28,7 @@ import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SearchResponseTest extends AbstractElasticModelTest {
     public static final SearchResponse SAMPLE = ImmutableSearchResponse.builder() //
-            .took(1) //
+            .took(1L) //
             .timedOut(false) //
             .shards(ShardsTest.MINIMAL) //
             .hits(SearchHitsTest.SAMPLE) //

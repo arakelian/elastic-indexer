@@ -37,7 +37,7 @@ public interface DocumentId {
     @Nullable
     @JsonProperty("_seq_no")
     @JsonView(Version6.class)
-    public Integer getSeqNo();
+    public Long getSeqNo();
 
     @Nullable
     @JsonProperty("_primary_term")
