@@ -17,19 +17,29 @@
 
 package com.arakelian.elastic.model;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.immutables.value.Value;
 
+import com.arakelian.elastic.Views.Elastic.Version7;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.Preconditions;
 
 @Value.Immutable(copy = false)
@@ -42,6 +52,62 @@ public interface Index extends Serializable {
 
         public WithoutNameSerializer(final JsonSerializer<Object> delegate) {
             super(Index.class, filter, delegate);
+        }
+    }
+
+    public static class MappingsSerializer extends StdSerializer<Map> {
+        public MappingsSerializer() {
+            super(Map.class);
+        }
+
+        @Override
+        public void serialize(
+                final Map mappings,
+                final JsonGenerator generator,
+                final SerializerProvider provider) throws IOException, JsonProcessingException {
+            final Class<?> activeView = provider.getActiveView();
+            if (Version7.class.isAssignableFrom(activeView)) {
+                final int size = mappings.size();
+                final String key;
+                if (size == 1) {
+                    key = mappings.keySet().iterator().next().toString();
+                } else if (size == 2) {
+                    key = "_default_";
+                } else {
+                    throw new IllegalStateException("mappings constraint violated");
+                }
+
+                Preconditions.checkState(mappings.containsKey(key), "mappings does not contain %s", key);
+                final Mapping value = (Mapping) mappings.get(key);
+                provider.defaultSerializeValue(value, generator);
+                return;
+            }
+
+            // default serialization
+            provider.defaultSerializeValue(mappings, generator);
+        }
+    }
+
+    public class MappingsDeserializer extends StdDeserializer<Map> {
+        public MappingsDeserializer() {
+            super(Map.class);
+        }
+
+        @Override
+        public Map deserialize(final JsonParser p, final DeserializationContext ctxt)
+                throws IOException, JsonProcessingException {
+            final Class<?> activeView = ctxt.getActiveView();
+            if (Version7.class.isAssignableFrom(activeView)) {
+                HashMap<String, Mapping> mappings = new HashMap<String, Mapping>();
+                final Mapping mapping = ctxt.readValue(p, Mapping.class);
+                mappings.put("_default", mapping);
+                return mappings;
+            }
+
+            // default deserialization
+            return ctxt.readValue(
+                    p,
+                    ctxt.getTypeFactory().constructMapType(Map.class, String.class, Mapping.class));
         }
     }
 
@@ -81,6 +147,8 @@ public interface Index extends Serializable {
 
     @Value.Auxiliary
     @JsonProperty("mappings")
+    @JsonSerialize(using = MappingsSerializer.class)
+    @JsonDeserialize(using = MappingsDeserializer.class)
     public Map<String, Mapping> getMappings();
 
     /**

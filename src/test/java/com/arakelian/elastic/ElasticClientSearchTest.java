@@ -340,6 +340,8 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                     // bermuda triangle
                     final MoreLikeThisQuery query = ImmutableMoreLikeThisQuery.builder() //
                             .name("my_morelikethis") //
+                            .addField("title") //
+                            .addField("comments") //
                             .boost(2.0f) //
                             .addLikeText("four score and seven years ago") //
                             .addLikeItem(ImmutableItem.builder().id("id").build()) //

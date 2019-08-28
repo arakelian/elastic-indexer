@@ -21,7 +21,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.Views;
 import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Preconditions;
@@ -39,27 +41,27 @@ public abstract class BulkOperation {
      *      API</a>
      */
     public static enum Action {
-    /**
-     * CREATE has put-if-absent semantics. The index operation will fail if a document by that id
-     * already exists in the index.
-     **/
-    CREATE(true),
+        /**
+         * CREATE has put-if-absent semantics. The index operation will fail if a document by that
+         * id already exists in the index.
+         **/
+        CREATE(true),
 
-    /**
-     * DELETE does not expect a source on the following line, and has the same semantics as the
-     * standard delete API.
-     **/
-    DELETE(false),
+        /**
+         * DELETE does not expect a source on the following line, and has the same semantics as the
+         * standard delete API.
+         **/
+        DELETE(false),
 
-    /**
-     * Unlike {@link #CREATE}, INDEX will add or replace document as necessary.
-     */
-    INDEX(true),
+        /**
+         * Unlike {@link #CREATE}, INDEX will add or replace document as necessary.
+         */
+        INDEX(true),
 
-    /**
-     * UPDATE expects that next line is a partial document or a script.
-     */
-    UPDATE(true);
+        /**
+         * UPDATE expects that next line is a partial document or a script.
+         */
+        UPDATE(true);
 
         private final boolean hasSource;
 
@@ -97,6 +99,12 @@ public abstract class BulkOperation {
      * @return mapping type within index.
      */
     public abstract Action getAction();
+
+    @Value.Default
+    @Value.Auxiliary
+    public VersionComponents getElasticVersion() {
+        return Views.VERSION_6.getVersion();
+    }
 
     @Nullable
     @Value.Derived
@@ -181,6 +189,7 @@ public abstract class BulkOperation {
 
     private void addActionAndMetadata(final StringBuilder buf) {
         final Action action = getAction();
+        final boolean version7 = getElasticVersion().atLeast(7, 0, 0);
 
         buf.append('{');
         buf.append("\"").append(action.toString()).append("\"").append(':');
@@ -188,18 +197,26 @@ public abstract class BulkOperation {
 
         buf.append("\"_index\"").append(':');
         buf.append('"').append(getIndex().getName()).append('"');
-
         buf.append(',');
-        buf.append("\"_type\"").append(':');
-        buf.append('"').append(getType()).append('"');
 
-        buf.append(',');
+        if (!version7) {
+            buf.append("\"_type\"").append(':');
+            buf.append('"').append(getType()).append('"');
+            buf.append(',');
+        }
+
         buf.append("\"_id\"").append(':');
         buf.append('"').append(getId()).append('"');
 
         if (getVersion() != null) {
             buf.append(',');
-            buf.append("\"_version\"").append(':');
+            buf.append("\"");
+            if (version7) {
+                buf.append("version");
+            } else {
+                buf.append("_version");
+            }
+            buf.append("\"").append(':');
             buf.append(getVersion());
             if (getVersionType() != null) {
                 buf.append(',');

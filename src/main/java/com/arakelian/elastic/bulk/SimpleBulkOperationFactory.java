@@ -30,9 +30,11 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.core.utils.DateUtils;
+import com.arakelian.elastic.Views;
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.doc.ElasticDocBuilder;
 import com.arakelian.elastic.model.Index;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
@@ -131,6 +133,12 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
         return document -> "_doc";
     }
 
+    @Value.Default
+    @Value.Auxiliary
+    public Function<T, VersionComponents> getElasticVersion() {
+        return document -> Views.VERSION_6.getVersion();
+    }
+
     /**
      * Returns the date that we should use as index version passed to Elastic.
      *
@@ -148,7 +156,8 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
         Preconditions.checkArgument(action == Action.DELETE);
 
         final String type = getType().apply(null);
-        final BulkOperation operation = createBulkOperation(action, type, id, null, null);
+        final VersionComponents elasticVersion = getElasticVersion().apply(null);
+        final BulkOperation operation = createBulkOperation(elasticVersion, action, type, id, null, null);
         return Lists.newArrayList(operation);
     }
 
@@ -195,18 +204,29 @@ public abstract class SimpleBulkOperationFactory<T> implements BulkOperationFact
             source = null;
         }
 
+        // determine Elastic version
+        final VersionComponents elasticVersion = getElasticVersion().apply(document);
+
         // create operation
-        final BulkOperation operation = createBulkOperation(action, type, id, source, version);
+        final BulkOperation operation = createBulkOperation(
+                elasticVersion,
+                action,
+                type,
+                id,
+                source,
+                version);
         return Lists.newArrayList(operation);
     }
 
     protected BulkOperation createBulkOperation(
+            final VersionComponents elasticVersion,
             final Action action,
             final String type,
             final String id,
             final CharSequence source,
             final Long version) {
         return ImmutableBulkOperation.builder() //
+                .elasticVersion(elasticVersion) //
                 .action(action) //
                 .index(getIndex()) //
                 .type(type) //

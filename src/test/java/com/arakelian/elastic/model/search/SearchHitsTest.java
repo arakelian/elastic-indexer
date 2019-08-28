@@ -23,11 +23,16 @@ import org.junit.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.model.AbstractElasticModelTest;
+import com.arakelian.elastic.model.search.SearchHits.Relation;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
 public class SearchHitsTest extends AbstractElasticModelTest {
     public static final SearchHits SAMPLE = ImmutableSearchHits.builder() //
-            .total(3) //
+            .totalObject(
+                    ImmutableTotal.builder() //
+                            .value(3) //
+                            .relation(Relation.GTE) //
+                            .build()) //
             .maxScore(3.0f) //
             .addHit(
                     ImmutableSearchHit.builder() //

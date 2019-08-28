@@ -38,7 +38,18 @@ public abstract class AbstractElasticModelTest {
                 "5.5", //
                 "5.6", //
                 "6", //
-                "6.1" };
+                "6.1", //
+                "6.2", //
+                "6.3", //
+                "6.4", //
+                "6.5", //
+                "6.6", //
+                "6.7", //
+                "6.8", //
+                "7", //
+                "7.1", //
+                "7.2", //
+                "7.3" };
     }
 
     protected final ObjectMapper objectMapper;

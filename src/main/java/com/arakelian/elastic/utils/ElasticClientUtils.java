@@ -38,6 +38,17 @@ import com.arakelian.elastic.Views.Elastic.Version5.Version55;
 import com.arakelian.elastic.Views.Elastic.Version5.Version56;
 import com.arakelian.elastic.Views.Elastic.Version6;
 import com.arakelian.elastic.Views.Elastic.Version6.Version61;
+import com.arakelian.elastic.Views.Elastic.Version6.Version62;
+import com.arakelian.elastic.Views.Elastic.Version6.Version63;
+import com.arakelian.elastic.Views.Elastic.Version6.Version64;
+import com.arakelian.elastic.Views.Elastic.Version6.Version65;
+import com.arakelian.elastic.Views.Elastic.Version6.Version66;
+import com.arakelian.elastic.Views.Elastic.Version6.Version67;
+import com.arakelian.elastic.Views.Elastic.Version6.Version68;
+import com.arakelian.elastic.Views.Elastic.Version7;
+import com.arakelian.elastic.Views.Elastic.Version7.Version71;
+import com.arakelian.elastic.Views.Elastic.Version7.Version72;
+import com.arakelian.elastic.Views.Elastic.Version7.Version73;
 import com.arakelian.elastic.model.About;
 import com.arakelian.elastic.model.ImmutableIndex;
 import com.arakelian.elastic.model.Index;
@@ -211,8 +222,33 @@ public class ElasticClientUtils {
             switch (version.getMinor()) {
             case 1:
                 return Version61.class;
+            case 2:
+                return Version62.class;
+            case 3:
+                return Version63.class;
+            case 4:
+                return Version64.class;
+            case 5:
+                return Version65.class;
+            case 6:
+                return Version66.class;
+            case 7:
+                return Version67.class;
+            case 8:
+                return Version68.class;
             default:
                 return Version6.class;
+            }
+        case 7:
+            switch (version.getMinor()) {
+            case 1:
+                return Version71.class;
+            case 2:
+                return Version72.class;
+            case 3:
+                return Version73.class;
+            default:
+                return Version7.class;
             }
         default:
             throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);
