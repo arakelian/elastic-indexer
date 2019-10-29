@@ -151,11 +151,6 @@ public abstract class ElasticDocConfig {
                         field.getName());
             }
         }
-
-        // map additional targets the same way
-        for (final String additionalTarget : field.getAdditionalTargets()) {
-            buildSourcePathMapping(result, paths, visited, additionalTarget);
-        }
     }
 
     /**

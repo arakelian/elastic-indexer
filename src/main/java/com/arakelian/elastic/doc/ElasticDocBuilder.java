@@ -48,6 +48,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
@@ -286,12 +287,14 @@ public class ElasticDocBuilder {
             // discard tokens
         });
 
-        tokenFilter.accept(obj.toString(), token -> {
-            // we only store non-empty strings in document
-            if (!StringUtils.isEmpty(token)) {
-                document.put(field.getName(), token);
-            }
-        });
+        tokenFilter.accept(
+                obj.toString(),
+                token -> {
+                    // we only store non-empty strings in document
+                    if (!StringUtils.isEmpty(token)) {
+                        document.put(field.getName(), token);
+                    }
+                });
 
         // null value is used to flush token filters that buffer
         for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
@@ -370,14 +373,43 @@ public class ElasticDocBuilder {
             return;
         }
 
+        final Set<Field> visited;
+        if (field.getAdditionalTargets().size() != 0) {
+            visited = Sets.newHashSet();
+        } else {
+            visited = null;
+        }
+
+        put(field, obj, visited);
+    }
+
+    protected void put(final Field field, final Object obj, final Set<Field> visited) {
+        if (visited != null) {
+            if (visited.contains(field)) {
+                return;
+            }
+            visited.add(field);
+        }
+
         // apply token filters
         if (obj instanceof CharSequence) {
             putCharSequence(field, obj);
+        } else {
+            // store object
+            document.put(field.getName(), obj);
+        }
+
+        // copy to additional fields?
+        final List<String> additionalTargets = field.getAdditionalTargets();
+        if (additionalTargets.size() == 0) {
             return;
         }
 
-        // store object
-        document.put(field.getName(), obj);
+        for (final String additionalTarget : additionalTargets) {
+            // recursive copy
+            final Field additionalField = config.getMapping().getField(additionalTarget);
+            put(additionalField, obj, visited);
+        }
     }
 
     /**

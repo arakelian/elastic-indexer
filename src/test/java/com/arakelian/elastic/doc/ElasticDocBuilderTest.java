@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.arakelian.core.utils.DateUtils;
+import com.arakelian.elastic.doc.filters.ImmutableReverse;
 import com.arakelian.elastic.doc.filters.ImmutableUppercase;
 import com.arakelian.elastic.doc.filters.Splitter;
 import com.arakelian.elastic.model.ElasticDocConfig;
@@ -172,6 +173,36 @@ public class ElasticDocBuilderTest {
         final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
         assertEquals( //
                 "{\"booleans\":true}", //
+                actual);
+    }
+
+    @Test
+    public void testAdditionalFields() {
+        final Mapping mapping = ImmutableMapping.builder() //
+                .all(null) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("phone") //
+                                .addAdditionalTarget("reversePhone") //
+                                .ignoreMalformed(false) //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("reversePhone") //
+                                .addTokenFilter(ImmutableReverse.of()) //
+                                .ignoreMalformed(false) //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .build();
+
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
+                .mapping(mapping) //
+                .putTarget("phone", JsonSelector.of("/phone")) //
+                .build();
+        final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
+        assertEquals( //
+                "{\"phone\":\"1-126-999-3806\",\"reversePhone\":\"6083-999-621-1\"}", //
                 actual);
     }
 
