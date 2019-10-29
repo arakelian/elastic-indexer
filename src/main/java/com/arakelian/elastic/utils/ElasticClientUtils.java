@@ -80,16 +80,28 @@ public class ElasticClientUtils {
     public static class RetryIoException implements Predicate<Throwable> {
         @Override
         public boolean apply(final Throwable exception) {
-            if (exception instanceof SocketTimeoutException) {
+            if (findCause(exception, SocketTimeoutException.class) != null) {
                 // Retry if the server dropped connection on us
                 return true;
             }
-            if (exception instanceof ElasticHttpException) {
-                final ElasticHttpException e = (ElasticHttpException) exception;
-                return retryIfResponse(e.getStatusCode());
+
+            final ElasticHttpException cause = findCause(exception, ElasticHttpException.class);
+            if (cause != null) {
+                return retryIfResponse(cause.getStatusCode());
             }
+
             // otherwise do not retry
             return false;
+        }
+
+        private <T> T findCause(final Throwable exception, final Class<T> type) {
+            if (exception == null) {
+                return null;
+            }
+            if (type.isInstance(exception)) {
+                return type.cast(exception);
+            }
+            return findCause(exception.getCause(), type);
         }
     }
 
