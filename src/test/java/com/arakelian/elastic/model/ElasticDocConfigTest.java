@@ -27,18 +27,10 @@ public class ElasticDocConfigTest extends AbstractElasticModelTest {
     public static final ElasticDocConfig MINIMAL = ImmutableElasticDocConfig.builder() //
             .mapping(MappingTest.CONTACT) //
             .addIdentityFields("name", "street", "city", "state", "zip") //
-            .putTarget("name", JsonSelector.of("firstName")) //
-            .putTarget("name", JsonSelector.of("middleName")) //
-            .putTarget("name", JsonSelector.of("lastName")) //
             .build();
 
     public ElasticDocConfigTest(final String number) {
         super(number);
-    }
-
-    @Test
-    public void testMap() {
-
     }
 
     @Test
