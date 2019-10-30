@@ -216,7 +216,12 @@ public class ElasticDocBuilder {
             return values.iterator().next();
         }
 
-        final Field field = config.getMapping().getField(fieldName);
+        final Mapping mapping = config.getMapping();
+        if (config.isIgnoreMissingFields() && !mapping.hasField(fieldName)) {
+            return null;
+        }
+
+        final Field field = mapping.getField(fieldName);
         final Boolean sortTokens = field.isSortTokens();
         if (sortTokens == null || !sortTokens.booleanValue()) {
             // no sort; just return insertion order
@@ -405,9 +410,13 @@ public class ElasticDocBuilder {
             return;
         }
 
+        final Mapping mapping = config.getMapping();
         for (final String additionalTarget : additionalTargets) {
+            if (config.isIgnoreMissingAdditionalTargets() && !mapping.hasField(additionalTarget)) {
+                continue;
+            }
             // recursive copy
-            final Field additionalField = config.getMapping().getField(additionalTarget);
+            final Field additionalField = mapping.getField(additionalTarget);
             put(additionalField, obj, visited);
         }
     }

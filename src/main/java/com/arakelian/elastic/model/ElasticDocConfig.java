@@ -122,6 +122,18 @@ public abstract class ElasticDocConfig {
         return true;
     }
 
+    @Value.Default
+    @Value.Auxiliary
+    public boolean isIgnoreMissingAdditionalTargets() {
+        return false;
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    public boolean isIgnoreMissingFields() {
+        return false;
+    }
+
     private void buildSourcePathMapping(
             final Multimap<JsonSelector, Field> result,
             final Collection<JsonSelector> paths,
@@ -129,6 +141,11 @@ public abstract class ElasticDocConfig {
             final String target) {
         // make sure we don't visit more than once
         if (!visited.add(target)) {
+            return;
+        }
+
+        // check if field exists
+        if (isIgnoreMissingFields() && !getMapping().hasField(target)) {
             return;
         }
 
