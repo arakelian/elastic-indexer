@@ -23,14 +23,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.lang3.StringUtils;
 
-import com.arakelian.elastic.doc.filters.TokenChain;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
@@ -43,7 +41,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -116,9 +113,6 @@ public class ElasticDocBuilder {
     /** The Elastic document we're building. Duplicate values are not stored. **/
     protected final LinkedHashMultimap<String, Object> document;
 
-    /** Token filters **/
-    private final Map<Field, TokenFilter> tokenFilters;
-
     /** Can only build one document at a time **/
     private final Lock lock;
 
@@ -132,7 +126,6 @@ public class ElasticDocBuilder {
         this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
         this.document = LinkedHashMultimap.create();
-        this.tokenFilters = Maps.newLinkedHashMap();
         this.mapper = config.getObjectMapper();
         this.jsonPathConfig = Configuration.builder() //
                 .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
@@ -285,36 +278,6 @@ public class ElasticDocBuilder {
         return sorted;
     }
 
-    private void putCharSequence(final Field field, final Object obj) {
-        // flush token filters which buffer
-        final TokenFilter tokenFilter = getTokenFilter(field);
-        tokenFilter.accept(null, token -> {
-            // discard tokens
-        });
-
-        tokenFilter.accept(
-                obj.toString(),
-                token -> {
-                    // we only store non-empty strings in document
-                    if (!StringUtils.isEmpty(token)) {
-                        document.put(field.getName(), token);
-                    }
-                });
-
-        // null value is used to flush token filters that buffer
-        for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
-            tokenFilter.accept(null, token -> {
-                if (!StringUtils.isEmpty(token)) {
-                    document.put(field.getName(), token);
-                    changed.set(true);
-                }
-            });
-            if (!changed.get()) {
-                break;
-            }
-        }
-    }
-
     /**
      * Returns the Elastic document as a simple map.
      *
@@ -345,33 +308,6 @@ public class ElasticDocBuilder {
         return map;
     }
 
-    protected TokenFilter getTokenFilter(final Field field) {
-        if (tokenFilters.containsKey(field)) {
-            // use cached value
-            return tokenFilters.get(field);
-        }
-
-        // mapping may contain global token filters that are applied before or after the
-        // field-specific list
-        final Mapping mapping = config.getMapping();
-        final List<TokenFilter> before = mapping.getBeforeTokenFilters();
-        final List<TokenFilter> after = mapping.getAfterTokenFilters();
-
-        final TokenFilter filter;
-        if (before.size() == 0 && after.size() == 0) {
-            // optimization: no global filters
-            filter = TokenChain.link(field.getTokenFilters());
-        } else {
-            // combine filters
-            filter = TokenChain
-                    .link(Lists.newArrayList(Iterables.concat(before, field.getTokenFilters(), after)));
-        }
-
-        // store in cache
-        tokenFilters.put(field, filter);
-        return filter;
-    }
-
     protected void put(final Field field, final Object obj) {
         if (obj == null) {
             // we don't store null values
@@ -396,9 +332,14 @@ public class ElasticDocBuilder {
             visited.add(field);
         }
 
-        // apply token filters
+        final Mapping mapping = config.getMapping();
         if (obj instanceof CharSequence) {
-            putCharSequence(field, obj);
+            // apply token filters
+            final CharSequence csq = (CharSequence) obj;
+            final TokenFilter tokenFilter = mapping.getFieldTokenFilter(field.getName());
+            tokenFilter.execute(csq, token -> {
+                document.put(field.getName(), token);
+            });
         } else {
             // store object
             document.put(field.getName(), obj);
@@ -410,7 +351,6 @@ public class ElasticDocBuilder {
             return;
         }
 
-        final Mapping mapping = config.getMapping();
         for (final String additionalTarget : additionalTargets) {
             if (config.isIgnoreMissingAdditionalTargets() && !mapping.hasField(additionalTarget)) {
                 continue;

@@ -17,10 +17,15 @@
 
 package com.arakelian.elastic.doc.filters;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.collect.ImmutableList;
 
 @JsonTypeInfo(property = "type", use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({ //
@@ -63,4 +68,42 @@ public interface TokenFilter {
     public static final String NULL = "null";
 
     public <T extends Consumer<String>> T accept(String value, T output);
+
+    public default List<String> execute(final CharSequence csq) {
+        final ImmutableList.Builder<String> tokens = ImmutableList.builder();
+        execute(csq, token -> {
+            tokens.add(token.toString());
+        });
+        return tokens.build();
+    }
+
+    public default void execute(final CharSequence csq, final Consumer<CharSequence> consumer) {
+        // null value is used to flush token filters that buffer
+        accept(null, token -> {
+            // discard any leftovers from last execution; perhaps there was an exception and
+            // pipeline was not reset
+        });
+
+        accept(
+                csq != null ? csq.toString() : StringUtils.EMPTY,
+                token -> {
+                    // we only store non-empty strings in document
+                    if (!StringUtils.isEmpty(token)) {
+                        consumer.accept(token);
+                    }
+                });
+
+        // null value is used to flush token filters that buffer
+        for (final AtomicBoolean changed = new AtomicBoolean();; changed.set(false)) {
+            accept(null, token -> {
+                if (!StringUtils.isEmpty(token)) {
+                    consumer.accept(token);
+                    changed.set(true);
+                }
+            });
+            if (!changed.get()) {
+                break;
+            }
+        }
+    }
 }

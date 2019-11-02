@@ -22,9 +22,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.arakelian.core.utils.DateUtils;
+import com.arakelian.elastic.doc.filters.ImmutablePatternReplace;
 import com.arakelian.elastic.doc.filters.ImmutableReverse;
+import com.arakelian.elastic.doc.filters.ImmutableStripWhitespace;
 import com.arakelian.elastic.doc.filters.ImmutableUppercase;
 import com.arakelian.elastic.doc.filters.Splitter;
+import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.ImmutableElasticDocConfig;
@@ -32,6 +35,7 @@ import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.JsonSelector;
 import com.arakelian.elastic.model.Mapping;
+import com.google.common.collect.ImmutableList;
 
 public class ElasticDocBuilderTest {
     /** Sample input **/
@@ -134,6 +138,51 @@ public class ElasticDocBuilderTest {
     }
 
     @Test
+    public void testAdditionalFields() {
+        final Mapping mapping = ImmutableMapping.builder() //
+                .all(null) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("phone") //
+                                .addTokenFilter(ImmutableStripWhitespace.of()) //
+                                .addTokenFilter(
+                                        ImmutablePatternReplace.builder() //
+                                                .pattern("\\p{Punct}") //
+                                                .replacement("") //
+                                                .build())
+                                .addAdditionalTarget("reversePhone") //
+                                .ignoreMalformed(false) //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("reversePhone") //
+                                .addTokenFilter(ImmutableStripWhitespace.of()) //
+                                .addTokenFilter(
+                                        ImmutablePatternReplace.builder() //
+                                                .pattern("\\p{Punct}") //
+                                                .replacement("") //
+                                                .build())
+                                .addTokenFilter(ImmutableReverse.of()) //
+                                .ignoreMalformed(false) //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .build();
+
+        final TokenFilter tokenFilter = mapping.getFieldTokenFilter("reversePhone");
+        Assert.assertEquals(ImmutableList.of("2121555307"), tokenFilter.execute("(703) 555-1212"));
+
+        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
+                .mapping(mapping) //
+                .putTarget("phone", JsonSelector.of("/phone")) //
+                .build();
+        final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
+        assertEquals( //
+                "{\"phone\":\"11269993806\",\"reversePhone\":\"60839996211\"}", //
+                actual);
+    }
+
+    @Test
     public void testBooleansFalse() {
         final Mapping mapping = ImmutableMapping.builder() //
                 .all(null) //
@@ -173,36 +222,6 @@ public class ElasticDocBuilderTest {
         final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
         assertEquals( //
                 "{\"booleans\":true}", //
-                actual);
-    }
-
-    @Test
-    public void testAdditionalFields() {
-        final Mapping mapping = ImmutableMapping.builder() //
-                .all(null) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("phone") //
-                                .addAdditionalTarget("reversePhone") //
-                                .ignoreMalformed(false) //
-                                .type(Type.TEXT) //
-                                .build()) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("reversePhone") //
-                                .addTokenFilter(ImmutableReverse.of()) //
-                                .ignoreMalformed(false) //
-                                .type(Type.TEXT) //
-                                .build()) //
-                .build();
-
-        final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
-                .mapping(mapping) //
-                .putTarget("phone", JsonSelector.of("/phone")) //
-                .build();
-        final String actual = new ElasticDocBuilder(config).build(sampleJson).toString();
-        assertEquals( //
-                "{\"phone\":\"1-126-999-3806\",\"reversePhone\":\"6083-999-621-1\"}", //
                 actual);
     }
 

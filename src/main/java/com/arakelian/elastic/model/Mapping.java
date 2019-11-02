@@ -28,6 +28,7 @@ import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
+import com.arakelian.elastic.doc.filters.TokenChain;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
@@ -47,6 +48,8 @@ import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 @Value.Immutable(copy = false)
@@ -172,6 +175,50 @@ public interface Mapping extends Serializable {
     @Value.Auxiliary
     public default List<Field> getFields() {
         return ImmutableList.of();
+    }
+
+    public default TokenFilter getFieldTokenFilter(final String name) {
+        // quick check to see if field exists
+        final Map<String, TokenFilter> tokenFilters = getFieldTokenFilters();
+        if (tokenFilters.containsKey(name)) {
+            return tokenFilters.get(name);
+        }
+
+        // if not, we'll try using alias
+        final Map<String, String> aliases = getAliases();
+        Preconditions
+                .checkState(aliases.containsKey(name), "Field \"%s\" is not part of index mapping", name);
+        final String canonical = aliases.get(name);
+        return getFieldTokenFilter(canonical);
+    }
+
+    @JsonIgnore
+    @Value.Lazy
+    @Value.Auxiliary
+    public default Map<String, TokenFilter> getFieldTokenFilters() {
+        // mapping may contain global token filters that are applied before or after the
+        // field-specific list
+        final List<TokenFilter> before = getBeforeTokenFilters();
+        final List<TokenFilter> after = getAfterTokenFilters();
+
+        final ImmutableMap.Builder<String, TokenFilter> tokenFilters = ImmutableMap.builder();
+        final Map<String, Field> fields = getProperties();
+        for (final String name : fields.keySet()) {
+            final Field field = fields.get(name);
+
+            final TokenFilter filter;
+            if (before.size() == 0 && after.size() == 0) {
+                // optimization: no global filters
+                filter = TokenChain.link(field.getTokenFilters());
+            } else {
+                // combine filters
+                filter = TokenChain
+                        .link(Lists.newArrayList(Iterables.concat(before, field.getTokenFilters(), after)));
+            }
+
+            tokenFilters.put(name, filter);
+        }
+        return tokenFilters.build();
     }
 
     @Value.Default
