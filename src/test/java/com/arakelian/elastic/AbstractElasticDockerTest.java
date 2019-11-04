@@ -43,7 +43,7 @@ import com.arakelian.docker.junit.model.DockerConfig;
 import com.arakelian.docker.junit.model.HostConfigurers;
 import com.arakelian.docker.junit.model.ImmutableDockerConfig;
 import com.arakelian.elastic.bulk.BulkIndexer;
-import com.arakelian.elastic.bulk.BulkOperationFactory;
+import com.arakelian.elastic.bulk.BulkIngester;
 import com.arakelian.elastic.bulk.ImmutableSimpleBulkOperationFactory;
 import com.arakelian.elastic.bulk.SimpleBulkOperationFactory;
 import com.arakelian.elastic.bulk.event.IndexerListener;
@@ -218,16 +218,13 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         assertTrue(document.isFound());
     }
 
-    public BulkIndexer createIndexer(
-            final BulkOperationFactory bulkOperationFactory,
-            final IndexerListener listener) {
+    public BulkIndexer createIndexer(final IndexerListener listener) {
         final BulkIndexerConfig config = ImmutableBulkIndexerConfig.builder() //
                 .blockingQueue(true) //
                 .queueSize(10) //
                 .maxBulkOperations(10) //
                 .maxBulkOperationBytes(1 * 1024 * 1024) //
                 .maximumThreads(1) //
-                .bulkOperationFactory(bulkOperationFactory) //
                 .listener(listener) //
                 .shutdownTimeout(1) //
                 .shutdownTimeoutUnit(TimeUnit.DAYS) //
@@ -248,8 +245,12 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return bulkOperationFactory;
     }
 
-    public BulkIndexer createPersonIndexer(final Index index) {
-        return createIndexer(createPersonBulkOperationFactory(index), LoggingIndexerListener.SINGLETON);
+    public BulkIndexer createPersonIndexer() {
+        return createIndexer(LoggingIndexerListener.SINGLETON);
+    }
+
+    public BulkIngester createPersonIngester(final Index index, final BulkIndexer bulkIndexer) {
+        return new BulkIngester(createPersonBulkOperationFactory(index), bulkIndexer);
     }
 
     public Mapping createPersonMapping() {

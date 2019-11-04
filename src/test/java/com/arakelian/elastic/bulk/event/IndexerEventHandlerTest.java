@@ -33,6 +33,7 @@ import org.junit.Test;
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.bulk.AbstractBulkIndexerTest;
 import com.arakelian.elastic.bulk.BulkIndexer;
+import com.arakelian.elastic.bulk.BulkIngester;
 import com.arakelian.elastic.bulk.BulkOperation.VersionType;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
@@ -72,10 +73,9 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
             final List<Person> people = RandomPerson.get().listOf(10);
 
             withPersonIndex(index -> {
-                try (final BulkIndexer indexer = createIndexer(
-                        createPersonBulkOperationFactory(index),
-                        listener)) {
-                    indexer.index(people);
+                try (final BulkIndexer indexer = createIndexer(listener)) {
+                    final BulkIngester ingester = createPersonIngester(index, indexer);
+                    ingester.index(people);
                 }
 
                 // verify we can find documents

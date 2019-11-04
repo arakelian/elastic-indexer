@@ -39,9 +39,10 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
             final List<Person> people = RandomPerson.get().listOf(10);
 
             final BulkIndexer tmp;
-            try (final BulkIndexer indexer = tmp = createPersonIndexer(index)) {
+            try (final BulkIndexer indexer = tmp = createPersonIndexer()) {
+                final BulkIngester ingester = createPersonIngester(index, indexer);
                 assertTrue(indexer.isIdle());
-                indexer.index(people);
+                ingester.index(people);
             }
             assertTrue(tmp.isIdle());
 
@@ -58,10 +59,11 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
             final List<Person> people = RandomPerson.get().listOf(10);
 
             final BulkIndexer tmp;
-            try (final BulkIndexer indexer = tmp = createPersonIndexer(index)) {
+            try (final BulkIndexer indexer = tmp = createPersonIndexer()) {
+                final BulkIngester ingester = createPersonIngester(index, indexer);
                 assertTrue(indexer.isIdle());
                 for (final Person person : people) {
-                    indexer.index(person);
+                    ingester.index(person);
                 }
             }
             assertTrue(tmp.isIdle());
@@ -78,17 +80,18 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
             final List<Person> people = RandomPerson.get().listOf(10);
 
             final BulkIndexer tmp;
-            try (final BulkIndexer indexer = tmp = createPersonIndexer(index)) {
+            try (final BulkIndexer indexer = tmp = createPersonIndexer()) {
                 // should be idle since we haven't indexed anything yet
+                final BulkIngester ingester = createPersonIngester(index, indexer);
                 assertTrue(indexer.isIdle());
 
                 // when indexing, the Elastic documents will receive a version timestamp that
                 // corresponds to the update date of the person
-                indexer.index(people);
+                ingester.index(people);
 
                 // when deleting the documents, we will use a version timestamp that is equal to the
                 // current time
-                indexer.delete(people);
+                ingester.delete(people);
             }
             assertTrue(tmp.isIdle());
         });
@@ -100,11 +103,12 @@ public class BulkIndexerTest extends AbstractBulkIndexerTest {
             final Iterator<Person> people = RandomPerson.get().iteratorOf(10);
 
             final BulkIndexer tmp;
-            try (final BulkIndexer indexer = tmp = createPersonIndexer(index)) {
+            try (final BulkIndexer indexer = tmp = createPersonIndexer()) {
+                final BulkIngester ingester = createPersonIngester(index, indexer);
                 assertTrue(indexer.isIdle());
-                indexer.index(RandomPerson.get().listOf(10));
+                ingester.index(RandomPerson.get().listOf(10));
                 while (people.hasNext()) {
-                    indexer.delete(people.next());
+                    ingester.delete(people.next());
                 }
             }
             assertTrue(tmp.isIdle());

@@ -18,13 +18,11 @@
 package com.arakelian.elastic.bulk;
 
 import static com.arakelian.elastic.bulk.BulkOperation.Action.DELETE;
-import static com.arakelian.elastic.bulk.BulkOperation.Action.INDEX;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -49,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import com.arakelian.core.utils.ExecutorUtils;
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.ElasticClient;
-import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.model.BulkIndexerConfig;
 import com.arakelian.elastic.model.BulkIndexerStats;
@@ -487,6 +484,33 @@ public class BulkIndexer implements Closeable {
         return Optional.of(future);
     }
 
+    public Optional<ListenableFuture<List<BulkResponse>>> add(
+            final List<BulkOperation> ops,
+            final boolean forceFlush) throws RejectedExecutionException {
+        List<ListenableFuture<BulkResponse>> futures = null;
+
+        // we do not acquire lock here because an add may cause a flush, and a flush could
+        // block waiting for the indexer queue to have space
+        for (int i = 0, size = ops.size(); i < size; i++) {
+            final BulkOperation op = ops.get(i);
+            final ListenableFuture<BulkResponse> future = enqueue(op, forceFlush && i == size - 1);
+            assert !forceFlush || future != null;
+
+            if (future != null) {
+                if (futures == null) {
+                    futures = new ArrayList<>();
+                }
+                futures.add(future);
+            }
+        }
+
+        if (futures == null || futures.size() == 0) {
+            return Optional.empty();
+        } else {
+            return Optional.of(Futures.allAsList(futures));
+        }
+    }
+
     /**
      * Called during shutdown to terminate the scheduled executor thread.
      *
@@ -544,67 +568,6 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Deletes a list of documents from their respective Elastic indexes.
-     *
-     * @param documents
-     *            list of documents to be removed
-     * @return an optional future for retrieving bulk responses associated with this request
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(final Collection<?> documents)
-            throws RejectedExecutionException, IOException {
-        if (documents == null || documents.size() == 0) {
-            return Optional.empty();
-        }
-
-        // we do not acquire lock here because we might flush, which might cause us to block if
-        // the queue is full!
-        List<ListenableFuture<BulkResponse>> futures = null;
-        for (final Object document : documents) {
-            futures = add(document, DELETE, false, futures);
-        }
-        return combineFutures(futures);
-    }
-
-    /**
-     * Delete specified document from Elastic index.
-     *
-     * @param document
-     *            document to be deleted
-     * @return an optional future for retrieving bulk responses associated with this request
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(final Object document)
-            throws RejectedExecutionException, IOException {
-        return delete(document, false);
-    }
-
-    /**
-     * Delete specified document from Elastic index.
-     *
-     * @param document
-     *            document to be deleted
-     * @param forceFlush
-     *            true to force an immediate flush of data to Elastic
-     * @return an optional future for retrieving bulk responses associated with this request
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(
-            final Object document,
-            final boolean forceFlush) throws RejectedExecutionException, IOException {
-        return combineFutures(add(document, DELETE, forceFlush, null));
-    }
-
-    /**
      * Flushes any pending bulk operations to Elastic asynchronously, and returns a future that
      * corresponds to the batch (or null if no batch operation is required).
      *
@@ -643,68 +606,6 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Adds a list of documents to the Elastic index without immediate index refresh and optional
-     * flush.
-     *
-     * @param documents
-     *            list of documents to index
-     * @return an optional Future for retrieving bulk responses associated with this request.
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(final Collection<?> documents)
-            throws RejectedExecutionException, IOException {
-        if (documents == null || documents.size() == 0) {
-            return Optional.empty();
-        }
-
-        // we do not acquire lock here because we might flush, which might cause us to block if
-        // the queue is full!
-        List<ListenableFuture<BulkResponse>> futures = null;
-        for (final Object document : documents) {
-            futures = add(document, INDEX, false, futures);
-        }
-        return combineFutures(futures);
-    }
-
-    /**
-     * Adds a document to the Elastic index.
-     *
-     * @param document
-     *            document to be indexed
-     * @return an optional Future for retrieving bulk responses associated with this request.
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(final Object document)
-            throws RejectedExecutionException, IOException {
-        return index(document, false);
-    }
-
-    /**
-     * Adds a document to the Elastic index.
-     *
-     * @param document
-     *            document to be indexed
-     * @param forceFlush
-     *            true to force an immediate flush of data to Elastic
-     * @return an optional Future for retrieving bulk responses associated with this request.
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(
-            final Object document,
-            final boolean forceFlush) throws RejectedExecutionException, IOException {
-        return combineFutures(add(document, INDEX, forceFlush, null));
-    }
-
-    /**
      * Returns true if indexer has closed
      *
      * @return true if indexer has closed
@@ -733,77 +634,6 @@ public class BulkIndexer implements Closeable {
                 .omitNullValues() //
                 .add("config", config) //
                 .toString();
-    }
-
-    /**
-     * Adds a bulk operation to the queue, using the given document and specified action.
-     *
-     * @param document
-     *            document
-     * @param action
-     *            action to be performed on document
-     * @param forceFlush
-     *            true to force an immediate flush of data to Elastic
-     * @throws RejectedExecutionException
-     *             if indexer is closed or background queue is full
-     * @throws IOException
-     *             if document could not be serialized
-     */
-    private List<ListenableFuture<BulkResponse>> add(
-            final Object document,
-            final Action action,
-            final boolean forceFlush,
-            List<ListenableFuture<BulkResponse>> futures) throws RejectedExecutionException, IOException {
-        if (document == null) {
-            return futures;
-        }
-
-        // might be closed after this, but save time
-        ensureOpen();
-
-        // a document may be indexed to multiple places
-        final BulkOperationFactory factory = config.getBulkOperationFactory();
-        if (!factory.supports(document)) {
-            throw new IOException("Unsupported document: " + document);
-        }
-
-        final List<BulkOperation> ops = factory.createBulkOperations(document, action);
-        if (ops == null || ops.size() == 0) {
-            return futures;
-        }
-
-        // we do not acquire lock here because an add may cause a flush, and a flush could
-        // block waiting for the indexer queue to have space
-        for (int i = 0, size = ops.size(); i < size; i++) {
-            final BulkOperation op = ops.get(i);
-            final ListenableFuture<BulkResponse> future = enqueue(op, forceFlush && i == size - 1);
-            assert !forceFlush || future != null;
-
-            if (future != null) {
-                if (futures == null) {
-                    futures = new ArrayList<>();
-                }
-                futures.add(future);
-            }
-        }
-
-        return futures;
-    }
-
-    /**
-     * Returns a future that combines the result of multiple futures.
-     *
-     * @param futures
-     *            list of futures
-     * @return a future that combines the result of multiple futures.
-     */
-    private Optional<ListenableFuture<List<BulkResponse>>> combineFutures(
-            final List<ListenableFuture<BulkResponse>> futures) {
-        if (futures == null || futures.size() == 0) {
-            return Optional.empty();
-        } else {
-            return Optional.of(Futures.allAsList(futures));
-        }
     }
 
     /**

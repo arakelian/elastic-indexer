@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.immutables.value.Value;
 
-import com.arakelian.elastic.bulk.BulkOperationFactory;
 import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.NullIndexerListener;
 import com.arakelian.elastic.utils.ElasticClientUtils;
@@ -46,9 +45,6 @@ public abstract class BulkIndexerConfig {
     public int getAutomaticFlushMillis() {
         return 1000;
     }
-
-    @Value.Auxiliary
-    public abstract BulkOperationFactory getBulkOperationFactory();
 
     /**
      * Returns the default strategy for determining when to stop retrying network requests to
