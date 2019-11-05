@@ -50,7 +50,7 @@ public class BulkIngester {
     private final Map<String, BulkIndexer> bulkIndexers;
 
     /** Bulk operation factory **/
-    private final BulkOperationFactory factory;
+    private final BulkOperationFactory bulkOperationFactory;
 
     /** Function that takes an index name and returns the indexer name that should be used **/
     private final Function<String, String> indexToIndexer;
@@ -60,11 +60,12 @@ public class BulkIngester {
     }
 
     public BulkIngester(
-            final BulkOperationFactory factory,
+            final BulkOperationFactory bulkOperationFactory,
             final Map<String, BulkIndexer> bulkIndexers,
             final Function<String, String> indexToIndexer) {
         this.bulkIndexers = Preconditions.checkNotNull(bulkIndexers, "bulkIndexers must be non-null");
-        this.factory = Preconditions.checkNotNull(factory, "factory must be non-null");
+        this.bulkOperationFactory = Preconditions
+                .checkNotNull(bulkOperationFactory, "bulkOperationFactory must be non-null");
         this.indexToIndexer = Preconditions.checkNotNull(indexToIndexer, "indexToIndexer must be non-null");
         Preconditions.checkArgument(this.bulkIndexers.size() != 0, "Must have at least one bulkIndexer");
     }
@@ -153,6 +154,10 @@ public class BulkIngester {
 
     public Map<String, BulkIndexer> getBulkIndexers() {
         return bulkIndexers;
+    }
+
+    public BulkOperationFactory getBulkOperationFactory() {
+        return bulkOperationFactory;
     }
 
     /**
@@ -278,7 +283,7 @@ public class BulkIngester {
         }
 
         // a document may be indexed to multiple places
-        if (!factory.supports(document)) {
+        if (!bulkOperationFactory.supports(document)) {
             throw new IOException("Unsupported document: " + document);
         }
 
@@ -286,7 +291,7 @@ public class BulkIngester {
             batches = LinkedListMultimap.create();
         }
 
-        final List<BulkOperation> ops = factory.createBulkOperations(document, action);
+        final List<BulkOperation> ops = bulkOperationFactory.createBulkOperations(document, action);
         for (final BulkOperation op : ops) {
             final String indexerName = indexToIndexer.apply(op.getIndex().getName());
             batches.put(indexerName, op);
