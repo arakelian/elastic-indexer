@@ -23,14 +23,19 @@ import static com.arakelian.elastic.bulk.BulkOperation.Action.INDEX;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Function;
 
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.model.BulkResponse;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -38,14 +43,30 @@ import com.google.common.util.concurrent.ListenableFuture;
  * Index API.
  */
 public class BulkIngester {
-    /** Configuration **/
-    private final BulkIndexer bulkIndexer;
+    /** Name of default indexer **/
+    private static final String DEFAULT_INDEXER = "default";
 
+    /** Bulk indexers by name **/
+    private final Map<String, BulkIndexer> bulkIndexers;
+
+    /** Bulk operation factory **/
     private final BulkOperationFactory factory;
 
+    /** Function that takes an index name and returns the indexer name that should be used **/
+    private final Function<String, String> indexToIndexer;
+
     public BulkIngester(final BulkOperationFactory factory, final BulkIndexer bulkIndexer) {
-        this.bulkIndexer = Preconditions.checkNotNull(bulkIndexer, "bulkIndexer must be non-null");
+        this(factory, ImmutableMap.of(DEFAULT_INDEXER, bulkIndexer), (index) -> DEFAULT_INDEXER);
+    }
+
+    public BulkIngester(
+            final BulkOperationFactory factory,
+            final Map<String, BulkIndexer> bulkIndexers,
+            final Function<String, String> indexToIndexer) {
+        this.bulkIndexers = Preconditions.checkNotNull(bulkIndexers, "bulkIndexers must be non-null");
         this.factory = Preconditions.checkNotNull(factory, "factory must be non-null");
+        this.indexToIndexer = Preconditions.checkNotNull(indexToIndexer, "indexToIndexer must be non-null");
+        Preconditions.checkArgument(this.bulkIndexers.size() != 0, "Must have at least one bulkIndexer");
     }
 
     /**
@@ -59,18 +80,39 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(final Collection<?> documents)
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> delete(final Collection<?> documents)
             throws RejectedExecutionException, IOException {
+        return delete(documents, false);
+    }
+
+    /**
+     * Deletes a list of documents from their respective Elastic indexes, and optionally flushes
+     * those deletes to Elastic immediately.
+     *
+     * @param documents
+     *            list of documents to be removed
+     * @param forceFlush
+     *            true to flush associated index so that deletes are immediately processed
+     * @return an optional future for retrieving bulk responses associated with this request
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> delete(
+            final Collection<?> documents,
+            final boolean forceFlush) throws RejectedExecutionException, IOException {
+
         if (documents == null || documents.size() == 0) {
-            return Optional.empty();
+            return ImmutableMap.of();
         }
 
-        List<BulkOperation> batch = null;
+        Multimap<String, BulkOperation> batches = null;
         for (final Object document : documents) {
-            batch = makeBatch(document, DELETE, batch);
+            batches = makeBatch(document, DELETE, batches);
         }
 
-        return add(batch, false);
+        return dispatch(batches, forceFlush);
     }
 
     /**
@@ -84,7 +126,7 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(final Object document)
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> delete(final Object document)
             throws RejectedExecutionException, IOException {
         return delete(document, false);
     }
@@ -102,16 +144,19 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> delete(
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> delete(
             final Object document,
             final boolean forceFlush) throws RejectedExecutionException, IOException {
 
-        return add(makeBatch(document, DELETE, null), forceFlush);
+        return dispatch(makeBatch(document, DELETE, null), forceFlush);
+    }
+
+    public Map<String, BulkIndexer> getBulkIndexers() {
+        return bulkIndexers;
     }
 
     /**
-     * Adds a list of documents to the Elastic index without immediate index refresh and optional
-     * flush.
+     * Adds a list of documents to the Elastic index without immediate flush.
      *
      * @param documents
      *            list of documents to index
@@ -121,18 +166,37 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(final Collection<?> documents)
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> index(final Collection<?> documents)
             throws RejectedExecutionException, IOException {
+        return index(documents, false);
+    }
+
+    /**
+     * Adds a list of documents to the Elastic index with optional flush.
+     *
+     * @param documents
+     *            list of documents to index
+     * @param forceFlush
+     *            true to flush indexer after adding documents
+     * @return an optional Future for retrieving bulk responses associated with this request.
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> index(
+            final Collection<?> documents,
+            final boolean forceFlush) throws RejectedExecutionException, IOException {
         if (documents == null || documents.size() == 0) {
-            return Optional.empty();
+            return ImmutableMap.of();
         }
 
-        List<BulkOperation> batch = null;
+        Multimap<String, BulkOperation> batches = null;
         for (final Object document : documents) {
-            batch = makeBatch(document, INDEX, batch);
+            batches = makeBatch(document, INDEX, batches);
         }
 
-        return add(batch, false);
+        return dispatch(batches, forceFlush);
     }
 
     /**
@@ -146,7 +210,7 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(final Object document)
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> index(final Object document)
             throws RejectedExecutionException, IOException {
         return index(document, false);
     }
@@ -164,11 +228,11 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    public Optional<ListenableFuture<List<BulkResponse>>> index(
+    public Map<String, Optional<ListenableFuture<List<BulkResponse>>>> index(
             final Object document,
             final boolean forceFlush) throws RejectedExecutionException, IOException {
 
-        return add(makeBatch(document, INDEX, null), forceFlush);
+        return dispatch(makeBatch(document, INDEX, null), forceFlush);
     }
 
     @Override
@@ -178,10 +242,17 @@ public class BulkIngester {
                 .toString();
     }
 
-    private Optional<ListenableFuture<List<BulkResponse>>> add(
-            final List<BulkOperation> batch,
+    private Map<String, Optional<ListenableFuture<List<BulkResponse>>>> dispatch(
+            final Multimap<String, BulkOperation> batches,
             final boolean forceFlush) {
-        return bulkIndexer.add(batch, forceFlush);
+        final ImmutableMap.Builder<String, Optional<ListenableFuture<List<BulkResponse>>>> map = ImmutableMap
+                .builder();
+        for (final String indexerName : batches.keySet()) {
+            final BulkIndexer bulkIndexer = bulkIndexers.get(indexerName);
+            final Collection<BulkOperation> batch = batches.get(indexerName);
+            map.put(indexerName, bulkIndexer.add(ImmutableList.copyOf(batch), forceFlush));
+        }
+        return map.build();
     }
 
     /**
@@ -198,12 +269,12 @@ public class BulkIngester {
      * @throws IOException
      *             if document could not be serialized
      */
-    private List<BulkOperation> makeBatch(
+    private Multimap<String, BulkOperation> makeBatch(
             final Object document,
             final Action action,
-            List<BulkOperation> batch) throws RejectedExecutionException, IOException {
+            Multimap<String, BulkOperation> batches) throws RejectedExecutionException, IOException {
         if (document == null) {
-            return batch;
+            return batches;
         }
 
         // a document may be indexed to multiple places
@@ -211,12 +282,15 @@ public class BulkIngester {
             throw new IOException("Unsupported document: " + document);
         }
 
-        final List<BulkOperation> ops = factory.createBulkOperations(document, action);
-        if (batch == null) {
-            batch = Lists.newArrayList(ops);
-        } else {
-            batch.addAll(ops);
+        if (batches == null) {
+            batches = LinkedListMultimap.create();
         }
-        return batch;
+
+        final List<BulkOperation> ops = factory.createBulkOperations(document, action);
+        for (final BulkOperation op : ops) {
+            final String indexerName = indexToIndexer.apply(op.getIndex().getName());
+            batches.put(indexerName, op);
+        }
+        return batches;
     }
 }
