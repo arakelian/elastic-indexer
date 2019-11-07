@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableList;
         @JsonSubTypes.Type(name = TokenFilter.TRUNCATE, value = Truncate.class), //
         @JsonSubTypes.Type(name = TokenFilter.UPPERCASE, value = Uppercase.class), //
         @JsonSubTypes.Type(name = TokenFilter.REVERSE, value = Reverse.class), //
+        @JsonSubTypes.Type(name = TokenFilter.CUSTOM, value = Custom.class), //
         @JsonSubTypes.Type(name = TokenFilter.NULL, value = NullFilter.class) //
 })
 @FunctionalInterface
@@ -64,6 +65,7 @@ public interface TokenFilter {
     public static final String SPLITTER = "splitter";
     public static final String NORMALIZE_VALUES = "normalize_values";
     public static final String STRIP_LEADING_ZEROES = "strip_leading_zeroes";
+    public static final String CUSTOM = "custom";
     public static final String SORT = "sort";
     public static final String NULL = "null";
 
