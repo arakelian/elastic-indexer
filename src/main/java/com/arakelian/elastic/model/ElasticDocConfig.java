@@ -19,6 +19,7 @@ package com.arakelian.elastic.model;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.immutables.value.Value;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.doc.DefaultValueProducer;
+import com.arakelian.elastic.doc.JsonNodeFunction;
 import com.arakelian.elastic.doc.ValueProducer;
 import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -36,6 +38,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
@@ -51,6 +54,13 @@ public abstract class ElasticDocConfig {
     public Collection<Field> getFieldsTargetedBy(final JsonSelector sourcePath) {
         final Collection<Field> collection = getSourcePathsMapping().get(sourcePath);
         return collection != null ? collection : ImmutableList.of();
+    }
+
+    @JsonIgnore
+    @Value.Default
+    @Value.Auxiliary
+    public Map<String, JsonNodeFunction> getFunctions() {
+        return ImmutableMap.of();
     }
 
     /**

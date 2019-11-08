@@ -36,9 +36,12 @@ import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.JsonSelector;
 import com.arakelian.elastic.model.Mapping;
+import com.arakelian.elastic.utils.JsonNodeUtils;
 import com.arakelian.json.JsonFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
@@ -47,7 +50,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
@@ -107,6 +109,11 @@ public class ElasticDocBuilder {
         }
     }
 
+    /**
+     * Used to build a canonical path, with clean separators
+     */
+    private static final Joiner SPACE_JOINER = Joiner.on(" ").skipNulls();
+
     /** Elastic document configuration **/
     protected final ElasticDocConfig config;
 
@@ -120,17 +127,13 @@ public class ElasticDocBuilder {
     protected final ObjectMapper mapper;
 
     /** JsonPath configuration **/
-    private final Configuration jsonPathConfig;
+    private Configuration jsonPathConfig;
 
     public ElasticDocBuilder(final ElasticDocConfig config) {
         this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
         this.document = LinkedHashMultimap.create();
         this.mapper = config.getObjectMapper();
-        this.jsonPathConfig = Configuration.builder() //
-                .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
-                .mappingProvider(new JacksonMappingProvider(mapper)) //
-                .build();
     }
 
     public CharSequence build(final CharSequence json) throws ElasticDocException {
@@ -138,7 +141,7 @@ public class ElasticDocBuilder {
         return build(node);
     }
 
-    public CharSequence build(final JsonNode raw) throws ElasticDocException {
+    public CharSequence build(final JsonNode root) throws ElasticDocException {
         lock.lock();
         try {
             final ElasticDocImpl doc = new ElasticDocImpl();
@@ -146,13 +149,12 @@ public class ElasticDocBuilder {
             try {
                 // give plugins a chance to modify raw JSON, or initialize document
                 for (final ElasticDocBuilderPlugin plugin : plugins) {
-                    plugin.before(raw, doc);
+                    plugin.before(root, doc);
                 }
 
                 // map document fields to one or more index fields
                 for (final JsonSelector sourcePath : config.getSourcePaths()) {
-                    final JsonPath jsonPath = sourcePath.getJsonPath();
-                    final JsonNode node = jsonPath.read(raw, jsonPathConfig);
+                    final JsonNode node = read(sourcePath, root);
 
                     // we've arrived at path! put values into document
                     final Collection<Field> targets = config.getFieldsTargetedBy(sourcePath);
@@ -163,7 +165,7 @@ public class ElasticDocBuilder {
 
                 // give plugins a chance to augment document
                 for (final ElasticDocBuilderPlugin plugin : plugins) {
-                    plugin.after(raw, doc);
+                    plugin.after(root, doc);
                 }
 
                 final CharSequence json = writeDocumentAsJson(config.isCompact());
@@ -195,6 +197,39 @@ public class ElasticDocBuilder {
         if (values != null) {
             map.put(fieldName, values);
         }
+    }
+
+    private JsonNode concat(final JsonSelector selector, final JsonNode node) {
+        Preconditions.checkArgument(selector != null, "selector must be non-null");
+        Preconditions.checkArgument(node != null, "node must be non-null");
+
+        final JsonNode[] args = getArguments(selector, node);
+        return TextNode.valueOf(SPACE_JOINER.join(args));
+    }
+
+    private JsonNode function(final JsonSelector selector, final JsonNode node) {
+        Preconditions.checkArgument(selector != null, "selector must be non-null");
+        Preconditions.checkArgument(node != null, "node must be non-null");
+
+        // lookup function
+        final String name = selector.getFunctionName();
+        final JsonNodeFunction function = config.getFunctions().get(name);
+        Preconditions.checkState(function != null, "Undefined function: " + name);
+
+        // apply function
+        final JsonNode[] args = getArguments(selector, node);
+        return function.apply(args);
+    }
+
+    private JsonNode[] getArguments(final JsonSelector selector, final JsonNode node) {
+        final Map<String, List<String>> arguments = selector.getArguments();
+
+        int arg = 0;
+        final JsonNode[] args = new JsonNode[arguments.size()];
+        for (final List<String> path : arguments.values()) {
+            args[arg++] = JsonNodeUtils.read(node, path);
+        }
+        return args;
     }
 
     private Object getFieldValues(final String fieldName) {
@@ -276,6 +311,33 @@ public class ElasticDocBuilder {
         }
 
         return sorted;
+    }
+
+    private JsonNode jsonPath(final JsonSelector selector, final JsonNode node) {
+        if (jsonPathConfig == null) {
+            jsonPathConfig = Configuration.builder() //
+                    .jsonProvider(new JacksonJsonNodeJsonProvider(mapper)) //
+                    .mappingProvider(new JacksonMappingProvider(mapper)) //
+                    .build();
+        }
+
+        // traverse node using JsonPath and return value
+        return selector.getJsonPath().read(node, jsonPathConfig);
+    }
+
+    private JsonNode read(final JsonSelector selector, final JsonNode node) {
+        switch (selector.getType()) {
+        case PATH:
+            return selector.read(node);
+        case JSON_PATH:
+            return jsonPath(selector, node);
+        case CONCAT:
+            return concat(selector, node);
+        case FUNCTION:
+            return function(selector, node);
+        default:
+            throw new IllegalStateException("Unsupported selector: " + selector.toString());
+        }
     }
 
     /**
