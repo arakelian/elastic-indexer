@@ -181,6 +181,16 @@ public abstract class JsonSelector implements Serializable {
         }
     }
 
+    public long hashCode(final JsonNode node) {
+        Preconditions.checkState(getType() == Type.PATH);
+        return JsonNodeUtils.hashCode(node, getPath());
+    }
+
+    public String md5(final JsonNode node) {
+        Preconditions.checkState(getType() == Type.PATH);
+        return JsonNodeUtils.md5(node, getPath());
+    }
+
     @Value.Check
     public JsonSelector normalizeSelector() {
         final String val = getSelector();
