@@ -231,8 +231,8 @@ public abstract class JsonSelector implements Serializable {
         return JsonNodeUtils.read(node, getPath());
     }
 
-    public void read(final JsonNode node, final Consumer<JsonNode> consumer) {
+    public void traverse(final JsonNode node, final Consumer<JsonNode> consumer) {
         Preconditions.checkState(getType() == Type.PATH);
-        JsonNodeUtils.read(node, consumer, getPath());
+        JsonNodeUtils.traverse(node, consumer, getPath());
     }
 }

@@ -20,14 +20,57 @@ import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 
 public class JsonNodeUtils {
-    public static class DigestCollector extends JsonNodeCollector {
+    public static abstract class AbstractValueCollector implements Consumer<JsonNode> {
+        @Override
+        public void accept(final JsonNode node) {
+            if (node == null || node.isMissingNode()) {
+                return;
+            }
+
+            // unwrap arrays
+            if (node.isArray()) {
+                unwrapArray(node);
+                return;
+            }
+
+            // unwrap objects
+            if (node.isObject()) {
+                unwrapObject(node);
+                return;
+            }
+
+            collect(node);
+        }
+
+        protected abstract void collect(JsonNode node);
+
+        protected void unwrapArray(final JsonNode node) {
+            for (int i = 0, size = node.size(); i < size; i++) {
+                accept(node.get(i));
+            }
+        }
+
+        protected void unwrapObject(final JsonNode node) {
+            final Iterator<JsonNode> children = node.elements();
+            while (children.hasNext()) {
+                final JsonNode child = children.next();
+                accept(child);
+            }
+        }
+    }
+
+    public static class DigestCollector extends AbstractValueCollector {
         private final MessageDigest digester;
+
+        public DigestCollector(final MessageDigest digester) {
+            this.digester = digester;
+        }
 
         public DigestCollector(final String algorithm) {
             try {
                 digester = MessageDigest.getInstance(algorithm);
             } catch (final NoSuchAlgorithmException e) {
-                throw new IllegalStateException("Unable to create digester with algorithm " + algorithm, e);
+                throw new IllegalStateException(e.getMessage(), e);
             }
         }
 
@@ -173,7 +216,7 @@ public class JsonNodeUtils {
         }
     }
 
-    public static class HashCodeCollector extends JsonNodeCollector {
+    public static class HashCodeCollector extends AbstractValueCollector {
         private long hashCode;
 
         public long getValue() {
@@ -228,46 +271,7 @@ public class JsonNodeUtils {
         }
     }
 
-    public static abstract class JsonNodeCollector implements Consumer<JsonNode> {
-        @Override
-        public void accept(final JsonNode node) {
-            if (node == null || node.isMissingNode()) {
-                return;
-            }
-
-            // unwrap arrays
-            if (node.isArray()) {
-                unwrapArray(node);
-                return;
-            }
-
-            // unwrap objects
-            if (node.isObject()) {
-                unwrapObject(node);
-                return;
-            }
-
-            collect(node);
-        }
-
-        protected abstract void collect(JsonNode node);
-
-        protected void unwrapArray(final JsonNode node) {
-            for (int i = 0, size = node.size(); i < size; i++) {
-                accept(node.get(i));
-            }
-        }
-
-        protected void unwrapObject(final JsonNode node) {
-            final Iterator<JsonNode> children = node.elements();
-            while (children.hasNext()) {
-                final JsonNode child = children.next();
-                accept(child);
-            }
-        }
-    }
-
-    public static class ValueCollector extends JsonNodeCollector {
+    public static class ReadCollector extends AbstractValueCollector {
         private JsonNode value;
 
         public JsonNode getValue() {
@@ -305,16 +309,19 @@ public class JsonNodeUtils {
         return collector.getValue();
     }
 
-    public static void read(final JsonNode node, final Consumer<JsonNode> consumer, final List<String> path) {
+    public static JsonNode read(final JsonNode node, final List<String> path) {
+        final ReadCollector collector = new ReadCollector();
+        traverse(node, collector, path, 0);
+        return collector.getValue();
+    }
+
+    public static void traverse(
+            final JsonNode node,
+            final Consumer<JsonNode> consumer,
+            final List<String> path) {
         Preconditions.checkState(consumer != null, "consumer must be non-null");
         Preconditions.checkState(path != null, "path must be non-null");
         traverse(node, consumer, path, 0);
-    }
-
-    public static JsonNode read(final JsonNode node, final List<String> path) {
-        final ValueCollector collector = new ValueCollector();
-        traverse(node, collector, path, 0);
-        return collector.getValue();
     }
 
     private static void traverse(
