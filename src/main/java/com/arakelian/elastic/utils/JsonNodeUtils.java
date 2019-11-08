@@ -1,5 +1,6 @@
 package com.arakelian.elastic.utils;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.databind.node.MissingNode;
 import com.google.common.base.Preconditions;
 
 public class JsonNodeUtils {
-    public static class JsonNodeCollector implements Consumer<JsonNode> {
+    public static class ValueCollector implements Consumer<JsonNode> {
         private JsonNode value;
 
         @Override
@@ -23,6 +24,16 @@ public class JsonNodeUtils {
             if (node.isArray()) {
                 for (int i = 0, size = node.size(); i < size; i++) {
                     accept(node.get(i));
+                }
+                return;
+            }
+
+            // unwrap objects
+            if (node.isObject()) {
+                final Iterator<JsonNode> children = node.elements();
+                while (children.hasNext()) {
+                    final JsonNode child = children.next();
+                    accept(child);
                 }
                 return;
             }
@@ -55,7 +66,7 @@ public class JsonNodeUtils {
     }
 
     public static JsonNode read(final JsonNode node, final List<String> path) {
-        final JsonNodeCollector collector = new JsonNodeCollector();
+        final ValueCollector collector = new ValueCollector();
         read(node, collector, path, 0);
         return collector.getValue();
     }
