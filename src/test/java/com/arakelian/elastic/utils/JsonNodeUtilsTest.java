@@ -27,11 +27,11 @@ public class JsonNodeUtilsTest {
 
     @Test
     public void testEquals() {
-        Assert.assertEquals("a1", read("a"));
+        Assert.assertEquals("\"a1\"", read("a"));
         Assert.assertEquals("[\"b1\",\"b2\"]", read("b"));
         Assert.assertEquals("[\"c1\",\"c2\",\"c3\"]", read("c"));
         Assert.assertEquals("[\"c1\",\"c3\"]", read("c/ca"));
-        Assert.assertEquals("c2", read("c/cb"));
+        Assert.assertEquals("\"c2\"", read("c/cb"));
         Assert.assertEquals("", read("d"));
     }
 
