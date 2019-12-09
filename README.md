@@ -57,7 +57,7 @@ Add the following to your `pom.xml`:
 <dependency>
     <groupId>com.arakelian</groupId>
     <artifactId>elastic-indexer</artifactId>
-    <version>6.1.1</version>
+    <version>7.1.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -72,7 +72,7 @@ repositories {
 }
 
 dependencies {
-  testCompile 'com.arakelian:elastic-indexer:6.1.1'
+  testCompile 'com.arakelian:elastic-indexer:7.1.0'
 }
 ```
 
