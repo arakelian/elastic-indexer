@@ -153,17 +153,17 @@ public class JsonSelectorTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInvalidPathDollarDot() {
-        Assert.assertEquals("", read("$.").toString());
+        Assert.assertEquals("", read("$."));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testInvalidPathDotDot() {
-        Assert.assertEquals("", read("..").toString());
+        Assert.assertEquals("", read(".."));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testInvalidPathEmpty() {
-        Assert.assertEquals("", read("").toString());
+        Assert.assertEquals("", read(""));
     }
 
     @Test
@@ -198,28 +198,30 @@ public class JsonSelectorTest {
     @Test
     public void testSimplePath() {
         // price is not available at root
-        Assert.assertEquals(null, read("price").toString());
+        Assert.assertEquals("", read("price"));
 
         // simple path traversal
-        Assert.assertEquals("\"red\"", read("store/bicycle/color").toString());
+        Assert.assertEquals("\"red\"", read("store/bicycle/color"));
 
         // dots are same thing as slashes
-        Assert.assertEquals("\"red\"", read("store.bicycle.color").toString());
+        Assert.assertEquals("\"red\"", read("store.bicycle.color"));
 
         // collapse multiple dots and slashes
-        Assert.assertEquals("\"red\"", read("///store///bicycle///color").toString());
+        Assert.assertEquals("\"red\"", read("///store///bicycle///color"));
 
         // book[*] is implied
-        Assert.assertEquals("[8.95,12.99,8.99,22.99]", read("store/book/price").toString());
+        Assert.assertEquals("[8.95,12.99,8.99,22.99]", read("store/book/price"));
 
         // book[*] is implied
-        Assert.assertEquals("[\"reference\",\"fiction\",\"fiction\",\"fiction\"]", read("store/book/category").toString());
+        Assert.assertEquals(
+                "[\"reference\",\"fiction\",\"fiction\",\"fiction\"]",
+                read("store/book/category"));
 
         // cannot find .price without .book
-        Assert.assertEquals("", read("store/price").toString());
+        Assert.assertEquals("", read("store/price"));
     }
 
-    private JsonNode read(final String selector) {
+    private String read(String selector) {
         final JsonNode json;
         try {
             // won't fail
@@ -228,6 +230,7 @@ public class JsonSelectorTest {
             throw new UncheckedIOException(e);
         }
 
-        return JsonSelector.of(selector).read(json);
+        final JsonNode value = JsonSelector.of(selector).read(json);
+        return value.isMissingNode() ? "" : value.toString();
     }
 }

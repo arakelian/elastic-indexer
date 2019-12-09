@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.model.JsonSelector;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -13,6 +15,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 public class JsonNodeUtilsTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonNodeUtilsTest.class);
+
     private ObjectNode node;
 
     @Before
@@ -23,12 +27,24 @@ public class JsonNodeUtilsTest {
 
     @Test
     public void testEquals() {
-        Assert.assertEquals("\"a1\"", JsonSelector.of("a").read(node).toString());
-        Assert.assertEquals("[\"b1\",\"b2\"]", JsonSelector.of("b").read(node).toString());
-        Assert.assertEquals("[\"c1\",\"c2\",\"c3\"]", JsonSelector.of("c").read(node).toString());
-        Assert.assertEquals("[\"c1\",\"c3\"]", JsonSelector.of("c/ca").read(node).toString());
-        Assert.assertEquals("\"c2\"", JsonSelector.of("c/cb").read(node).toString());
-        Assert.assertEquals(null, JsonSelector.of("d").read(node).toString());
+        Assert.assertEquals("a1", read("a"));
+        Assert.assertEquals("[\"b1\",\"b2\"]", read("b"));
+        Assert.assertEquals("[\"c1\",\"c2\",\"c3\"]", read("c"));
+        Assert.assertEquals("[\"c1\",\"c3\"]", read("c/ca"));
+        Assert.assertEquals("c2", read("c/cb"));
+        Assert.assertEquals("", read("d"));
+    }
+
+    private String read(String selector) {
+        final JsonSelector js = JsonSelector.of(selector);
+        final JsonNode value = js.read(node);
+        LOGGER.info(
+                "{} read as {}: {} (len:{})",
+                js,
+                value.getClass().getName(),
+                value.toString(),
+                value.toString().length());
+        return value.isMissingNode() ? "" : value.toString();
     }
 
     @Test
