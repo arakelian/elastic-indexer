@@ -198,7 +198,7 @@ public class JsonSelectorTest {
     @Test
     public void testSimplePath() {
         // price is not available at root
-        Assert.assertEquals("", read("price").toString());
+        Assert.assertEquals(null, read("price").toString());
 
         // simple path traversal
         Assert.assertEquals("\"red\"", read("store/bicycle/color").toString());

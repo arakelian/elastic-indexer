@@ -28,7 +28,7 @@ public class JsonNodeUtilsTest {
         Assert.assertEquals("[\"c1\",\"c2\",\"c3\"]", JsonSelector.of("c").read(node).toString());
         Assert.assertEquals("[\"c1\",\"c3\"]", JsonSelector.of("c/ca").read(node).toString());
         Assert.assertEquals("\"c2\"", JsonSelector.of("c/cb").read(node).toString());
-        Assert.assertEquals("", JsonSelector.of("d").read(node).toString());
+        Assert.assertEquals(null, JsonSelector.of("d").read(node).toString());
     }
 
     @Test
