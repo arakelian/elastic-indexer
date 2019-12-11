@@ -25,7 +25,6 @@ import java.util.Map;
 import org.immutables.value.Value;
 
 import com.arakelian.elastic.Views.Elastic.Version7;
-import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,11 +46,26 @@ import com.google.common.base.Preconditions;
 @JsonDeserialize(builder = ImmutableIndex.Builder.class)
 @JsonPropertyOrder({ "name", "settings", "mappings" })
 public interface Index extends Serializable {
-    public static class WithoutNameSerializer extends ExcludeSerializer<Index> {
-        private static final JsonPointerNotMatchedFilter filter = new JsonPointerNotMatchedFilter("/name");
+    public class MappingsDeserializer extends StdDeserializer<Map> {
+        public MappingsDeserializer() {
+            super(Map.class);
+        }
 
-        public WithoutNameSerializer(final JsonSerializer<Object> delegate) {
-            super(Index.class, filter, delegate);
+        @Override
+        public Map deserialize(final JsonParser p, final DeserializationContext ctxt)
+                throws IOException, JsonProcessingException {
+            final Class<?> activeView = ctxt.getActiveView();
+            if (Version7.class.isAssignableFrom(activeView)) {
+                final HashMap<String, Mapping> mappings = new HashMap<>();
+                final Mapping mapping = ctxt.readValue(p, Mapping.class);
+                mappings.put("_default", mapping);
+                return mappings;
+            }
+
+            // default deserialization
+            return ctxt.readValue(
+                    p,
+                    ctxt.getTypeFactory().constructMapType(Map.class, String.class, Mapping.class));
         }
     }
 
@@ -88,26 +102,9 @@ public interface Index extends Serializable {
         }
     }
 
-    public class MappingsDeserializer extends StdDeserializer<Map> {
-        public MappingsDeserializer() {
-            super(Map.class);
-        }
-
-        @Override
-        public Map deserialize(final JsonParser p, final DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
-            final Class<?> activeView = ctxt.getActiveView();
-            if (Version7.class.isAssignableFrom(activeView)) {
-                HashMap<String, Mapping> mappings = new HashMap<String, Mapping>();
-                final Mapping mapping = ctxt.readValue(p, Mapping.class);
-                mappings.put("_default", mapping);
-                return mappings;
-            }
-
-            // default deserialization
-            return ctxt.readValue(
-                    p,
-                    ctxt.getTypeFactory().constructMapType(Map.class, String.class, Mapping.class));
+    public static class WithoutNameSerializer extends ExcludeSerializer<Index> {
+        public WithoutNameSerializer(final JsonSerializer<Object> delegate) {
+            super(Index.class, delegate, ".name");
         }
     }
 

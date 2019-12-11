@@ -17,6 +17,8 @@
 
 package com.arakelian.elastic.search;
 
+import java.util.Objects;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,7 @@ import com.arakelian.elastic.model.search.Query;
 import com.arakelian.elastic.model.search.QueryStringQuery;
 import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.TermsQuery;
+import com.arakelian.jackson.model.Jackson;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -112,11 +115,12 @@ public class WriteQueryVisitorTest {
     private void validateQueryDsl(final Query query, final String expected) {
         final Search search = ImmutableSearch.builder().query(query).build();
 
-        final String dsl = JacksonUtils.toString(writer -> {
-            new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSearch(search);
-        }, mapper, true);
+        final CharSequence dsl = Jackson.of(mapper) //
+                .toCharSequence(writer -> {
+                    new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSearch(search);
+                });
 
         LOGGER.info("Query DSL: {}", dsl);
-        JsonAssert.assertJsonEquals(expected, dsl);
+        JsonAssert.assertJsonEquals(expected, Objects.toString(dsl, null));
     }
 }

@@ -114,9 +114,9 @@ dependencies {
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
     
     compile 'com.arakelian:more-commons:2.3.0'
-    compile 'com.arakelian:jackson-utils:2.3.0'
-    compile 'com.arakelian:json-filter:3.3.0'
-    compile 'com.arakelian:key-value-store:2.3.0'
+    compile 'com.arakelian:jackson-utils:3.0.0'
+    compile 'com.arakelian:json-filter:3.3.1'
+    compile 'com.arakelian:key-value-store:2.4.0'
     compile 'com.arakelian:retry:3.6.0'
     
     // caching
@@ -161,8 +161,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'net.javacrumbs.json-unit:json-unit:2.11.1'
     testCompile 'com.arakelian:more-commons:2.3.0:tests'
-    testCompile 'com.arakelian:jackson-utils:2.3.0:tests'
+    testCompile 'com.arakelian:jackson-utils:2.4.0:tests'
     testCompile 'com.arakelian:docker-junit-rule:3.4.0'
-    testCompile 'com.arakelian:faker:3.3.0'
+    testCompile 'com.arakelian:faker:3.4.0'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.6.2'
 }

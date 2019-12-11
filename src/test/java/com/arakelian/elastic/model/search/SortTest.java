@@ -25,13 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.SerializableTestUtils;
-import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.enums.SortMode;
 import com.arakelian.elastic.model.enums.SortOrder;
 import com.arakelian.elastic.search.WriteSearchVisitor;
+import com.arakelian.jackson.model.Jackson;
 import com.arakelian.jackson.utils.JacksonTestUtils;
-import com.arakelian.jackson.utils.JacksonUtils;
 import com.google.common.collect.ImmutableList;
 
 import net.javacrumbs.jsonunit.JsonAssert;
@@ -79,8 +79,10 @@ public class SortTest {
 
     @Test
     public void testSorts() {
-        final String actual = JacksonUtils.toCharSequence(
-                writer -> new WriteSearchVisitor(writer, VersionComponents.of(5, 0)).writeSorts(COMPLEX_SORT))
+        final String actual = Jackson.of()
+                .toCharSequence(
+                        generator -> new WriteSearchVisitor(generator, VersionComponents.of(5, 0))
+                                .writeSorts(COMPLEX_SORT))
                 .toString();
         LOGGER.info("Search visitor: {}", actual);
         JsonAssert.assertJsonEquals("[\n" + //

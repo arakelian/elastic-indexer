@@ -78,15 +78,16 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
     @Test
     public void testDeleteNonExistantDocument() throws IOException {
-        withPersonIndex(index -> {
-            // verify can delete non-existant record
-            try {
-                elasticClient.deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
-                Assert.fail("Delete of non-existant document should have thrown 404");
-            } catch (final ElasticNotFoundException e) {
-                // successful
-            }
-        });
+        withPersonIndex(
+                index -> {
+                    // verify can delete non-existant record
+                    try {
+                        elasticClient.deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
+                        Assert.fail("Delete of non-existant document should have thrown 404");
+                    } catch (final ElasticNotFoundException e) {
+                        // successful
+                    }
+                });
     }
 
     @Test
@@ -194,7 +195,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         return deleteMillis;
     }
 
-    private long assertIndexWithExternalVersion(final Index index, final Person person) throws IOException {
+    private long assertIndexWithExternalVersion(final Index index, final Person person) {
         // index document
         final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
         final IndexedDocument response = assertSuccessful( //

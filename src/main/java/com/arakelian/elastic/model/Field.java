@@ -33,8 +33,6 @@ import com.arakelian.elastic.model.Mapping.FieldDeserializer;
 import com.arakelian.elastic.model.enums.Orientation;
 import com.arakelian.elastic.model.enums.SpatialStrategy;
 import com.arakelian.elastic.model.enums.Tree;
-import com.arakelian.jackson.CompoundTokenFilter;
-import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -94,13 +92,8 @@ public abstract class Field implements Serializable {
     }
 
     public static class SubfieldSerializer extends ExcludeSerializer<Field> {
-        private static final com.fasterxml.jackson.core.filter.TokenFilter FILTER = CompoundTokenFilter.of( //
-                new JsonPointerNotMatchedFilter("/name"), //
-                new JsonPointerNotMatchedFilter("/include_in_all") //
-        );
-
         public SubfieldSerializer() {
-            super(Field.class, FILTER);
+            super(Field.class, ".name", ".include_in_all");
         }
     }
 

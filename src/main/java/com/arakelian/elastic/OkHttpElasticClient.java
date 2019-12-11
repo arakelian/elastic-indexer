@@ -45,7 +45,7 @@ import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.search.WriteSearchVisitor;
 import com.arakelian.elastic.utils.ElasticClientUtils;
-import com.arakelian.jackson.utils.JacksonUtils;
+import com.arakelian.jackson.model.Jackson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -345,9 +345,10 @@ public class OkHttpElasticClient implements ElasticClient {
     public SearchResponse search(final String name, final Search search) {
         final ObjectMapper mapper = getVersionedObjectMapper();
 
-        final CharSequence query = JacksonUtils.toCharSequence(writer -> {
-            new WriteSearchVisitor(writer, version).writeSearch(search);
-        }, mapper, true);
+        final CharSequence query = Jackson.of(mapper) //
+                .toCharSequence(true, writer -> {
+                    new WriteSearchVisitor(writer, version).writeSearch(search);
+                });
 
         final SearchResponse response = execute(() -> {
             return new DelegatingCall<>(SearchResponse.class,

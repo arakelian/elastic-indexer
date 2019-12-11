@@ -30,7 +30,6 @@ import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Enhancement;
 import com.arakelian.elastic.doc.filters.TokenChain;
 import com.arakelian.elastic.doc.filters.TokenFilter;
-import com.arakelian.jackson.JsonPointerNotMatchedFilter;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -82,10 +81,8 @@ public interface Mapping extends Serializable {
     }
 
     public static class FieldSerializer extends ExcludeSerializer<Field> {
-        private static final JsonPointerNotMatchedFilter filter = new JsonPointerNotMatchedFilter("/name");
-
         public FieldSerializer() {
-            super(Field.class, filter);
+            super(Field.class, ".name");
         }
     }
 
