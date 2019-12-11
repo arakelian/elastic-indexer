@@ -165,4 +165,5 @@ dependencies {
     testCompile 'com.arakelian:docker-junit-rule:3.4.0'
     testCompile 'com.arakelian:faker:3.4.0'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.6.2'
+    testCompile 'javax.activation:activation:1.1.1'
 }
