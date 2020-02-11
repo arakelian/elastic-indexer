@@ -82,17 +82,20 @@ public class BulkIndexer implements Closeable {
         private final int totalBytes;
         private final int delayMillis;
         private final int attempt;
+        private final Reason reason;
 
         public Batch(
                 final ImmutableList<BulkOperation> operations,
                 final int totalBytes,
                 final int delayMillis,
-                final int attempt) {
+                final int attempt,
+                final Reason reason) {
             Preconditions.checkNotNull(operations);
             this.id = BULK_ID.incrementAndGet();
             this.operations = operations;
             this.totalBytes = totalBytes;
             this.delayMillis = delayMillis;
+            this.reason = reason;
             this.attempt = Math.min(attempt, 1);
             BulkIndexer.this.totalBytes.addAndGet(totalBytes);
         }
@@ -133,6 +136,7 @@ public class BulkIndexer implements Closeable {
                     .add("operations", operations.size()) //
                     .add("totalBytes", totalBytes) //
                     .add("attempt", attempt) //
+                    .add("reason", reason) //
                     .toString();
         }
 
@@ -286,7 +290,7 @@ public class BulkIndexer implements Closeable {
                 final Batch retryBatch = new Batch( //
                         ImmutableList.copyOf(retryable), //
                         totalBytes, //
-                        config.getPartialRetryDelayMillis(), batch.attempt + 1);
+                        config.getPartialRetryDelayMillis(), batch.attempt + 1, Reason.RETRY);
 
                 // there is no need to check if we are closed, as we will get a
                 // RejectedExecutionException.
@@ -329,6 +333,10 @@ public class BulkIndexer implements Closeable {
                 flushQuietly();
             }
         }
+    }
+
+    private static enum Reason {
+        FORCE, MAX_OPERATIONS, MAX_BYTES, RETRY;
     }
 
     private static final int ONE_KB = 1024;
@@ -659,13 +667,26 @@ public class BulkIndexer implements Closeable {
             // indexer may have closed since we acquired lock
             ensureOpen();
 
-            // we allow flush to occur after indexer is closed
-            if (forceFlush || size >= config.getMaxBulkOperations()
-                    || totalPendingBytes > config.getMaxBulkOperationBytes()) {
+            final Reason reason;
+            if (forceFlush) {
+                reason = Reason.FORCE;
+            } else if (size >= config.getMaxBulkOperations()) {
+                reason = Reason.MAX_OPERATIONS;
+            } else if (totalPendingBytes > config.getMaxBulkOperationBytes()) {
+                reason = Reason.MAX_BYTES;
+            } else {
+                // no flush
+                reason = null;
+            }
+
+            if (reason != null) {
                 final Batch batch = new Batch(ImmutableList.copyOf(pendingOperations), //
-                        totalPendingBytes, 0, 1);
+                        totalPendingBytes, 0, 1, reason);
                 pendingOperations.clear();
                 totalPendingBytes = 0;
+                if (reason == Reason.FORCE) {
+                    LOGGER.info("Force flush {}", batch, new Exception("Force flush"));
+                }
                 return batch;
             }
         } finally {
