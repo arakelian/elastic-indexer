@@ -684,9 +684,6 @@ public class BulkIndexer implements Closeable {
                         totalPendingBytes, 0, 1, reason);
                 pendingOperations.clear();
                 totalPendingBytes = 0;
-                if (reason == Reason.FORCE) {
-                    LOGGER.info("Force flush {}", batch, new Exception("Force flush"));
-                }
                 return batch;
             }
         } finally {

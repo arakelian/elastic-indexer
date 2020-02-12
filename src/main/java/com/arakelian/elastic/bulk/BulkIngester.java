@@ -34,6 +34,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -238,6 +239,59 @@ public class BulkIngester {
             final boolean forceFlush) throws RejectedExecutionException, IOException {
 
         return dispatch(makeBatch(document, INDEX, null), forceFlush);
+    }
+
+    /**
+     * Returns a list of {@link BulkOperation}s that needs to be performed in response to a request
+     * to index/delete a document. The {@link BulkOperation}s are grouped by indexer name.
+     *
+     * @param documents
+     *            list of documents
+     * @param action
+     *            action to be performed, e.g. INDEX or DELETE
+     * @return a list of {@link BulkOperation}s for each indexer
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Multimap<String, BulkOperation> makeBatch(final Collection<?> documents, final Action action)
+            throws RejectedExecutionException, IOException {
+        if (documents == null || documents.size() == 0) {
+            return ImmutableMultimap.of();
+        }
+
+        Multimap<String, BulkOperation> batches = null;
+        for (final Object document : documents) {
+            batches = makeBatch(document, action, batches);
+        }
+
+        return batches != null ? batches : ImmutableMultimap.of();
+    }
+
+    /**
+     * Returns a list of {@link BulkOperation}s that needs to be performed in response to a request
+     * to index/delete a document. The {@link BulkOperation}s are grouped by indexer name.
+     *
+     * @param document
+     *            document to be indexed or deleted
+     * @param action
+     *            action to be performed, e.g. INDEX or DELETE
+     * @return a list of {@link BulkOperation}s for each indexer
+     * @throws RejectedExecutionException
+     *             if indexer is closed or background queue is full
+     * @throws IOException
+     *             if document could not be serialized
+     */
+    public Multimap<String, BulkOperation> makeBatch(final Object document, final Action action)
+            throws RejectedExecutionException, IOException {
+        Multimap<String, BulkOperation> batches = null;
+
+        if (document != null) {
+            batches = makeBatch(document, action, batches);
+        }
+
+        return batches != null ? batches : ImmutableMultimap.of();
     }
 
     @Override
