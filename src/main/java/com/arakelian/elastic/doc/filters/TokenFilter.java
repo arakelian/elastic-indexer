@@ -18,14 +18,17 @@
 package com.arakelian.elastic.doc.filters;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.immutables.value.Value;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 @JsonTypeInfo(property = "type", use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({ //
@@ -107,5 +110,10 @@ public interface TokenFilter {
                 break;
             }
         }
+    }
+
+    @Value.Default
+    public default Set<String> getTags() {
+        return ImmutableSet.of();
     }
 }

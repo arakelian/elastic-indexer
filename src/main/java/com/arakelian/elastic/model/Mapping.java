@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.immutables.value.Value;
 
@@ -177,6 +179,13 @@ public interface Mapping extends Serializable {
     public default TokenFilter getFieldTokenFilter(final String name) {
         // quick check to see if field exists
         final Map<String, TokenFilter> tokenFilters = getFieldTokenFilters();
+        return getFieldTokenFilter(name, tokenFilters);
+    }
+
+    public default TokenFilter getFieldTokenFilter(
+            final String name,
+            final Map<String, TokenFilter> tokenFilters) {
+        Preconditions.checkState(tokenFilters != null, "tokenFilters must be non-null");
         if (tokenFilters.containsKey(name)) {
             return tokenFilters.get(name);
         }
@@ -186,31 +195,41 @@ public interface Mapping extends Serializable {
         Preconditions
                 .checkState(aliases.containsKey(name), "Field \"%s\" is not part of index mapping", name);
         final String canonical = aliases.get(name);
-        return getFieldTokenFilter(canonical);
+        return getFieldTokenFilter(canonical, tokenFilters);
     }
 
     @JsonIgnore
     @Value.Lazy
     @Value.Auxiliary
     public default Map<String, TokenFilter> getFieldTokenFilters() {
+        return getFieldTokenFilters(tokenFilter -> true);
+    }
+
+    public default Map<String, TokenFilter> getFieldTokenFilters(final Predicate<TokenFilter> predicate) {
         // mapping may contain global token filters that are applied before or after the
         // field-specific list
-        final List<TokenFilter> before = getBeforeTokenFilters();
-        final List<TokenFilter> after = getAfterTokenFilters();
+        final List<TokenFilter> before = getBeforeTokenFilters().stream() //
+                .filter(predicate) //
+                .collect(Collectors.toList());
+        final List<TokenFilter> after = getAfterTokenFilters().stream() //
+                .filter(predicate) //
+                .collect(Collectors.toList());
 
         final ImmutableMap.Builder<String, TokenFilter> tokenFilters = ImmutableMap.builder();
         final Map<String, Field> fields = getProperties();
         for (final String name : fields.keySet()) {
             final Field field = fields.get(name);
+            final List<TokenFilter> filters = field.getTokenFilters().stream() //
+                    .filter(predicate) //
+                    .collect(Collectors.toList());
 
             final TokenFilter filter;
             if (before.size() == 0 && after.size() == 0) {
                 // optimization: no global filters
-                filter = TokenChain.link(field.getTokenFilters());
+                filter = TokenChain.link(filters);
             } else {
                 // combine filters
-                filter = TokenChain
-                        .link(Lists.newArrayList(Iterables.concat(before, field.getTokenFilters(), after)));
+                filter = TokenChain.link(Lists.newArrayList(Iterables.concat(before, filters, after)));
             }
 
             tokenFilters.put(name, filter);
