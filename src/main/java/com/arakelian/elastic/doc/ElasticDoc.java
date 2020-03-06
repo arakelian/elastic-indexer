@@ -34,6 +34,15 @@ public interface ElasticDoc {
      */
     public Collection<Object> get(final String field);
 
+    /**
+     * Return values associated with attribute by plug-in.
+     *
+     * @param name
+     *            attribute name
+     * @return set of values
+     */
+    public Set<Object> getAttribute(String name);
+
     public ElasticDocConfig getConfig();
 
     /**
@@ -65,6 +74,25 @@ public interface ElasticDoc {
      *            value (any object serializable by Jackson)
      */
     public void put(final Field field, final Object value);
+
+    /**
+     * Associate a value with an attribute.
+     *
+     * @param name
+     *            attribute name
+     * @param value
+     *            attribute value
+     */
+    public void putAttribute(String name, Object value);
+
+    /**
+     * Returns the values associated with attribute, after removing them all.
+     *
+     * @param name
+     *            attribute name
+     * @return values removed by attribute
+     */
+    public Set<Object> removeAttribute(String name);
 
     /**
      * Returns a rendering of the current Elastic document in JSON format.

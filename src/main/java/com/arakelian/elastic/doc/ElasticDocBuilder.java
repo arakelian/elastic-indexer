@@ -71,6 +71,11 @@ public class ElasticDocBuilder {
         }
 
         @Override
+        public Set<Object> getAttribute(final String name) {
+            return attributes.get(name);
+        }
+
+        @Override
         public ElasticDocConfig getConfig() {
             return config;
         }
@@ -100,7 +105,17 @@ public class ElasticDocBuilder {
                     config.getMapping().hasField(field),
                     "Field \"%s\" is not part of mapping",
                     field.getName());
-            ElasticDocBuilder.this.put(field, value);
+            ElasticDocBuilder.this.put(this, field, value);
+        }
+
+        @Override
+        public void putAttribute(final String name, final Object value) {
+            attributes.put(name, value);
+        }
+
+        @Override
+        public Set<Object> removeAttribute(final String name) {
+            return attributes.removeAll(name);
         }
 
         @Override
@@ -120,6 +135,9 @@ public class ElasticDocBuilder {
     /** The Elastic document we're building. Duplicate values are not stored. **/
     protected final LinkedHashMultimap<String, Object> document;
 
+    /** Attributes used by plugins **/
+    protected final LinkedHashMultimap<String, Object> attributes;
+
     /** Can only build one document at a time **/
     private final Lock lock;
 
@@ -133,6 +151,7 @@ public class ElasticDocBuilder {
         this.lock = new ReentrantLock();
         this.config = Preconditions.checkNotNull(config);
         this.document = LinkedHashMultimap.create();
+        this.attributes = LinkedHashMultimap.create();
         this.mapper = config.getObjectMapper();
     }
 
@@ -159,7 +178,7 @@ public class ElasticDocBuilder {
                     // we've arrived at path! put values into document
                     final Collection<Field> targets = config.getFieldsTargetedBy(sourcePath);
                     for (final Field field : targets) {
-                        putNode(field, node);
+                        putNode(doc, field, node);
                     }
                 }
 
@@ -174,6 +193,7 @@ public class ElasticDocBuilder {
                 throw new ElasticDocException("Unable to build document", e);
             } finally {
                 document.clear();
+                attributes.clear();
             }
         } finally {
             lock.unlock();
@@ -370,7 +390,7 @@ public class ElasticDocBuilder {
         return map;
     }
 
-    protected void put(final Field field, final Object obj) {
+    protected void put(final ElasticDoc doc, final Field field, final Object obj) {
         if (obj == null) {
             // we don't store null values
             return;
@@ -383,10 +403,15 @@ public class ElasticDocBuilder {
             visited = null;
         }
 
-        put(field, obj, visited, field);
+        put(doc, field, obj, visited, field);
     }
 
-    protected void put(final Field field, final Object obj, final Set<Field> visited, final Field original) {
+    protected void put(
+            final ElasticDoc doc,
+            final Field field,
+            final Object obj,
+            final Set<Field> visited,
+            final Field original) {
         if (visited != null) {
             if (visited.contains(field)) {
                 return;
@@ -402,14 +427,14 @@ public class ElasticDocBuilder {
             tokenFilter.execute(csq, token -> {
                 document.put(field.getName(), token);
                 for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
-                    plugin.put(field, token, original);
+                    plugin.put(doc, field, token, original);
                 }
             });
         } else {
             // store object
             document.put(field.getName(), obj);
             for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
-                plugin.put(field, obj, original);
+                plugin.put(doc, field, obj, original);
             }
         }
 
@@ -425,7 +450,7 @@ public class ElasticDocBuilder {
             }
             // recursive copy
             final Field additionalField = mapping.getField(additionalTarget);
-            put(additionalField, obj, visited, original);
+            put(doc, additionalField, obj, visited, original);
         }
     }
 
@@ -437,10 +462,10 @@ public class ElasticDocBuilder {
      * @param node
      *            value
      */
-    protected void putNode(final Field field, final JsonNode node) {
+    protected void putNode(final ElasticDoc doc, final Field field, final JsonNode node) {
         // pipeline: deserialize to object -> token filters for textual data
         config.getValueProducer().traverse(field, node, obj -> {
-            put(field, obj);
+            put(doc, field, obj);
         });
     }
 
