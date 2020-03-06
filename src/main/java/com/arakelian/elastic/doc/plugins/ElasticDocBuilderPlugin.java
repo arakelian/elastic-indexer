@@ -19,6 +19,7 @@ package com.arakelian.elastic.doc.plugins;
 
 import com.arakelian.elastic.doc.ElasticDoc;
 import com.arakelian.elastic.doc.ElasticDocException;
+import com.arakelian.elastic.model.Field;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @SuppressWarnings("unused")
@@ -27,6 +28,9 @@ public interface ElasticDocBuilderPlugin {
     }
 
     public default void before(final JsonNode raw, final ElasticDoc doc) {
+    }
+
+    public default void put(final Field field, Object token, final Field original) {
     }
 
     public String getName();

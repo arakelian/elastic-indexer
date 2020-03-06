@@ -383,10 +383,10 @@ public class ElasticDocBuilder {
             visited = null;
         }
 
-        put(field, obj, visited);
+        put(field, obj, visited, field);
     }
 
-    protected void put(final Field field, final Object obj, final Set<Field> visited) {
+    protected void put(final Field field, final Object obj, final Set<Field> visited, final Field original) {
         if (visited != null) {
             if (visited.contains(field)) {
                 return;
@@ -401,10 +401,16 @@ public class ElasticDocBuilder {
             final TokenFilter tokenFilter = mapping.getFieldTokenFilter(field.getName());
             tokenFilter.execute(csq, token -> {
                 document.put(field.getName(), token);
+                for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
+                    plugin.put(field, token, original);
+                }
             });
         } else {
             // store object
             document.put(field.getName(), obj);
+            for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
+                plugin.put(field, obj, original);
+            }
         }
 
         // copy to additional fields?
@@ -419,7 +425,7 @@ public class ElasticDocBuilder {
             }
             // recursive copy
             final Field additionalField = mapping.getField(additionalTarget);
-            put(additionalField, obj, visited);
+            put(additionalField, obj, visited, original);
         }
     }
 
