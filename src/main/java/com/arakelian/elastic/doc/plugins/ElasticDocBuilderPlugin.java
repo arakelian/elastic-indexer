@@ -61,14 +61,17 @@ public interface ElasticDocBuilderPlugin {
      *            field
      * @param value
      *            value being stored in field
-     * @param original
+     * @param originalField
      *            original field that value was stored to (if field is different reference than
      *            original, it is an additionalTarget)
+     * @param originalValue
+     *            original value that was stored (prior to any token filters)
      */
     public default void put(
             final ElasticDoc doc,
             final Field field,
             final Object value,
-            final Field original) {
+            final Field originalField,
+            final Object originalValue) {
     }
 }
