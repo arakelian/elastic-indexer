@@ -409,7 +409,7 @@ public class ElasticDocBuilder {
     protected void put(
             final ElasticDoc doc,
             final Field field,
-            final Object obj,
+            final Object val,
             final Set<Field> visited,
             final Field originalField) {
         if (visited != null) {
@@ -419,22 +419,34 @@ public class ElasticDocBuilder {
             visited.add(field);
         }
 
+        final Object value;
+        if (field == originalField) {
+            // give plugins a chance to mutate value
+            Object v = val;
+            for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
+                v = plugin.beforePut(doc, field, v);
+            }
+            value = v;
+        } else {
+            value = val;
+        }
+
         final Mapping mapping = config.getMapping();
-        if (obj instanceof CharSequence) {
+        if (value instanceof CharSequence) {
             // apply token filters
-            final CharSequence csq = (CharSequence) obj;
+            final CharSequence csq = (CharSequence) value;
             final TokenFilter tokenFilter = mapping.getFieldTokenFilter(field.getName());
             tokenFilter.execute(csq, token -> {
                 document.put(field.getName(), token);
                 for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
-                    plugin.put(doc, field, token, originalField, obj);
+                    plugin.put(doc, field, token, originalField, value);
                 }
             });
         } else {
             // store object
-            document.put(field.getName(), obj);
+            document.put(field.getName(), value);
             for (final ElasticDocBuilderPlugin plugin : config.getPlugins()) {
-                plugin.put(doc, field, obj, originalField, obj);
+                plugin.put(doc, field, value, originalField, value);
             }
         }
 
@@ -450,7 +462,7 @@ public class ElasticDocBuilder {
             }
             // recursive copy
             final Field additionalField = mapping.getField(additionalTarget);
-            put(doc, additionalField, obj, visited, originalField);
+            put(doc, additionalField, value, visited, originalField);
         }
     }
 

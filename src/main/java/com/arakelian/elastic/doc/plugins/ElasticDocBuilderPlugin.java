@@ -53,6 +53,21 @@ public interface ElasticDocBuilderPlugin {
     public String getName();
 
     /**
+     * Returns value that should be put into elastic document. Defaults to the given value.
+     * 
+     * @param doc
+     *            elastic document
+     * @param field
+     *            target field
+     * @param value
+     *            value
+     * @return value that should be put into elastic document.
+     */
+    public default Object beforePut(final ElasticDoc doc, final Field field, Object value) {
+        return value;
+    }
+
+    /**
      * Invoke after value is record into {@link ElasticDoc} being built.
      *
      * @param doc
