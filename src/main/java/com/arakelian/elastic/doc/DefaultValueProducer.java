@@ -167,6 +167,7 @@ public class DefaultValueProducer implements ValueProducer {
                 // our implementation is smart about detecting epoch units (seconds, milliseconds,
                 // and microseconds)
                 final long val = node.longValue();
+                @SuppressWarnings("PreferJavaTimeOverload")
                 final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(val);
                 if (value == null) {
                     malformed(field, node, null);

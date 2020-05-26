@@ -148,6 +148,7 @@ public class OkHttpElasticClient implements ElasticClient {
         this(elasticUrl, elasticApiFactory, mapper, null);
     }
 
+    @SuppressWarnings("PreferJavaTimeOverload")
     public OkHttpElasticClient(
             final String elasticUrl,
             final OkHttpElasticApiFactory elasticApiFactory,

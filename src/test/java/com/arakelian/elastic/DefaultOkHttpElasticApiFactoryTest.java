@@ -38,6 +38,7 @@ import okhttp3.ResponseBody;
 public class DefaultOkHttpElasticApiFactoryTest {
     @Test
     public void testEnumsAreConvertedToLowercase() {
+        @SuppressWarnings("PreferJavaTimeOverload")
         final OkHttpClient okHttpClient = new OkHttpClient.Builder() //
                 .connectTimeout(2, TimeUnit.SECONDS) //
                 .addInterceptor(chain -> {

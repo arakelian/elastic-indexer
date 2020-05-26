@@ -379,6 +379,7 @@ public class ElasticDocBuilder {
         put(doc, field, obj, visited, field);
     }
 
+    @SuppressWarnings("ReferenceEquality")
     protected void put(
             final ElasticDoc doc,
             final Field field,
@@ -442,6 +443,8 @@ public class ElasticDocBuilder {
     /**
      * Adds a field/value pair to an Elasticsearch document.
      *
+     * @param doc
+     *            elastic document
      * @param field
      *            field
      * @param node

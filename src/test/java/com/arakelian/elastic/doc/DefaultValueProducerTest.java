@@ -188,6 +188,7 @@ public class DefaultValueProducerTest {
     }
 
     @Test
+    @SuppressWarnings("PreferJavaTimeOverload")
     public void testDate() throws IOException {
         final Field field = ImmutableField.builder().name("field").type(Type.DATE).build();
 
