@@ -81,7 +81,7 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
         @Value.Default
         @Value.Auxiliary
         public default Predicate<String> getPredicate() {
-            return new Predicate<>() {
+            return new Predicate<String>() {
                 @Override
                 public boolean test(final String field) {
                     // never include the digest field itself

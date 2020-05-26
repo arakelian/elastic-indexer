@@ -85,7 +85,7 @@ public class HasLengthPlugin implements ElasticDocBuilderPlugin {
         @Value.Derived
         @Value.Auxiliary
         public default Predicate<Field> getNamePredicate() {
-            return new Predicate<>() {
+            return new Predicate<Field>() {
                 @Override
                 public boolean test(final Field field) {
                     final String name = field.getName();
@@ -111,7 +111,7 @@ public class HasLengthPlugin implements ElasticDocBuilderPlugin {
         @Value.Default
         @Value.Auxiliary
         public default Predicate<Field> getPredicate() {
-            return new Predicate<>() {
+            return new Predicate<Field>() {
                 @Override
                 public boolean test(final Field t) {
                     return true;
