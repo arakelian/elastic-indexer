@@ -37,10 +37,9 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.docker.junit.Container;
-import com.arakelian.docker.junit.Container.Binding;
+import com.arakelian.docker.junit.Container.SimpleBinding;
 import com.arakelian.docker.junit.DockerRule;
 import com.arakelian.docker.junit.model.DockerConfig;
-import com.arakelian.docker.junit.model.HostConfigurers;
 import com.arakelian.docker.junit.model.ImmutableDockerConfig;
 import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkIngester;
@@ -71,6 +70,10 @@ import com.arakelian.json.JsonFilter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
+import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.ExposedPort;
+import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.PortBinding;
+import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.Ports.Binding;
+import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.Ulimit;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
@@ -93,9 +96,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     public static final String _DOC = Mapping._DOC;
 
+    public static final ExposedPort ELASTIC_PORT = ExposedPort.tcp(9200);
+
     /**
      * Returns list of Elastic versions that we want to test
-     * 
+     *
      * @return list of Elastic versions that we want to test
      * @see <a href="https://www.docker.elastic.co">Docker Images</a>
      */
@@ -127,19 +132,17 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     protected final String elasticUrl;
     protected final ElasticClient elasticClient;
     protected final ElasticClientWithRetry elasticClientWithRetry;
+
     protected final Container container;
 
     public AbstractElasticDockerTest(final String imageVersion) throws Exception {
-        final String name = "elastic-test-" + imageVersion;
         final String image = "docker.elastic.co/elasticsearch/elasticsearch:" + imageVersion;
 
         config = ImmutableDockerConfig.builder() //
-                .name(name) //
                 .image(image) //
-                .ports("9200") //
-                .addHostConfigurer(HostConfigurers.noUlimits()) //
-                .addContainerConfigurer(builder -> {
-                    builder.env(
+                .addCreateContainerConfigurer(create -> {
+                    create.withExposedPorts(ELASTIC_PORT);
+                    create.withEnv(
                             "http.host=0.0.0.0", //
                             "transport.host=127.0.0.1", //
                             "xpack.security.enabled=false", //
@@ -147,6 +150,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                             "xpack.graph.enabled=false", //
                             "xpack.watcher.enabled=false", //
                             "ES_JAVA_OPTS=-Xms512m -Xmx512m");
+                }) //
+                .addHostConfigConfigurer(hostConfig -> {
+                    hostConfig.withAutoRemove(true);
+                    hostConfig.withPortBindings(new PortBinding(Binding.empty(), ELASTIC_PORT));
+                    hostConfig.withUlimits(new Ulimit[] { new Ulimit("nofile", 65536L, 65536L) });
                 }) //
                 .build();
 
@@ -164,7 +172,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             // is really available; even after the logs indicate that it has started, it
             // may not respond to requests for a few seconds. We use /_cluster/health API as
             // a means of more reliably determining availability.
-            final Binding binding = container.getPortBinding("9200/tcp");
+            final SimpleBinding binding = container.getSimpleBinding(ELASTIC_PORT);
             elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
             LOGGER.info("Elastic host: {}", elasticUrl);
 
@@ -216,6 +224,83 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             assertEquals(expectedVersion, document.getVersion());
         }
         assertTrue(document.isFound());
+    }
+
+    protected void assertIndexWithInternalVersion(
+            final Index index,
+            final Person person,
+            final long expectedVersion) {
+        // test default versioning
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument(
+                        index.getName(), //
+                        _DOC, //
+                        person.getId(), //
+                        JacksonUtils.toStringSafe(person, false)));
+
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(_DOC, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
+    }
+
+    protected SearchResponse assertSearchFinds(
+            final Index index,
+            final Search search,
+            final long expectedTotal) {
+        final SearchResponse response = search(index, search);
+
+        // verify we have a match
+        final SearchHits hits = response.getHits();
+        final long total = hits.getTotal();
+        if (expectedTotal > 0) {
+            assertEquals(expectedTotal, total);
+        } else {
+            final long leastExpected = -expectedTotal;
+            assertTrue(
+                    "Expected at least " + Long.toString(leastExpected) + " but found " + total,
+                    total >= leastExpected);
+        }
+        return response;
+    }
+
+    protected void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, -1);
+        final SearchHits hits = response.getHits();
+
+        final String id = person.getId();
+        for (int i = 0, size = hits.getSize(); i < size; i++) {
+            final Source source = hits.get(i).getSource();
+            if (!id.equals(source.getString("id"))) {
+                continue;
+            }
+
+            assertEquals(id, source.getString("id"));
+            assertEquals(person.getFirstName(), source.getString("firstName"));
+            assertEquals(person.getLastName(), source.getString("lastName"));
+            assertEquals(person.getAge(), source.getInt("age"));
+            assertEquals(person.getComments(), source.getString("comments"));
+            assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
+            return;
+        }
+
+        fail("Unable to find any match for " + person);
+    }
+
+    protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
+        final SearchResponse response = assertSearchFinds(index, search, 1);
+        final SearchHits hits = response.getHits();
+        assertEquals(1, hits.getSize());
+
+        final Source source = hits.get(0).getSource();
+        assertEquals(person.getId(), source.getString("id"));
+        assertEquals(person.getFirstName(), source.getString("firstName"));
+        assertEquals(person.getLastName(), source.getString("lastName"));
+        assertEquals(person.getAge(), source.getInt("age"));
+        assertEquals(person.getComments(), source.getString("comments"));
+        assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
     }
 
     public BulkIndexer createIndexer(final IndexerListener listener) {
@@ -337,92 +422,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return mapping;
     }
 
-    @After
-    public void releaseRef() {
-        container.releaseRef();
-    }
-
-    public void withPersonIndex(final WithIndexCallback test) throws IOException {
-        withIndex(createPersonMapping(), test);
-    }
-
-    protected void assertIndexWithInternalVersion(
-            final Index index,
-            final Person person,
-            final long expectedVersion) {
-        // test default versioning
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument(
-                        index.getName(), //
-                        _DOC, //
-                        person.getId(), //
-                        JacksonUtils.toStringSafe(person, false)));
-
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(_DOC, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(expectedVersion), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
-    }
-
-    protected SearchResponse assertSearchFinds(
-            final Index index,
-            final Search search,
-            final long expectedTotal) {
-        final SearchResponse response = search(index, search);
-
-        // verify we have a match
-        final SearchHits hits = response.getHits();
-        final long total = hits.getTotal();
-        if (expectedTotal > 0) {
-            assertEquals(expectedTotal, total);
-        } else {
-            final long leastExpected = -expectedTotal;
-            assertTrue(
-                    "Expected at least " + Long.toString(leastExpected) + " but found " + total,
-                    total >= leastExpected);
-        }
-        return response;
-    }
-
-    protected void assertSearchFindsOneOf(final Index index, final Search search, final Person person) {
-        final SearchResponse response = assertSearchFinds(index, search, -1);
-        final SearchHits hits = response.getHits();
-
-        final String id = person.getId();
-        for (int i = 0, size = hits.getSize(); i < size; i++) {
-            final Source source = hits.get(i).getSource();
-            if (!id.equals(source.getString("id"))) {
-                continue;
-            }
-
-            assertEquals(id, source.getString("id"));
-            assertEquals(person.getFirstName(), source.getString("firstName"));
-            assertEquals(person.getLastName(), source.getString("lastName"));
-            assertEquals(person.getAge(), source.getInt("age"));
-            assertEquals(person.getComments(), source.getString("comments"));
-            assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
-            return;
-        }
-
-        fail("Unable to find any match for " + person);
-    }
-
-    protected void assertSearchFindsPerson(final Index index, final Search search, final Person person) {
-        final SearchResponse response = assertSearchFinds(index, search, 1);
-        final SearchHits hits = response.getHits();
-        assertEquals(1, hits.getSize());
-
-        final Source source = hits.get(0).getSource();
-        assertEquals(person.getId(), source.getString("id"));
-        assertEquals(person.getFirstName(), source.getString("firstName"));
-        assertEquals(person.getLastName(), source.getString("lastName"));
-        assertEquals(person.getAge(), source.getInt("age"));
-        assertEquals(person.getComments(), source.getString("comments"));
-        assertEquals(DateUtils.toStringIsoFormat(person.getBirthdate()), source.getString("birthdate"));
-    }
-
     @Override
     protected ElasticClient getElasticClient() {
         return elasticClient;
@@ -436,6 +435,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @Override
     protected String getElasticUrl() {
         return elasticUrl;
+    }
+
+    @After
+    public void releaseRef() {
+        container.releaseRef();
     }
 
     protected SearchResponse search(final Index index, final Search search) {
@@ -456,5 +460,9 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
             }
             callback.accept(index, people);
         });
+    }
+
+    public void withPersonIndex(final WithIndexCallback test) throws IOException {
+        withIndex(createPersonMapping(), test);
     }
 }

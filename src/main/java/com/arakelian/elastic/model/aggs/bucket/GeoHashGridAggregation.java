@@ -56,18 +56,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableGeoHashGridAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEOHASH_GRID_AGGREGATION)
 public interface GeoHashGridAggregation extends BucketAggregation, ValuesSourceAggregation {
-    @Nullable
-    @JsonProperty("precision")
-    public Integer getPrecision();
-
-    @Nullable
-    @JsonProperty("size")
-    public Integer getRequiredSize();
-
-    @Nullable
-    @JsonProperty("shard_size")
-    public Integer getShardSize();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -81,4 +69,16 @@ public interface GeoHashGridAggregation extends BucketAggregation, ValuesSourceA
             visitor.leave(this);
         }
     }
+
+    @Nullable
+    @JsonProperty("precision")
+    public Integer getPrecision();
+
+    @Nullable
+    @JsonProperty("size")
+    public Integer getRequiredSize();
+
+    @Nullable
+    @JsonProperty("shard_size")
+    public Integer getShardSize();
 }

@@ -62,26 +62,6 @@ public abstract class AbstractElasticTest {
     @Rule
     public TestName testName = new TestName();
 
-    @Before
-    public final void createRefreshLimiter() {
-        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
-                .coreThreads(1) //
-                .maximumThreads(1) //
-                .defaultPermitsPerSecond(1.0) //
-                .build(), //
-                getElasticClient());
-    }
-
-    @After
-    public final void destroyRefreshLimiter() {
-        refreshLimiter.close();
-    }
-
-    @Before
-    public final void startTest() {
-        LOGGER.info("Starting test: {}", testName.getMethodName());
-    }
-
     protected final void assertCreateIndex(final Index index) {
         // verify it does not already exist
         assertIndexNotExists(index);
@@ -122,6 +102,21 @@ public abstract class AbstractElasticTest {
         return response;
     }
 
+    @Before
+    public final void createRefreshLimiter() {
+        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
+                .coreThreads(1) //
+                .maximumThreads(1) //
+                .defaultPermitsPerSecond(1.0) //
+                .build(), //
+                getElasticClient());
+    }
+
+    @After
+    public final void destroyRefreshLimiter() {
+        refreshLimiter.close();
+    }
+
     protected abstract ElasticClient getElasticClient();
 
     protected abstract ElasticClientWithRetry getElasticClientWithRetry();
@@ -138,6 +133,11 @@ public abstract class AbstractElasticTest {
                 .putMapping(Mapping._DOC, mapping) //
                 .build();
         return index;
+    }
+
+    @Before
+    public final void startTest() {
+        LOGGER.info("Starting test: {}", testName.getMethodName());
     }
 
     protected final VersionComponents waitForElasticReady(final OkHttpClient client) {

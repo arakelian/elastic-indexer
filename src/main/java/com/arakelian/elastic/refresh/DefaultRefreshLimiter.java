@@ -134,6 +134,132 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
         }
     }
 
+    private void complete(final Index index) {
+        index.lock.lock();
+        try {
+            if (index.running.compareAndSet(true, false)) {
+                index.refreshed.signalAll();
+            }
+            if (index.requeue.compareAndSet(true, false)) {
+                enqueueRefresh(index.name);
+            }
+        } finally {
+            index.lock.unlock();
+        }
+    }
+
+    private void doEnqueue(final Index index) {
+        final Stopwatch timer = Stopwatch.createStarted();
+
+        final long id = index.getFutures().incrementAndGet();
+        LOGGER.debug("Queuing refresh {} of index \"{}\"", id, index.name);
+
+        ListenableFuture<Refresh> future = null;
+        try {
+            // process asynchronously
+            future = doSubmit(index);
+
+            // define callback when completed
+            Futures.addCallback(future, new FutureCallback<Refresh>() {
+                private void completeQuietly(final Index index) {
+                    try {
+                        complete(index);
+                    } catch (final RejectedExecutionException e) {
+                        // ignore
+                    }
+                }
+
+                @Override
+                public void onFailure(final Throwable t) {
+                    LOGGER.warn("Refresh {} of index \"{}\" failed after {}", id, index.name, timer, t);
+                    completeQuietly(index);
+                }
+
+                @Override
+                public void onSuccess(final Refresh result) {
+                    // refresh may have failed
+                    LOGGER.debug(
+                            "Refresh {} of index \"{}\" completed successfully after {}: {}",
+                            id,
+                            index.name,
+                            timer,
+                            result);
+                    completeQuietly(index);
+                }
+            }, MoreExecutors.directExecutor());
+        } finally {
+            // if something went wrong during submit, reset flags!
+            if (future == null) {
+                complete(index);
+            }
+        }
+    }
+
+    /**
+     * Refreshes the given Elastic index by calling Elastic client API.
+     *
+     * IMPORTANT: This method assumes that the rate limiter has been acquired.
+     *
+     * @param name
+     *            index name
+     * @return result of call to Elastic client if successful
+     * @throws IOException
+     */
+    private Refresh doRefresh(final Index index) throws IOException {
+        LOGGER.debug("Refreshing index \"{}\"", index.name);
+        index.getAttempts().incrementAndGet();
+        final Refresh response = elasticClient.refreshIndex(index.name);
+        index.getSuccessful().incrementAndGet();
+        return response;
+    }
+
+    /**
+     * Refreshes the given Elastic index by calling Elastic client API, and returns true if the call
+     * was successful. If the refresh fails for whatever reason, the error is logged and this method
+     * returns false.
+     *
+     * IMPORTANT: This method assumes that the rate limiter has been acquired.
+     *
+     * @param name
+     *            index name
+     * @return true if index was refreshed successfully
+     */
+    private boolean doRefreshQuietly(final Index index) {
+        try {
+            final Refresh response = doRefresh(index);
+            return response != null;
+        } catch (final IOException e) {
+            LOGGER.warn("Safetly ignoring refresh failure: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private ListenableFuture<Refresh> doSubmit(final Index index) {
+        try {
+            return refreshExecutor.submit(() -> {
+                // acquire rate limiter before we do anything
+                index.getAcquires().incrementAndGet();
+                final double secondsWaited = index.rateLimiter.acquire();
+                final long nanosWaited = (long) (secondsWaited * 1000000000);
+                LOGGER.debug(
+                        "Waited {} to acquire rate limiter for index \"{}\"",
+                        MoreStringUtils.toString(nanosWaited, TimeUnit.NANOSECONDS),
+                        index.name);
+
+                return config.getRetryer().wrap(
+                        () -> {
+                            // we are about to perform refresh, so we can clear the requeue flag
+                            index.requeue.set(false);
+
+                            // perform refresh
+                            return doRefresh(index);
+                        }).call();
+            });
+        } catch (final RejectedExecutionException e) {
+            throw new RejectedExecutionException("Unable to enqueue refresh of index " + index.name, e);
+        }
+    }
+
     /*
      * (non-Javadoc)
      * @see com.arakelian.elastic.refresh.RefreshLimiter#enqueueRefresh(java.lang.String)
@@ -156,6 +282,11 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
         } finally {
             index.lock.unlock();
         }
+    }
+
+    private Index getIndex(final String name) {
+        Preconditions.checkArgument(name != null, "name must be non-null");
+        return indexes.get(name);
     }
 
     public RefreshStats getStats(final String name) {
@@ -249,135 +380,5 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
         } finally {
             index.lock.unlock();
         }
-    }
-
-    private void complete(final Index index) {
-        index.lock.lock();
-        try {
-            if (index.running.compareAndSet(true, false)) {
-                index.refreshed.signalAll();
-            }
-            if (index.requeue.compareAndSet(true, false)) {
-                enqueueRefresh(index.name);
-            }
-        } finally {
-            index.lock.unlock();
-        }
-    }
-
-    private void doEnqueue(final Index index) {
-        final Stopwatch timer = Stopwatch.createStarted();
-
-        final long id = index.getFutures().incrementAndGet();
-        LOGGER.debug("Queuing refresh {} of index \"{}\"", id, index.name);
-
-        ListenableFuture<Refresh> future = null;
-        try {
-            // process asynchronously
-            future = doSubmit(index);
-
-            // define callback when completed
-            Futures.addCallback(future, new FutureCallback<Refresh>() {
-                @Override
-                public void onFailure(final Throwable t) {
-                    LOGGER.warn("Refresh {} of index \"{}\" failed after {}", id, index.name, timer, t);
-                    completeQuietly(index);
-                }
-
-                @Override
-                public void onSuccess(final Refresh result) {
-                    // refresh may have failed
-                    LOGGER.debug(
-                            "Refresh {} of index \"{}\" completed successfully after {}: {}",
-                            id,
-                            index.name,
-                            timer,
-                            result);
-                    completeQuietly(index);
-                }
-
-                private void completeQuietly(final Index index) {
-                    try {
-                        complete(index);
-                    } catch (final RejectedExecutionException e) {
-                        // ignore
-                    }
-                }
-            }, MoreExecutors.directExecutor());
-        } finally {
-            // if something went wrong during submit, reset flags!
-            if (future == null) {
-                complete(index);
-            }
-        }
-    }
-
-    /**
-     * Refreshes the given Elastic index by calling Elastic client API.
-     *
-     * IMPORTANT: This method assumes that the rate limiter has been acquired.
-     *
-     * @param name
-     *            index name
-     * @return result of call to Elastic client if successful
-     * @throws IOException
-     */
-    private Refresh doRefresh(final Index index) throws IOException {
-        LOGGER.debug("Refreshing index \"{}\"", index.name);
-        index.getAttempts().incrementAndGet();
-        final Refresh response = elasticClient.refreshIndex(index.name);
-        index.getSuccessful().incrementAndGet();
-        return response;
-    }
-
-    /**
-     * Refreshes the given Elastic index by calling Elastic client API, and returns true if the call
-     * was successful. If the refresh fails for whatever reason, the error is logged and this method
-     * returns false.
-     *
-     * IMPORTANT: This method assumes that the rate limiter has been acquired.
-     *
-     * @param name
-     *            index name
-     * @return true if index was refreshed successfully
-     */
-    private boolean doRefreshQuietly(final Index index) {
-        try {
-            final Refresh response = doRefresh(index);
-            return response != null;
-        } catch (final IOException e) {
-            LOGGER.warn("Safetly ignoring refresh failure: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    private ListenableFuture<Refresh> doSubmit(final Index index) {
-        try {
-            return refreshExecutor.submit(() -> {
-                // acquire rate limiter before we do anything
-                index.getAcquires().incrementAndGet();
-                final double secondsWaited = index.rateLimiter.acquire();
-                final long nanosWaited = (long) (secondsWaited * 1000000000);
-                LOGGER.debug(
-                        "Waited {} to acquire rate limiter for index \"{}\"",
-                        MoreStringUtils.toString(nanosWaited, TimeUnit.NANOSECONDS),
-                        index.name);
-
-                return config.getRetryer().wrap(() -> {
-                    // we are about to perform refresh, so we can clear the requeue flag
-                    index.requeue.set(false);
-
-                    // perform refresh
-                    return doRefresh(index);
-                }).call();
-            });
-        } catch (final RejectedExecutionException e) {
-            throw new RejectedExecutionException("Unable to enqueue refresh of index " + index.name, e);
-        }
-    }
-
-    private Index getIndex(final String name) {
-        Preconditions.checkArgument(name != null, "name must be non-null");
-        return indexes.get(name);
     }
 }

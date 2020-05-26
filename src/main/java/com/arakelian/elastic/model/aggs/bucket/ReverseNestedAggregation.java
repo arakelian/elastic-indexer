@@ -48,9 +48,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableReverseNestedAggregation.Builder.class)
 @JsonTypeName(Aggregation.REVERSE_NESTED_AGGREGATION)
 public interface ReverseNestedAggregation extends BucketAggregation {
-    @Nullable
-    public String getPath();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -64,4 +61,7 @@ public interface ReverseNestedAggregation extends BucketAggregation {
             visitor.leave(this);
         }
     }
+
+    @Nullable
+    public String getPath();
 }

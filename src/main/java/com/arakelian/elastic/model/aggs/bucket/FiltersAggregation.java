@@ -46,20 +46,6 @@ import com.google.common.collect.ImmutableMap;
 @JsonDeserialize(builder = ImmutableFiltersAggregation.Builder.class)
 @JsonTypeName(Aggregation.FILTERS_AGGREGATION)
 public interface FiltersAggregation extends BucketAggregation {
-    @Value.Default
-    public default Map<String, Query> getFilters() {
-        return ImmutableMap.of();
-    }
-
-    @Nullable
-    public String getOtherBucketKey();
-
-    @Nullable
-    public Boolean isKeyed();
-
-    @Nullable
-    public Boolean isOtherBucket();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -73,4 +59,18 @@ public interface FiltersAggregation extends BucketAggregation {
             visitor.leave(this);
         }
     }
+
+    @Value.Default
+    public default Map<String, Query> getFilters() {
+        return ImmutableMap.of();
+    }
+
+    @Nullable
+    public String getOtherBucketKey();
+
+    @Nullable
+    public Boolean isKeyed();
+
+    @Nullable
+    public Boolean isOtherBucket();
 }

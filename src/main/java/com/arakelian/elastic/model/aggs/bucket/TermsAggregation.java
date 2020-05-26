@@ -45,6 +45,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableTermsAggregation.Builder.class)
 @JsonTypeName(Aggregation.TERMS_AGGREGATION)
 public interface TermsAggregation extends BucketAggregation, ValuesSourceAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterTerms(this)) {
+                visitor.leaveTerms(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Nullable
     public CollectMode getCollectMode();
 
@@ -125,18 +139,4 @@ public interface TermsAggregation extends BucketAggregation, ValuesSourceAggrega
 
     @Nullable
     public Boolean isShowTermDocCountError();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterTerms(this)) {
-                visitor.leaveTerms(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

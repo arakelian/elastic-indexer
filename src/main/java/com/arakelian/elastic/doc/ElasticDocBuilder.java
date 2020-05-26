@@ -200,18 +200,6 @@ public class ElasticDocBuilder {
         }
     }
 
-    public JsonNode readValue(final CharSequence json) {
-        Preconditions.checkArgument(json != null, "json must be non-null");
-
-        JsonNode node;
-        try {
-            node = mapper.readTree(new CharSequenceReader(json));
-        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
-            throw new ElasticDocException("Unable to parse source document", e);
-        }
-        return node;
-    }
-
     private void buildDocumentMap(final String fieldName, final Map<String, Object> map) {
         final Object values = getFieldValues(fieldName);
         if (values != null) {
@@ -250,6 +238,36 @@ public class ElasticDocBuilder {
             args[arg++] = JsonNodeUtils.read(node, path);
         }
         return args;
+    }
+
+    /**
+     * Returns the Elastic document as a simple map.
+     *
+     * Field names are will be ordered as they are in the mapping, and values are listed in the
+     * order they were added to the document.
+     *
+     * @return the document as a simple map.
+     */
+    protected Map<String, Object> getDocumentAsMap() {
+        final Map<String, Object> map = Maps.newLinkedHashMap();
+
+        // add fields in the order that they appear in the mapping
+        final Map<String, Field> properties = config.getMapping().getProperties();
+        final Set<String> mappingFields = properties.keySet();
+        for (final String fieldName : mappingFields) {
+            if (document.containsKey(fieldName)) {
+                buildDocumentMap(fieldName, map);
+            }
+        }
+
+        // add fields that do not appear in mapping
+        for (final String fieldName : document.keys()) {
+            if (!mappingFields.contains(fieldName)) {
+                buildDocumentMap(fieldName, map);
+            }
+        }
+
+        return map;
     }
 
     private Object getFieldValues(final String fieldName) {
@@ -345,51 +363,6 @@ public class ElasticDocBuilder {
         return selector.getJsonPath().read(node, jsonPathConfig);
     }
 
-    private JsonNode read(final JsonSelector selector, final JsonNode node) {
-        switch (selector.getType()) {
-        case PATH:
-            return selector.read(node);
-        case JSON_PATH:
-            return jsonPath(selector, node);
-        case CONCAT:
-            return concat(selector, node);
-        case FUNCTION:
-            return function(selector, node);
-        default:
-            throw new IllegalStateException("Unsupported selector: " + selector.toString());
-        }
-    }
-
-    /**
-     * Returns the Elastic document as a simple map.
-     *
-     * Field names are will be ordered as they are in the mapping, and values are listed in the
-     * order they were added to the document.
-     *
-     * @return the document as a simple map.
-     */
-    protected Map<String, Object> getDocumentAsMap() {
-        final Map<String, Object> map = Maps.newLinkedHashMap();
-
-        // add fields in the order that they appear in the mapping
-        final Map<String, Field> properties = config.getMapping().getProperties();
-        final Set<String> mappingFields = properties.keySet();
-        for (final String fieldName : mappingFields) {
-            if (document.containsKey(fieldName)) {
-                buildDocumentMap(fieldName, map);
-            }
-        }
-
-        // add fields that do not appear in mapping
-        for (final String fieldName : document.keys()) {
-            if (!mappingFields.contains(fieldName)) {
-                buildDocumentMap(fieldName, map);
-            }
-        }
-
-        return map;
-    }
-
     protected void put(final ElasticDoc doc, final Field field, final Object obj) {
         if (obj == null) {
             // we don't store null values
@@ -479,6 +452,33 @@ public class ElasticDocBuilder {
         config.getValueProducer().traverse(field, node, obj -> {
             put(doc, field, obj);
         });
+    }
+
+    private JsonNode read(final JsonSelector selector, final JsonNode node) {
+        switch (selector.getType()) {
+        case PATH:
+            return selector.read(node);
+        case JSON_PATH:
+            return jsonPath(selector, node);
+        case CONCAT:
+            return concat(selector, node);
+        case FUNCTION:
+            return function(selector, node);
+        default:
+            throw new IllegalStateException("Unsupported selector: " + selector.toString());
+        }
+    }
+
+    public JsonNode readValue(final CharSequence json) {
+        Preconditions.checkArgument(json != null, "json must be non-null");
+
+        JsonNode node;
+        try {
+            node = mapper.readTree(new CharSequenceReader(json));
+        } catch (final IllegalArgumentException | IllegalStateException | IOException e) {
+            throw new ElasticDocException("Unable to parse source document", e);
+        }
+        return node;
     }
 
     protected CharSequence writeDocumentAsJson(final boolean compact) throws ElasticDocException {

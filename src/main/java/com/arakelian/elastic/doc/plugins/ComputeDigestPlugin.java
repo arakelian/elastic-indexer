@@ -81,7 +81,7 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
         @Value.Default
         @Value.Auxiliary
         public default Predicate<String> getPredicate() {
-            return new Predicate<String>() {
+            return new Predicate<>() {
                 @Override
                 public boolean test(final String field) {
                     // never include the digest field itself
@@ -156,11 +156,6 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
         doc.put(field, digest);
     }
 
-    @Override
-    public String getName() {
-        return name;
-    }
-
     protected MessageDigest getMessageDigest() throws NoSuchAlgorithmException, NoSuchProviderException {
         final String provider = config.getProvider();
         if (StringUtils.isEmpty(provider)) {
@@ -168,6 +163,11 @@ public class ComputeDigestPlugin implements ElasticDocBuilderPlugin {
         } else {
             return MessageDigest.getInstance(config.getAlgorithm(), provider);
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     protected void traverse(

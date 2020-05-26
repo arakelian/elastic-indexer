@@ -49,13 +49,13 @@ public abstract class Custom extends AbstractCharFilter {
         return delegate.apply(value);
     }
 
-    public abstract String getClassName();
-
     @Value.Default
     @Value.Auxiliary
     public Map<String, Object> getArguments() {
         return ImmutableMap.of();
     }
+
+    public abstract String getClassName();
 
     @JsonIgnore
     @Nullable
@@ -66,7 +66,7 @@ public abstract class Custom extends AbstractCharFilter {
         Preconditions.checkState(delegateClass != null, "Delegate class must be non-null");
         try {
             return JacksonUtils.getObjectMapper().convertValue(getArguments(), delegateClass);
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             throw new IllegalStateException(
                     "Cannot create custom token filter with class \"" + delegateClass.getName() + "\"", e);
         }

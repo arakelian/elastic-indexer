@@ -90,6 +90,20 @@ public interface RegexpQuery extends StandardQuery {
         return buf.toString();
     }
 
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterRegexpQuery(this)) {
+                visitor.leaveRegexpQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @JsonProperty("field")
     public String getFieldName();
 
@@ -124,20 +138,6 @@ public interface RegexpQuery extends StandardQuery {
      *      documentation</a>
      */
     public String getValue();
-
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterRegexpQuery(this)) {
-                visitor.leaveRegexpQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 
     @Override
     default boolean isEmpty() {

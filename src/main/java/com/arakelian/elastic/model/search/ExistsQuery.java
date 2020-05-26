@@ -35,9 +35,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableExistsQuery.Builder.class)
 @JsonTypeName(Query.EXISTS_QUERY)
 public interface ExistsQuery extends StandardQuery {
-    @JsonProperty("field")
-    public String getFieldName();
-
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -51,6 +48,9 @@ public interface ExistsQuery extends StandardQuery {
             visitor.leave(this);
         }
     }
+
+    @JsonProperty("field")
+    public String getFieldName();
 
     @Override
     default boolean isEmpty() {

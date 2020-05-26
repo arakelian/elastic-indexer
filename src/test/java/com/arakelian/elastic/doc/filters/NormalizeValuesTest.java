@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 public class NormalizeValuesTest {
     public static enum TestEnum {
         ONE, TWO;
+
         public static TestEnum fromString(final String value) {
             if ("1".equals(value)) {
                 return ONE;
@@ -52,6 +53,10 @@ public class NormalizeValuesTest {
             .factoryMethod("fromString") //
             .caseSensitive(false) //
             .build();
+
+    private List<String> test(final NormalizeValues tokenFilter, final String input) {
+        return tokenFilter.accept(input, new TokenCollector()).get();
+    }
 
     @Test
     public void testCodes() {
@@ -84,9 +89,5 @@ public class NormalizeValuesTest {
     public void testSerializable() {
         SerializableTestUtils.testSerializable(GENDER, NormalizeValues.class);
         SerializableTestUtils.testSerializable(ENUM, NormalizeValues.class);
-    }
-
-    private List<String> test(final NormalizeValues tokenFilter, final String input) {
-        return tokenFilter.accept(input, new TokenCollector()).get();
     }
 }

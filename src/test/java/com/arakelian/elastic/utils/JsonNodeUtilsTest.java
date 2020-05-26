@@ -19,6 +19,18 @@ public class JsonNodeUtilsTest {
 
     private ObjectNode node;
 
+    private String read(final String selector) {
+        final JsonSelector js = JsonSelector.of(selector);
+        final JsonNode value = js.read(node);
+        LOGGER.info(
+                "{} read as {}: {} (len:{})",
+                js,
+                value.getClass().getName(),
+                value.toString(),
+                value.toString().length());
+        return value.isMissingNode() ? "" : value.toString();
+    }
+
     @Before
     public void setup() throws IOException {
         final String json = "{\"a\":\"a1\", \"b\":[\"b1\",\"b2\"], \"c\":[{\"ca\":\"c1\",\"cb\":\"c2\"},{\"ca\":\"c3\"}], \"x\":[false,3.141569,9223372036854775807]}";
@@ -33,18 +45,6 @@ public class JsonNodeUtilsTest {
         Assert.assertEquals("[\"c1\",\"c3\"]", read("c/ca"));
         Assert.assertEquals("\"c2\"", read("c/cb"));
         Assert.assertEquals("", read("d"));
-    }
-
-    private String read(String selector) {
-        final JsonSelector js = JsonSelector.of(selector);
-        final JsonNode value = js.read(node);
-        LOGGER.info(
-                "{} read as {}: {} (len:{})",
-                js,
-                value.getClass().getName(),
-                value.toString(),
-                value.toString().length());
-        return value.isMissingNode() ? "" : value.toString();
     }
 
     @Test

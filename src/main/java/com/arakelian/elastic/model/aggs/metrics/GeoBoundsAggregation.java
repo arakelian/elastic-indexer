@@ -40,9 +40,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableGeoBoundsAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEO_BOUNDS_AGGREGATION)
 public interface GeoBoundsAggregation extends MetricAggregation, ValuesSourceAggregation {
-    @Nullable
-    public Boolean isWrapLongitude();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -56,4 +53,7 @@ public interface GeoBoundsAggregation extends MetricAggregation, ValuesSourceAgg
             visitor.leave(this);
         }
     }
+
+    @Nullable
+    public Boolean isWrapLongitude();
 }

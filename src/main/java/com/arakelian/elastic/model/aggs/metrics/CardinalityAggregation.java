@@ -40,19 +40,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableCardinalityAggregation.Builder.class)
 @JsonTypeName(Aggregation.CARDINALITY_AGGREGATION)
 public interface CardinalityAggregation extends MetricAggregation, ValuesSourceAggregation {
-    /**
-     * Returns the precision threshold.
-     *
-     * The precision threshold allows you to trade memory for accuracy, and defines a unique count
-     * below which counts are expected to be close to accurate. Above this value, counts might
-     * become a bit more fuzzy. The maximum supported value is 40000, thresholds above this number
-     * will have the same effect as a threshold of 40000. The default values in Elastic is 3000.
-     *
-     * @return the precision threshold.
-     */
-    @Nullable
-    public Long getPrecisionThreshold();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -66,4 +53,17 @@ public interface CardinalityAggregation extends MetricAggregation, ValuesSourceA
             visitor.leave(this);
         }
     }
+
+    /**
+     * Returns the precision threshold.
+     *
+     * The precision threshold allows you to trade memory for accuracy, and defines a unique count
+     * below which counts are expected to be close to accurate. Above this value, counts might
+     * become a bit more fuzzy. The maximum supported value is 40000, thresholds above this number
+     * will have the same effect as a threshold of 40000. The default values in Elastic is 3000.
+     *
+     * @return the precision threshold.
+     */
+    @Nullable
+    public Long getPrecisionThreshold();
 }

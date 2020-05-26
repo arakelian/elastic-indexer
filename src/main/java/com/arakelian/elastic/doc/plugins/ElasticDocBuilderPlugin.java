@@ -50,11 +50,9 @@ public interface ElasticDocBuilderPlugin {
     public default void before(final JsonNode jsonDoc, final ElasticDoc doc) {
     }
 
-    public String getName();
-
     /**
      * Returns value that should be put into elastic document. Defaults to the given value.
-     * 
+     *
      * @param doc
      *            elastic document
      * @param field
@@ -63,9 +61,11 @@ public interface ElasticDocBuilderPlugin {
      *            value
      * @return value that should be put into elastic document.
      */
-    public default Object beforePut(final ElasticDoc doc, final Field field, Object value) {
+    public default Object beforePut(final ElasticDoc doc, final Field field, final Object value) {
         return value;
     }
+
+    public String getName();
 
     /**
      * Invoke after value is record into {@link ElasticDoc} being built.

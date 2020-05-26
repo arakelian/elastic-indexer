@@ -43,14 +43,6 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableRangeAggregation.Builder.class)
 @JsonTypeName(Aggregation.RANGE_AGGREGATION)
 public interface RangeAggregation extends BucketAggregation, ValuesSourceAggregation {
-    @Value.Default
-    public default List<Range> getRanges() {
-        return ImmutableList.of();
-    }
-
-    @Nullable
-    public Boolean isKeyed();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -64,4 +56,12 @@ public interface RangeAggregation extends BucketAggregation, ValuesSourceAggrega
             visitor.leave(this);
         }
     }
+
+    @Value.Default
+    public default List<Range> getRanges() {
+        return ImmutableList.of();
+    }
+
+    @Nullable
+    public Boolean isKeyed();
 }

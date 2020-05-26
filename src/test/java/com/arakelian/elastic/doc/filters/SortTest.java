@@ -32,6 +32,20 @@ import com.google.common.collect.ImmutableList;
 public class SortTest {
     public static final SortFilter SAMPLE = ImmutableSortFilter.builder().build();
 
+    private List<String> test(final String... values) {
+        final TokenCollector collector = new TokenCollector();
+
+        // pipe in values
+        for (final String v : values) {
+            SAMPLE.accept(v, token -> {
+                fail("Should not have received a token");
+            });
+        }
+
+        // flush collector
+        return SAMPLE.accept(null, collector).get();
+    }
+
     @Test
     public void testJackson() throws IOException {
         JacksonTestUtils.testReadWrite(SAMPLE, SortFilter.class);
@@ -45,19 +59,5 @@ public class SortTest {
     @Test
     public void testWhitespace() {
         assertEquals(ImmutableList.of("a", "b", "c"), test("c", "b", "a"));
-    }
-
-    private List<String> test(final String... values) {
-        final TokenCollector collector = new TokenCollector();
-
-        // pipe in values
-        for (final String v : values) {
-            SAMPLE.accept(v, token -> {
-                fail("Should not have received a token");
-            });
-        }
-
-        // flush collector
-        return SAMPLE.accept(null, collector).get();
     }
 }

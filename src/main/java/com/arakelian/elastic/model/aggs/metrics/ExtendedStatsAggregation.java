@@ -40,9 +40,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableExtendedStatsAggregation.Builder.class)
 @JsonTypeName(Aggregation.EXTENDED_STATS_AGGREGATION)
 public interface ExtendedStatsAggregation extends MetricAggregation, ValuesSourceAggregation {
-    @Nullable
-    public Double getSigma();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -56,4 +53,7 @@ public interface ExtendedStatsAggregation extends MetricAggregation, ValuesSourc
             visitor.leave(this);
         }
     }
+
+    @Nullable
+    public Double getSigma();
 }

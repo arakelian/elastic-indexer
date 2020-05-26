@@ -37,6 +37,10 @@ public class StripLeadingZeroesTest {
             .emitOriginal(false) //
             .build();
 
+    private List<String> test(final StripLeadingZeroes tokenFilter, final String input) {
+        return tokenFilter.accept(input, new TokenCollector()).get();
+    }
+
     @Test
     public void testJackson() throws IOException {
         JacksonTestUtils.testReadWrite(WHOLE, StripLeadingZeroes.class);
@@ -72,9 +76,5 @@ public class StripLeadingZeroesTest {
                 ImmutableList.of("UNITED AIRLINES FLIGHT 295"),
                 test(WORDS, "UNITED AIRLINES FLIGHT 00295"));
         Assert.assertEquals(ImmutableList.of("1 2 3 4 5"), test(WORDS, "   01 02 03 0004 00005"));
-    }
-
-    private List<String> test(final StripLeadingZeroes tokenFilter, final String input) {
-        return tokenFilter.accept(input, new TokenCollector()).get();
     }
 }

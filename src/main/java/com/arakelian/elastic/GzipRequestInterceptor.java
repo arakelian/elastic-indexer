@@ -29,20 +29,6 @@ import okio.GzipSink;
 import okio.Okio;
 
 public class GzipRequestInterceptor implements Interceptor {
-    @Override
-    public Response intercept(final Chain chain) throws IOException {
-        final Request originalRequest = chain.request();
-        if (originalRequest.body() == null || originalRequest.header("Content-Encoding") != null) {
-            return chain.proceed(originalRequest);
-        }
-
-        final Request compressedRequest = originalRequest.newBuilder() //
-                .header("Content-Encoding", "gzip") //
-                .method(originalRequest.method(), gzip(originalRequest.body())) //
-                .build();
-        return chain.proceed(compressedRequest);
-    }
-
     private RequestBody gzip(final RequestBody body) {
         return new RequestBody() {
             @Override
@@ -62,5 +48,19 @@ public class GzipRequestInterceptor implements Interceptor {
                 }
             }
         };
+    }
+
+    @Override
+    public Response intercept(final Chain chain) throws IOException {
+        final Request originalRequest = chain.request();
+        if (originalRequest.body() == null || originalRequest.header("Content-Encoding") != null) {
+            return chain.proceed(originalRequest);
+        }
+
+        final Request compressedRequest = originalRequest.newBuilder() //
+                .header("Content-Encoding", "gzip") //
+                .method(originalRequest.method(), gzip(originalRequest.body())) //
+                .build();
+        return chain.proceed(compressedRequest);
     }
 }

@@ -44,6 +44,20 @@ import com.google.common.base.Preconditions;
 @JsonDeserialize(builder = ImmutablePercentilesAggregation.Builder.class)
 @JsonTypeName(Aggregation.PERCENTILES_AGGREGATION)
 public interface PercentilesAggregation extends MetricAggregation, ValuesSourceAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterPercentiles(this)) {
+                visitor.leavePercentiles(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Check
     public default void checkMethod() {
         if (getCompression() != null) {
@@ -94,18 +108,4 @@ public interface PercentilesAggregation extends MetricAggregation, ValuesSourceA
 
     @Nullable
     public Boolean isKeyed();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterPercentiles(this)) {
-                visitor.leavePercentiles(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

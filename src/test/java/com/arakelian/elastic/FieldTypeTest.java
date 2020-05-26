@@ -79,44 +79,6 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
         this.type = type;
     }
 
-    /**
-     * Creates index mapping for field type.
-     *
-     * @throws IOException
-     *             if index cannot be created
-     */
-    @Test
-    public void testType() throws IOException {
-        final ImmutableMapping mapping = ImmutableMapping.builder() //
-                .dynamic(STRICT) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("value") //
-                                .type(type) //
-                                .build())
-                .build();
-
-        withIndex(mapping, index -> {
-            final String id = MoreStringUtils.shortUuid();
-
-            final Map<String, Object> doc = Maps.newLinkedHashMap();
-            doc.put("value", getTestValue());
-
-            final IndexedDocument response = assertSuccessful( //
-                    elasticClient.indexDocument(
-                            index.getName(), //
-                            _DOC, //
-                            id, //
-                            JacksonUtils.toString(doc, false)));
-
-            assertEquals(index.getName(), response.getIndex());
-            assertEquals(_DOC, response.getType());
-            assertEquals(id, response.getId());
-            assertEquals("created", response.getResult());
-            assertEquals(Boolean.TRUE, response.isCreated());
-        });
-    }
-
     private Object getTestValue() {
         switch (type) {
         case BINARY:
@@ -163,5 +125,43 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
         default:
             throw new IllegalStateException("Unsupported type: " + type);
         }
+    }
+
+    /**
+     * Creates index mapping for field type.
+     *
+     * @throws IOException
+     *             if index cannot be created
+     */
+    @Test
+    public void testType() throws IOException {
+        final ImmutableMapping mapping = ImmutableMapping.builder() //
+                .dynamic(STRICT) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("value") //
+                                .type(type) //
+                                .build())
+                .build();
+
+        withIndex(mapping, index -> {
+            final String id = MoreStringUtils.shortUuid();
+
+            final Map<String, Object> doc = Maps.newLinkedHashMap();
+            doc.put("value", getTestValue());
+
+            final IndexedDocument response = assertSuccessful( //
+                    elasticClient.indexDocument(
+                            index.getName(), //
+                            _DOC, //
+                            id, //
+                            JacksonUtils.toString(doc, false)));
+
+            assertEquals(index.getName(), response.getIndex());
+            assertEquals(_DOC, response.getType());
+            assertEquals(id, response.getId());
+            assertEquals("created", response.getResult());
+            assertEquals(Boolean.TRUE, response.isCreated());
+        });
     }
 }

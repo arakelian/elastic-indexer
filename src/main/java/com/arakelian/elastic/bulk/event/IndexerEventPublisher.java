@@ -76,28 +76,6 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
     public void closed(final BulkIndexerStats stats) {
     }
 
-    @Override
-    public void onFailure(final BulkOperation op, final BulkOperationResponse response) {
-        failed(op, response.getStatus());
-    }
-
-    @Override
-    public void onFailure(final BulkOperation op, final Throwable t) {
-        failed(op, null);
-    }
-
-    @Override
-    public void onSuccess(final BulkOperation op, final int statusCode) {
-        Preconditions.checkArgument(op != null, "op must be non-null");
-        final long sequence = ringBuffer.next();
-        try {
-            final IndexerEvent event = ringBuffer.get(sequence);
-            initialize(event, op, Status.SUCCEEDED, statusCode);
-        } finally {
-            ringBuffer.publish(sequence);
-        }
-    }
-
     private void failed(final BulkOperation op, final Integer statusCode) {
         Preconditions.checkArgument(op != null, "op must be non-null");
         final long sequence = ringBuffer.next();
@@ -124,5 +102,27 @@ public class IndexerEventPublisher implements IndexerListener, Closeable {
         event.setType(op.getType());
         event.setVersion(op.getVersion());
         event.setVersionType(op.getVersionType());
+    }
+
+    @Override
+    public void onFailure(final BulkOperation op, final BulkOperationResponse response) {
+        failed(op, response.getStatus());
+    }
+
+    @Override
+    public void onFailure(final BulkOperation op, final Throwable t) {
+        failed(op, null);
+    }
+
+    @Override
+    public void onSuccess(final BulkOperation op, final int statusCode) {
+        Preconditions.checkArgument(op != null, "op must be non-null");
+        final long sequence = ringBuffer.next();
+        try {
+            final IndexerEvent event = ringBuffer.get(sequence);
+            initialize(event, op, Status.SUCCEEDED, statusCode);
+        } finally {
+            ringBuffer.publish(sequence);
+        }
     }
 }

@@ -34,6 +34,36 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableBoolQuery.Builder.class)
 @JsonTypeName(Query.BOOL_QUERY)
 public interface BoolQuery extends StandardQuery {
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (!visitor.enterBoolQuery(this)) {
+                return;
+            }
+            try {
+                for (final Query q : getMustClauses()) {
+                    q.accept(visitor);
+                }
+                for (final Query q : getMustNotClauses()) {
+                    q.accept(visitor);
+                }
+                for (final Query q : getFilterClauses()) {
+                    q.accept(visitor);
+                }
+                for (final Query q : getShouldClauses()) {
+                    q.accept(visitor);
+                }
+            } finally {
+                visitor.leaveBoolQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Default
     @JsonProperty("filter")
     public default List<Query> getFilterClauses() {
@@ -64,36 +94,6 @@ public interface BoolQuery extends StandardQuery {
 
     @Nullable
     public Boolean isAdjustPureNegative();
-
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (!visitor.enterBoolQuery(this)) {
-                return;
-            }
-            try {
-                for (final Query q : getMustClauses()) {
-                    q.accept(visitor);
-                }
-                for (final Query q : getMustNotClauses()) {
-                    q.accept(visitor);
-                }
-                for (final Query q : getFilterClauses()) {
-                    q.accept(visitor);
-                }
-                for (final Query q : getShouldClauses()) {
-                    q.accept(visitor);
-                }
-            } finally {
-                visitor.leaveBoolQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 
     @Override
     default boolean isEmpty() {

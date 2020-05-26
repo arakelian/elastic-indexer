@@ -62,6 +62,97 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
         super(version);
     }
 
+    protected void assertIndexDocuments(final Index index, final String type, final String... rows) {
+        int id = 0;
+        for (final String row : rows) {
+            assertSuccessful( //
+                    elasticClient.indexDocument(
+                            index.getName(), //
+                            type,
+                            Integer.toString(++id),
+                            row));
+        }
+    }
+
+    private double avg(final List<Person> people) {
+        return people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .mapToDouble(p -> p.getAge()) //
+                .average() //
+                .getAsDouble();
+    }
+
+    private int count(final List<Person> people) {
+        return (int) people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .map(p -> p.getAge()) //
+                .count();
+    }
+
+    private int countDistinct(final List<Person> people) {
+        return (int) people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .map(p -> p.getAge()) //
+                .distinct() //
+                .count();
+    }
+
+    private ImmutableMapping createGeoPointMapping() {
+        return ImmutableMapping.builder() //
+                .dynamic(STRICT) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("location") //
+                                .type(Type.GEO_POINT) //
+                                .build()) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("city") //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .addField(
+                        ImmutableField.builder() //
+                                .name("name") //
+                                .type(Type.TEXT) //
+                                .build()) //
+                .build();
+    }
+
+    private void indexGeoPointDocuments(final Index index) {
+        assertIndexDocuments(
+                index,
+                _DOC, //
+                "{\"location\": \"52.374081,4.912350\", \"city\": \"Amsterdam\", \"name\": \"NEMO Science Museum\"}",
+                "{\"location\": \"52.369219,4.901618\", \"city\": \"Amsterdam\", \"name\": \"Museum Het Rembrandthuis\"}",
+                "{\"location\": \"52.371667,4.914722\", \"city\": \"Amsterdam\", \"name\": \"Nederlands Scheepvaartmuseum\"}",
+                "{\"location\": \"51.222900,4.405200\", \"city\": \"Antwerp\", \"name\": \"Letterenhuis\"}",
+                "{\"location\": \"48.861111,2.336389\", \"city\": \"Paris\", \"name\": \"Musée du Louvre\"}",
+                "{\"location\": \"48.860000,2.327000\", \"city\": \"Paris\", \"name\": \"Musée d'Orsay\"}");
+    }
+
+    private double max(final List<Person> people) {
+        return people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .mapToDouble(p -> p.getAge()) //
+                .max() //
+                .getAsDouble();
+    }
+
+    private double min(final List<Person> people) {
+        return people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .mapToDouble(p -> p.getAge()) //
+                .min() //
+                .getAsDouble();
+    }
+
+    private double sum(final List<Person> people) {
+        return people.stream() //
+                .filter(p -> p.getAge() != null) //
+                .mapToDouble(p -> p.getAge()) //
+                .sum();
+    }
+
     @Test
     public void testAvg() throws IOException {
         withPeople(10, (index, people) -> {
@@ -231,6 +322,29 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
         });
     }
 
+    private void testPercentileRankAggregation(
+            final Index index,
+            final List<Person> people,
+            final Collection<Double> values) {
+        final ImmutableSearch search = ImmutableSearch.builder() //
+                .size(0) //
+                .addAggregation(
+                        ImmutablePercentileRanksAggregation.builder() //
+                                .name("age") //
+                                .field("age") //
+                                .addAllValues(values) //
+                                .build()) //
+                .build();
+
+        // check response
+        final SearchResponse response = assertSearchFinds(index, search, people.size());
+        final MapPath agg = response.getAggregations().get("age");
+        for (final Double val : values) {
+            final String key = "values." + val.toString();
+            assertTrue("Cannot find property: " + key, agg.hasProperty(key));
+        }
+    }
+
     @Test
     public void testPercentiles() throws IOException {
         withPeople(50, (index, people) -> {
@@ -367,119 +481,5 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
             final MapPath agg = response.getAggregations().get("age");
             assertEquals(count(people), agg.getDouble("value"), 0.001d);
         });
-    }
-
-    private double avg(final List<Person> people) {
-        return people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .mapToDouble(p -> p.getAge()) //
-                .average() //
-                .getAsDouble();
-    }
-
-    private int count(final List<Person> people) {
-        return (int) people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .map(p -> p.getAge()) //
-                .count();
-    }
-
-    private int countDistinct(final List<Person> people) {
-        return (int) people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .map(p -> p.getAge()) //
-                .distinct() //
-                .count();
-    }
-
-    private ImmutableMapping createGeoPointMapping() {
-        return ImmutableMapping.builder() //
-                .dynamic(STRICT) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("location") //
-                                .type(Type.GEO_POINT) //
-                                .build()) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("city") //
-                                .type(Type.TEXT) //
-                                .build()) //
-                .addField(
-                        ImmutableField.builder() //
-                                .name("name") //
-                                .type(Type.TEXT) //
-                                .build()) //
-                .build();
-    }
-
-    private void indexGeoPointDocuments(final Index index) {
-        assertIndexDocuments(
-                index,
-                _DOC, //
-                "{\"location\": \"52.374081,4.912350\", \"city\": \"Amsterdam\", \"name\": \"NEMO Science Museum\"}",
-                "{\"location\": \"52.369219,4.901618\", \"city\": \"Amsterdam\", \"name\": \"Museum Het Rembrandthuis\"}",
-                "{\"location\": \"52.371667,4.914722\", \"city\": \"Amsterdam\", \"name\": \"Nederlands Scheepvaartmuseum\"}",
-                "{\"location\": \"51.222900,4.405200\", \"city\": \"Antwerp\", \"name\": \"Letterenhuis\"}",
-                "{\"location\": \"48.861111,2.336389\", \"city\": \"Paris\", \"name\": \"Musée du Louvre\"}",
-                "{\"location\": \"48.860000,2.327000\", \"city\": \"Paris\", \"name\": \"Musée d'Orsay\"}");
-    }
-
-    private double max(final List<Person> people) {
-        return people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .mapToDouble(p -> p.getAge()) //
-                .max() //
-                .getAsDouble();
-    }
-
-    private double min(final List<Person> people) {
-        return people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .mapToDouble(p -> p.getAge()) //
-                .min() //
-                .getAsDouble();
-    }
-
-    private double sum(final List<Person> people) {
-        return people.stream() //
-                .filter(p -> p.getAge() != null) //
-                .mapToDouble(p -> p.getAge()) //
-                .sum();
-    }
-
-    private void testPercentileRankAggregation(
-            final Index index,
-            final List<Person> people,
-            final Collection<Double> values) {
-        final ImmutableSearch search = ImmutableSearch.builder() //
-                .size(0) //
-                .addAggregation(
-                        ImmutablePercentileRanksAggregation.builder() //
-                                .name("age") //
-                                .field("age") //
-                                .addAllValues(values) //
-                                .build()) //
-                .build();
-
-        // check response
-        final SearchResponse response = assertSearchFinds(index, search, people.size());
-        final MapPath agg = response.getAggregations().get("age");
-        for (final Double val : values) {
-            final String key = "values." + val.toString();
-            assertTrue("Cannot find property: " + key, agg.hasProperty(key));
-        }
-    }
-
-    protected void assertIndexDocuments(final Index index, final String type, final String... rows) {
-        int id = 0;
-        for (final String row : rows) {
-            assertSuccessful( //
-                    elasticClient.indexDocument(
-                            index.getName(), //
-                            type,
-                            Integer.toString(++id),
-                            row));
-        }
     }
 }

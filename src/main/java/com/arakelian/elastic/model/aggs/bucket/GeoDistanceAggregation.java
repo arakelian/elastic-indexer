@@ -55,6 +55,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableGeoDistanceAggregation.Builder.class)
 @JsonTypeName(Aggregation.GEO_DISTANCE_AGGREGATION)
 public interface GeoDistanceAggregation extends BucketAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterGeoDistance(this)) {
+                visitor.leaveGeoDistance(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Nullable
     public DistanceType getDistanceType();
 
@@ -71,18 +85,4 @@ public interface GeoDistanceAggregation extends BucketAggregation {
 
     @Nullable
     public Boolean isKeyed();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterGeoDistance(this)) {
-                visitor.leaveGeoDistance(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

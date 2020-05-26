@@ -187,6 +187,10 @@ public abstract class Field implements Serializable {
         return another instanceof ImmutableField && equalTo((ImmutableField) another);
     }
 
+    private boolean equalTo(final ImmutableField another) {
+        return getName().equals(another.getName());
+    }
+
     /**
      * Returns a list of fields that should be targeted by
      * {@link com.arakelian.elastic.doc.ElasticDocBuilder} whenever this field is targeted.
@@ -683,9 +687,5 @@ public abstract class Field implements Serializable {
             return null;
         }
         return type == Type.BINARY;
-    }
-
-    private boolean equalTo(final ImmutableField another) {
-        return getName().equals(another.getName());
     }
 }

@@ -42,6 +42,18 @@ import com.google.common.collect.ImmutableSortedSet;
 @JsonDeserialize(builder = ImmutableQueryStringQuery.Builder.class)
 @JsonTypeName(Query.QUERY_STRING_QUERY)
 public interface QueryStringQuery extends StandardQuery {
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        if (!visitor.enterQueryStringQuery(this)) {
+            return;
+        }
+        visitor.leaveQueryStringQuery(this);
+        visitor.leave(this);
+    }
+
     @Nullable
     public String fuzzyRewrite();
 
@@ -107,6 +119,11 @@ public interface QueryStringQuery extends StandardQuery {
     @Nullable
     public Boolean isAutoGenerateSynonymsPhraseQuery();
 
+    @Override
+    default boolean isEmpty() {
+        return StringUtils.isEmpty(getQueryString());
+    }
+
     @Nullable
     public Boolean isEnablePositionIncrements();
 
@@ -118,21 +135,4 @@ public interface QueryStringQuery extends StandardQuery {
 
     @Nullable
     public Boolean isLenient();
-
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        if (!visitor.enterQueryStringQuery(this)) {
-            return;
-        }
-        visitor.leaveQueryStringQuery(this);
-        visitor.leave(this);
-    }
-
-    @Override
-    default boolean isEmpty() {
-        return StringUtils.isEmpty(getQueryString());
-    }
 }

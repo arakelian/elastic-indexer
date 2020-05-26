@@ -83,6 +83,12 @@ public abstract class Source implements Serializable {
         return getMapPath().getMap(path);
     }
 
+    @JsonIgnore
+    @Value.Lazy
+    MapPath getMapPath() {
+        return MapPath.of(getProperties(), getObjectMapper());
+    }
+
     public MapPath getMapPath(final String path) {
         return getMapPath().getMapPath(path);
     }
@@ -120,11 +126,5 @@ public abstract class Source implements Serializable {
 
     public void setObjectMapper(final ObjectMapper mapper) {
         this.mapper = mapper;
-    }
-
-    @JsonIgnore
-    @Value.Lazy
-    MapPath getMapPath() {
-        return MapPath.of(getProperties(), getObjectMapper());
     }
 }

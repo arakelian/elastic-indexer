@@ -43,6 +43,60 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 
 public class DefaultValueProducer implements ValueProducer {
+    protected abstract static class AbstractProducer {
+        protected void collect(final Field field, final JsonNode node, final Consumer<Object> consumer)
+                throws ValueException {
+            if (node == null || node.isNull() || node.isMissingNode()) {
+                return;
+            }
+
+            if (node.isArray()) {
+                handleArray(field, (ArrayNode) node, consumer);
+                return;
+            }
+
+            if (node.isObject()) {
+                handleObject(field, (ObjectNode) node, consumer);
+                return;
+            }
+
+            if (node.isPojo()) {
+                malformed(field, node, new IllegalStateException("Complex type cannot be coerced"));
+                return;
+            }
+
+            handleValue(field, node, consumer);
+        }
+
+        protected void handleArray(final Field field, final ArrayNode node, final Consumer<Object> consumer)
+                throws ValueException {
+            for (int i = 0, size = node.size(); i < size; i++) {
+                final JsonNode item = node.get(i);
+                collect(field, item, consumer);
+            }
+        }
+
+        protected void handleObject(final Field field, final ObjectNode node, final Consumer<Object> consumer)
+                throws ValueException {
+            final Iterator<JsonNode> children = node.elements();
+            while (children.hasNext()) {
+                final JsonNode child = children.next();
+                collect(field, child, consumer);
+            }
+        }
+
+        protected abstract void handleValue(
+                final Field field,
+                final JsonNode node,
+                final Consumer<Object> consumer) throws ValueException;
+
+        protected void malformed(final Field field, final JsonNode node, final Throwable cause) {
+            if (field.isIgnoreMalformed() == null || !field.isIgnoreMalformed()) {
+                throw new ValueException(field, node, cause);
+            }
+        }
+    }
+
     private final class BinaryProducer extends AbstractProducer {
         @Override
         protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer) {
@@ -207,91 +261,6 @@ public class DefaultValueProducer implements ValueProducer {
         }
     }
 
-    private final class ShortProducer extends AbstractProducer {
-        @Override
-        protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
-                throws ValueException {
-            if (node.isIntegralNumber() && node.canConvertToInt()) {
-                final int value = node.intValue();
-                if (value >= Short.MIN_VALUE && value <= Short.MAX_VALUE) {
-                    consumer.accept(Short.valueOf((short) value));
-                    return;
-                }
-            }
-
-            try {
-                final short value = Short.parseShort(asText(field, node));
-                consumer.accept(value);
-            } catch (final NumberFormatException nfe) {
-                malformed(field, node, nfe);
-            }
-        }
-    }
-
-    private final static class TextProducer extends AbstractProducer {
-        @Override
-        protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
-                throws ValueException {
-            // pass a default because NullNode.asText() returns "null" string
-            final String value = node.asText(null);
-            consumer.accept(value);
-        }
-    }
-
-    protected abstract static class AbstractProducer {
-        protected void collect(final Field field, final JsonNode node, final Consumer<Object> consumer)
-                throws ValueException {
-            if (node == null || node.isNull() || node.isMissingNode()) {
-                return;
-            }
-
-            if (node.isArray()) {
-                handleArray(field, (ArrayNode) node, consumer);
-                return;
-            }
-
-            if (node.isObject()) {
-                handleObject(field, (ObjectNode) node, consumer);
-                return;
-            }
-
-            if (node.isPojo()) {
-                malformed(field, node, new IllegalStateException("Complex type cannot be coerced"));
-                return;
-            }
-
-            handleValue(field, node, consumer);
-        }
-
-        protected void handleArray(final Field field, final ArrayNode node, final Consumer<Object> consumer)
-                throws ValueException {
-            for (int i = 0, size = node.size(); i < size; i++) {
-                final JsonNode item = node.get(i);
-                collect(field, item, consumer);
-            }
-        }
-
-        protected void handleObject(final Field field, final ObjectNode node, final Consumer<Object> consumer)
-                throws ValueException {
-            final Iterator<JsonNode> children = node.elements();
-            while (children.hasNext()) {
-                final JsonNode child = children.next();
-                collect(field, child, consumer);
-            }
-        }
-
-        protected abstract void handleValue(
-                final Field field,
-                final JsonNode node,
-                final Consumer<Object> consumer) throws ValueException;
-
-        protected void malformed(final Field field, final JsonNode node, final Throwable cause) {
-            if (field.isIgnoreMalformed() == null || !field.isIgnoreMalformed()) {
-                throw new ValueException(field, node, cause);
-            }
-        }
-    }
-
     protected final class ObjectProducer extends AbstractProducer {
         private final Class<?> clazz;
 
@@ -339,6 +308,37 @@ public class DefaultValueProducer implements ValueProducer {
         }
     }
 
+    private final class ShortProducer extends AbstractProducer {
+        @Override
+        protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
+                throws ValueException {
+            if (node.isIntegralNumber() && node.canConvertToInt()) {
+                final int value = node.intValue();
+                if (value >= Short.MIN_VALUE && value <= Short.MAX_VALUE) {
+                    consumer.accept(Short.valueOf((short) value));
+                    return;
+                }
+            }
+
+            try {
+                final short value = Short.parseShort(asText(field, node));
+                consumer.accept(value);
+            } catch (final NumberFormatException nfe) {
+                malformed(field, node, nfe);
+            }
+        }
+    }
+
+    private final static class TextProducer extends AbstractProducer {
+        @Override
+        protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
+                throws ValueException {
+            // pass a default because NullNode.asText() returns "null" string
+            final String value = node.asText(null);
+            consumer.accept(value);
+        }
+    }
+
     private final ObjectMapper mapper;
 
     private final BinaryProducer binaryProducer = new BinaryProducer();
@@ -362,77 +362,6 @@ public class DefaultValueProducer implements ValueProducer {
 
     public DefaultValueProducer(final ObjectMapper mapper) {
         this.mapper = Preconditions.checkNotNull(mapper);
-    }
-
-    @Override
-    public void traverse(final Field field, final JsonNode node, final Consumer<Object> consumer)
-            throws ValueException {
-        Preconditions.checkArgument(consumer != null, "consumer must be non-null");
-        Preconditions.checkArgument(field != null, "field must be non-null");
-        if (node == null || node.isNull() || node.isMissingNode()) {
-            return;
-        }
-
-        final Type type = field.getType();
-        if (type == null) {
-            // generic conversion
-            collectObjects(field, node, consumer);
-            return;
-        }
-
-        switch (type) {
-        case BINARY:
-            collectBinarys(field, node, consumer);
-            break;
-        case BOOLEAN:
-            collectBooleans(field, node, consumer);
-            break;
-        case DATE:
-            collectDates(field, node, consumer);
-            break;
-        case BYTE:
-            collectBytes(field, node, consumer);
-            break;
-        case SHORT:
-            collectShorts(field, node, consumer);
-            break;
-        case INTEGER:
-            collectIntegers(field, node, consumer);
-            break;
-        case LONG:
-            collectLongs(field, node, consumer);
-            break;
-        case DOUBLE:
-            collectDoubles(field, node, consumer);
-            break;
-        case FLOAT:
-            collectFloats(field, node, consumer);
-            break;
-        case TEXT:
-        case KEYWORD:
-            collectStrings(field, node, consumer);
-            break;
-        case GEO_POINT:
-            collectGeopoints(field, node, consumer);
-            break;
-        case INTEGER_RANGE:
-            collectIntegerRanges(field, node, consumer);
-            break;
-        case LONG_RANGE:
-            collectLongRanges(field, node, consumer);
-            break;
-        case FLOAT_RANGE:
-            collectFloatRanges(field, node, consumer);
-            break;
-        case DOUBLE_RANGE:
-            collectDoubleRanges(field, node, consumer);
-            break;
-        case DATE_RANGE:
-            collectDateRanges(field, node, consumer);
-            break;
-        default:
-            throw new ValueException("Unrecognized field type: " + field, field, node);
-        }
     }
 
     protected String asText(@SuppressWarnings("unused") final Field field, final JsonNode node) {
@@ -520,5 +449,76 @@ public class DefaultValueProducer implements ValueProducer {
 
     protected void collectStrings(final Field field, final JsonNode node, final Consumer<Object> consumer) {
         textProducer.collect(field, node, consumer);
+    }
+
+    @Override
+    public void traverse(final Field field, final JsonNode node, final Consumer<Object> consumer)
+            throws ValueException {
+        Preconditions.checkArgument(consumer != null, "consumer must be non-null");
+        Preconditions.checkArgument(field != null, "field must be non-null");
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return;
+        }
+
+        final Type type = field.getType();
+        if (type == null) {
+            // generic conversion
+            collectObjects(field, node, consumer);
+            return;
+        }
+
+        switch (type) {
+        case BINARY:
+            collectBinarys(field, node, consumer);
+            break;
+        case BOOLEAN:
+            collectBooleans(field, node, consumer);
+            break;
+        case DATE:
+            collectDates(field, node, consumer);
+            break;
+        case BYTE:
+            collectBytes(field, node, consumer);
+            break;
+        case SHORT:
+            collectShorts(field, node, consumer);
+            break;
+        case INTEGER:
+            collectIntegers(field, node, consumer);
+            break;
+        case LONG:
+            collectLongs(field, node, consumer);
+            break;
+        case DOUBLE:
+            collectDoubles(field, node, consumer);
+            break;
+        case FLOAT:
+            collectFloats(field, node, consumer);
+            break;
+        case TEXT:
+        case KEYWORD:
+            collectStrings(field, node, consumer);
+            break;
+        case GEO_POINT:
+            collectGeopoints(field, node, consumer);
+            break;
+        case INTEGER_RANGE:
+            collectIntegerRanges(field, node, consumer);
+            break;
+        case LONG_RANGE:
+            collectLongRanges(field, node, consumer);
+            break;
+        case FLOAT_RANGE:
+            collectFloatRanges(field, node, consumer);
+            break;
+        case DOUBLE_RANGE:
+            collectDoubleRanges(field, node, consumer);
+            break;
+        case DATE_RANGE:
+            collectDateRanges(field, node, consumer);
+            break;
+        default:
+            throw new ValueException("Unrecognized field type: " + field, field, node);
+        }
     }
 }

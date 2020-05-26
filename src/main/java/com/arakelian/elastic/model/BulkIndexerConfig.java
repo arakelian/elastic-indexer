@@ -35,6 +35,14 @@ import com.google.common.base.Preconditions;
 public abstract class BulkIndexerConfig {
     public static final int ONE_MEGABYTE = 1 * 1024 * 1024;
 
+    @Value.Check
+    protected void checkSettings() {
+        Preconditions.checkState(getMaximumThreads() > 0, "numberOfThreads must be greater than 0");
+        Preconditions
+                .checkState(getMaxBulkOperationBytes() > 0, "maxBulkOperationBytes must be greater than 0");
+        Preconditions.checkState(getQueueSize() > 0, "queueSize must be greater than 0");
+    }
+
     /**
      * Returns the number of milliseconds to wait before automatically flushing the bulk queue. If
      * this is zero or negative, the bulk queue is never automatically flushed.
@@ -160,13 +168,5 @@ public abstract class BulkIndexerConfig {
     @Value.Default
     public boolean isBlockingQueue() {
         return true;
-    }
-
-    @Value.Check
-    protected void checkSettings() {
-        Preconditions.checkState(getMaximumThreads() > 0, "numberOfThreads must be greater than 0");
-        Preconditions
-                .checkState(getMaxBulkOperationBytes() > 0, "maxBulkOperationBytes must be greater than 0");
-        Preconditions.checkState(getQueueSize() > 0, "queueSize must be greater than 0");
     }
 }

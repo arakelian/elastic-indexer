@@ -53,14 +53,6 @@ import com.google.common.collect.ImmutableMap;
 @JsonDeserialize(builder = ImmutableAdjacencyMatrixAggregation.Builder.class)
 @JsonTypeName(Aggregation.ADJACENCY_MATRIX_AGGREGATION)
 public interface AdjacencyMatrixAggregation extends BucketAggregation {
-    @Value.Default
-    public default Map<String, Query> getFilters() {
-        return ImmutableMap.of();
-    }
-
-    @Nullable
-    public String getSeparator();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -74,4 +66,12 @@ public interface AdjacencyMatrixAggregation extends BucketAggregation {
             visitor.leave(this);
         }
     }
+
+    @Value.Default
+    public default Map<String, Query> getFilters() {
+        return ImmutableMap.of();
+    }
+
+    @Nullable
+    public String getSeparator();
 }

@@ -58,6 +58,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableDateHistogramAggregation.Builder.class)
 @JsonTypeName(Aggregation.DATE_HISTOGRAM_AGGREGATION)
 public interface DateHistogramAggregation extends BucketAggregation, ValuesSourceAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterDateHistogram(this)) {
+                visitor.leaveDateHistogram(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Nullable
     public Long getExtendedBoundsMax();
 
@@ -93,18 +107,4 @@ public interface DateHistogramAggregation extends BucketAggregation, ValuesSourc
 
     @Nullable
     public Boolean isKeyed();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterDateHistogram(this)) {
-                visitor.leaveDateHistogram(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

@@ -46,6 +46,20 @@ import com.google.common.base.Preconditions;
 @JsonDeserialize(builder = ImmutableGeoShapeQuery.Builder.class)
 @JsonTypeName(Query.GEO_SHAPE_QUERY)
 public interface GeoShapeQuery extends StandardQuery {
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterGeoShapeQuery(this)) {
+                visitor.leaveGeoShapeQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Check
     public default void checkShape() {
         final boolean haveBoth = getShape() != null && getIndexedShape() != null;
@@ -70,20 +84,6 @@ public interface GeoShapeQuery extends StandardQuery {
     @Nullable
     @JsonProperty("strategy")
     public SpatialStrategy getStrategy();
-
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterGeoShapeQuery(this)) {
-                visitor.leaveGeoShapeQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 
     @Override
     default boolean isEmpty() {

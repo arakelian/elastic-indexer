@@ -93,18 +93,66 @@ public abstract class BulkOperation {
         }
     }
 
+    private void addActionAndMetadata(final StringBuilder buf) {
+        final Action action = getAction();
+        final boolean version7 = getElasticVersion().atLeast(7, 0, 0);
+
+        buf.append('{');
+        buf.append("\"").append(action.toString()).append("\"").append(':');
+        buf.append('{');
+
+        buf.append("\"_index\"").append(':');
+        buf.append('"').append(getIndex().getName()).append('"');
+        buf.append(',');
+
+        if (!version7) {
+            buf.append("\"_type\"").append(':');
+            buf.append('"').append(getType()).append('"');
+            buf.append(',');
+        }
+
+        buf.append("\"_id\"").append(':');
+        buf.append('"').append(getId()).append('"');
+
+        if (getVersion() != null) {
+            buf.append(',');
+            buf.append("\"");
+            if (version7) {
+                buf.append("version");
+            } else {
+                buf.append("_version");
+            }
+            buf.append("\"").append(':');
+            buf.append(getVersion());
+            if (getVersionType() != null) {
+                buf.append(',');
+                buf.append("\"version_type\"").append(':');
+                buf.append('"').append(getVersionType()).append('"');
+            }
+        }
+
+        buf.append('}');
+        buf.append('}');
+        buf.append('\n');
+    }
+
+    @Value.Check
+    protected void checkSource() {
+        if (getAction().hasSource()) {
+            final CharSequence source = getCompactSource();
+            Preconditions.checkState(source != null && source.length() != 0, "Source must be non-empty");
+            Preconditions.checkState(
+                    StringUtils.indexOf(source, '\n') == -1,
+                    "Newlines are not allowed in source JSON document when using Elastic bulk API");
+        }
+    }
+
     /**
      * Returns mapping type within index.
      *
      * @return mapping type within index.
      */
     public abstract Action getAction();
-
-    @Value.Default
-    @Value.Auxiliary
-    public VersionComponents getElasticVersion() {
-        return Views.VERSION_6.getVersion();
-    }
 
     @Nullable
     @Value.Derived
@@ -115,6 +163,12 @@ public abstract class BulkOperation {
             return JsonFilter.compactQuietly(source);
         }
         return source;
+    }
+
+    @Value.Default
+    @Value.Auxiliary
+    public VersionComponents getElasticVersion() {
+        return Views.VERSION_6.getVersion();
     }
 
     /**
@@ -185,59 +239,5 @@ public abstract class BulkOperation {
     @Value.Default
     public VersionType getVersionType() {
         return getVersion() != null ? VersionType.EXTERNAL : null;
-    }
-
-    private void addActionAndMetadata(final StringBuilder buf) {
-        final Action action = getAction();
-        final boolean version7 = getElasticVersion().atLeast(7, 0, 0);
-
-        buf.append('{');
-        buf.append("\"").append(action.toString()).append("\"").append(':');
-        buf.append('{');
-
-        buf.append("\"_index\"").append(':');
-        buf.append('"').append(getIndex().getName()).append('"');
-        buf.append(',');
-
-        if (!version7) {
-            buf.append("\"_type\"").append(':');
-            buf.append('"').append(getType()).append('"');
-            buf.append(',');
-        }
-
-        buf.append("\"_id\"").append(':');
-        buf.append('"').append(getId()).append('"');
-
-        if (getVersion() != null) {
-            buf.append(',');
-            buf.append("\"");
-            if (version7) {
-                buf.append("version");
-            } else {
-                buf.append("_version");
-            }
-            buf.append("\"").append(':');
-            buf.append(getVersion());
-            if (getVersionType() != null) {
-                buf.append(',');
-                buf.append("\"version_type\"").append(':');
-                buf.append('"').append(getVersionType()).append('"');
-            }
-        }
-
-        buf.append('}');
-        buf.append('}');
-        buf.append('\n');
-    }
-
-    @Value.Check
-    protected void checkSource() {
-        if (getAction().hasSource()) {
-            final CharSequence source = getCompactSource();
-            Preconditions.checkState(source != null && source.length() != 0, "Source must be non-empty");
-            Preconditions.checkState(
-                    StringUtils.indexOf(source, '\n') == -1,
-                    "Newlines are not allowed in source JSON document when using Elastic bulk API");
-        }
     }
 }

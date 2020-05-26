@@ -41,6 +41,10 @@ public class ElasticDocBuilderTest {
     /** Sample input **/
     private String sampleJson;
 
+    private void assertEquals(final String expected, final CharSequence filter) {
+        Assert.assertEquals(expected, filter != null ? filter.toString() : null);
+    }
+
     @Before
     public void setUp() {
         // source: https://cdn.rawgit.com/Marak/faker.js/master/examples/browser/index.html
@@ -525,9 +529,5 @@ public class ElasticDocBuilderTest {
         assertEquals(
                 "{\"tags\":[\"USER\",\"PERSON\",\"HUMAN\"]}",
                 new ElasticDocBuilder(config).build(sampleJson));
-    }
-
-    private void assertEquals(final String expected, final CharSequence filter) {
-        Assert.assertEquals(expected, filter != null ? filter.toString() : null);
     }
 }

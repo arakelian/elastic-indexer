@@ -42,6 +42,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableSignificantTextAggregation.Builder.class)
 @JsonTypeName(Aggregation.SIGNIFICANT_TEXT_AGGREGATION)
 public interface SignificantTextAggregation extends BucketAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterSignificantText(this)) {
+                visitor.leaveSignificantText(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Default
     public default List<Object> getExclude() {
         return ImmutableList.of();
@@ -97,18 +111,4 @@ public interface SignificantTextAggregation extends BucketAggregation {
 
     @Nullable
     public Boolean isFilterDuplicateText();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterSignificantText(this)) {
-                visitor.leaveSignificantText(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

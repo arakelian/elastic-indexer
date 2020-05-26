@@ -37,6 +37,12 @@ public interface Shards extends Serializable {
     @JsonProperty("failed")
     public Integer getFailed();
 
+    @JsonAnyGetter
+    @Value.Default
+    public default Map<String, Object> getProperties() {
+        return ImmutableMap.of();
+    }
+
     @Nullable
     @JsonProperty("skipped")
     public Integer getSkipped();
@@ -48,10 +54,4 @@ public interface Shards extends Serializable {
     @Nullable
     @JsonProperty("total")
     public Integer getTotal();
-
-    @JsonAnyGetter
-    @Value.Default
-    public default Map<String, Object> getProperties() {
-        return ImmutableMap.of();
-    }
 }

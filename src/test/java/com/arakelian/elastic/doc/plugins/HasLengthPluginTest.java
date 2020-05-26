@@ -47,6 +47,21 @@ public class HasLengthPluginTest {
 
     private ElasticDocBuilder docBuilder;
 
+    private void assertLengthyEquals(final String expected, final String document) throws IOException {
+        final CharSequence elasticDoc = docBuilder.build(document);
+        LOGGER.info("Input document: {}", JsonFilter.prettyify(document));
+        LOGGER.info("Elastic document: {}", JsonFilter.prettyify(elasticDoc));
+
+        JsonAssert.assertJsonEquals(
+                expected,
+                JsonFilter.filter(
+                        elasticDoc,
+                        ImmutableJsonFilterOptions.builder() //
+                                .addIncludes(INDICATOR_FIELD) //
+                                .build())
+                        .toString());
+    }
+
     @Before
     public void createBuilder() {
         plugin = new HasLengthPlugin( //
@@ -150,20 +165,5 @@ public class HasLengthPluginTest {
                         "   \"city\":\"123456789+123456789+123456789+123456789+123456789+123456789\",\n" + //
                         "   \"zip\":\"123456789+123456789+123456789+123456789+123456789\"\n" + //
                         "}");
-    }
-
-    private void assertLengthyEquals(final String expected, final String document) throws IOException {
-        final CharSequence elasticDoc = docBuilder.build(document);
-        LOGGER.info("Input document: {}", JsonFilter.prettyify(document));
-        LOGGER.info("Elastic document: {}", JsonFilter.prettyify(elasticDoc));
-
-        JsonAssert.assertJsonEquals(
-                expected,
-                JsonFilter.filter(
-                        elasticDoc,
-                        ImmutableJsonFilterOptions.builder() //
-                                .addIncludes(INDICATOR_FIELD) //
-                                .build())
-                        .toString());
     }
 }

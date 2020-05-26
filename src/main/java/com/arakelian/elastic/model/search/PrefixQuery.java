@@ -39,14 +39,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutablePrefixQuery.Builder.class)
 @JsonTypeName(Query.PREFIX_QUERY)
 public interface PrefixQuery extends StandardQuery {
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Nullable
-    public Rewrite getRewrite();
-
-    public String getValue();
-
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -57,6 +49,14 @@ public interface PrefixQuery extends StandardQuery {
         }
         visitor.leave(this);
     }
+
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @Nullable
+    public Rewrite getRewrite();
+
+    public String getValue();
 
     @Override
     default boolean isEmpty() {

@@ -43,8 +43,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableFiltersAggregation.Builder.class)
 @JsonTypeName(Aggregation.FILTER_AGGREGATION)
 public interface FilterAggregation extends BucketAggregation {
-    public Query getFilter();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -58,4 +56,6 @@ public interface FilterAggregation extends BucketAggregation {
             visitor.leave(this);
         }
     }
+
+    public Query getFilter();
 }

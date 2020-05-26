@@ -43,6 +43,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableSignificantTermsAggregation.Builder.class)
 @JsonTypeName(Aggregation.SIGNIFICANT_TERMS_AGGREGATION)
 public interface SignificantTermsAggregation extends BucketAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterSignificantTerms(this)) {
+                visitor.leaveSignificantTerms(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Default
     public default List<Object> getExclude() {
         return ImmutableList.of();
@@ -98,18 +112,4 @@ public interface SignificantTermsAggregation extends BucketAggregation {
      */
     @Nullable
     public Integer getSize();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterSignificantTerms(this)) {
-                visitor.leaveSignificantTerms(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

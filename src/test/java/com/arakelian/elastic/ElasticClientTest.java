@@ -56,6 +56,47 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         super(version);
     }
 
+    private long assertDeleteWithExternalVersion(final Index index, final String id) {
+        // delete document with external version
+        final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
+        final DeletedDocument deleted = assertSuccessful( //
+                elasticClient.deleteDocument( //
+                        index.getName(), //
+                        _DOC, //
+                        id, //
+                        deleteMillis));
+        assertEquals(index.getName(), deleted.getIndex());
+        assertEquals(_DOC, deleted.getType());
+        assertEquals(id, deleted.getId());
+        assertEquals(id, deleted.getId());
+        assertEquals("deleted", deleted.getResult());
+        assertEquals(Long.valueOf(deleteMillis), deleted.getVersion());
+        assertNotNull(deleted.isFound());
+        assertTrue(deleted.isFound().booleanValue());
+        return deleteMillis;
+    }
+
+    private long assertIndexWithExternalVersion(final Index index, final Person person) {
+        // index document
+        final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
+        final IndexedDocument response = assertSuccessful( //
+                elasticClient.indexDocument( //
+                        index.getName(), //
+                        _DOC, //
+                        person.getId(), //
+                        JacksonUtils.toString(person, false), //
+                        updateMillis));
+
+        // verify response
+        assertEquals(index.getName(), response.getIndex());
+        assertEquals(_DOC, response.getType());
+        assertEquals(person.getId(), response.getId());
+        assertEquals("created", response.getResult());
+        assertEquals(Long.valueOf(updateMillis), response.getVersion());
+        assertEquals(Boolean.TRUE, response.isCreated());
+        return updateMillis;
+    }
+
     @Test
     public void testClusterHealth() {
         final ClusterHealth health = assertSuccessful(
@@ -173,46 +214,5 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     public void testRefreshAll() {
         final Refresh response = assertSuccessful(elasticClient.refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
-    }
-
-    private long assertDeleteWithExternalVersion(final Index index, final String id) {
-        // delete document with external version
-        final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final DeletedDocument deleted = assertSuccessful( //
-                elasticClient.deleteDocument( //
-                        index.getName(), //
-                        _DOC, //
-                        id, //
-                        deleteMillis));
-        assertEquals(index.getName(), deleted.getIndex());
-        assertEquals(_DOC, deleted.getType());
-        assertEquals(id, deleted.getId());
-        assertEquals(id, deleted.getId());
-        assertEquals("deleted", deleted.getResult());
-        assertEquals(Long.valueOf(deleteMillis), deleted.getVersion());
-        assertNotNull(deleted.isFound());
-        assertTrue(deleted.isFound().booleanValue());
-        return deleteMillis;
-    }
-
-    private long assertIndexWithExternalVersion(final Index index, final Person person) {
-        // index document
-        final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
-        final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument( //
-                        index.getName(), //
-                        _DOC, //
-                        person.getId(), //
-                        JacksonUtils.toString(person, false), //
-                        updateMillis));
-
-        // verify response
-        assertEquals(index.getName(), response.getIndex());
-        assertEquals(_DOC, response.getType());
-        assertEquals(person.getId(), response.getId());
-        assertEquals("created", response.getResult());
-        assertEquals(Long.valueOf(updateMillis), response.getVersion());
-        assertEquals(Boolean.TRUE, response.isCreated());
-        return updateMillis;
     }
 }

@@ -153,6 +153,19 @@ public class BulkIngester {
         return dispatch(makeBatch(document, DELETE, null), forceFlush);
     }
 
+    private Map<String, Optional<ListenableFuture<List<BulkResponse>>>> dispatch(
+            final Multimap<String, BulkOperation> batches,
+            final boolean forceFlush) {
+        final ImmutableMap.Builder<String, Optional<ListenableFuture<List<BulkResponse>>>> map = ImmutableMap
+                .builder();
+        for (final String indexerName : batches.keySet()) {
+            final BulkIndexer bulkIndexer = bulkIndexers.get(indexerName);
+            final Collection<BulkOperation> batch = batches.get(indexerName);
+            map.put(indexerName, bulkIndexer.add(ImmutableList.copyOf(batch), forceFlush));
+        }
+        return map.build();
+    }
+
     public Map<String, BulkIndexer> getBulkIndexers() {
         return bulkIndexers;
     }
@@ -294,26 +307,6 @@ public class BulkIngester {
         return batches != null ? batches : ImmutableMultimap.of();
     }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this) //
-                .omitNullValues() //
-                .toString();
-    }
-
-    private Map<String, Optional<ListenableFuture<List<BulkResponse>>>> dispatch(
-            final Multimap<String, BulkOperation> batches,
-            final boolean forceFlush) {
-        final ImmutableMap.Builder<String, Optional<ListenableFuture<List<BulkResponse>>>> map = ImmutableMap
-                .builder();
-        for (final String indexerName : batches.keySet()) {
-            final BulkIndexer bulkIndexer = bulkIndexers.get(indexerName);
-            final Collection<BulkOperation> batch = batches.get(indexerName);
-            map.put(indexerName, bulkIndexer.add(ImmutableList.copyOf(batch), forceFlush));
-        }
-        return map.build();
-    }
-
     /**
      * Adds a bulk operation to the queue, using the given document and specified action.
      *
@@ -351,5 +344,12 @@ public class BulkIngester {
             batches.put(indexerName, op);
         }
         return batches;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this) //
+                .omitNullValues() //
+                .toString();
     }
 }

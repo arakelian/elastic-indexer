@@ -100,6 +100,30 @@ public class BulkIndexer implements Closeable {
             BulkIndexer.this.totalBytes.addAndGet(totalBytes);
         }
 
+        /**
+         * Returns the payload for the Elastic bulk API endpoint.
+         *
+         * We compute this by concatenating all of the individual operations being performed on each
+         * document.
+         *
+         * Note that we never convert the StringBuilder to a String to unnecessarily allocate extra
+         * RAM.
+         *
+         * @return payload for the Elastic bulk API endpoint.
+         */
+        private CharSequence buildPayload() {
+            // to reduce memory fragmentation when indexing billions of records, let's round up
+            // memory allocation
+            final int size = roundAllocation(totalBytes);
+
+            // allocate a string
+            final StringBuilder buf = new StringBuilder(size);
+            for (final BulkOperation op : operations) {
+                buf.append(op.getOperation());
+            }
+            return buf;
+        }
+
         @Override
         public BulkResponse call() throws IOException, InterruptedException {
             if (delayMillis != 0) {
@@ -128,42 +152,6 @@ public class BulkIndexer implements Closeable {
             }
         }
 
-        @Override
-        public String toString() {
-            return MoreObjects.toStringHelper(this) //
-                    .omitNullValues() //
-                    .add("id", id) //
-                    .add("operations", operations.size()) //
-                    .add("totalBytes", totalBytes) //
-                    .add("attempt", attempt) //
-                    .add("reason", reason) //
-                    .toString();
-        }
-
-        /**
-         * Returns the payload for the Elastic bulk API endpoint.
-         *
-         * We compute this by concatenating all of the individual operations being performed on each
-         * document.
-         *
-         * Note that we never convert the StringBuilder to a String to unnecessarily allocate extra
-         * RAM.
-         *
-         * @return payload for the Elastic bulk API endpoint.
-         */
-        private CharSequence buildPayload() {
-            // to reduce memory fragmentation when indexing billions of records, let's round up
-            // memory allocation
-            final int size = roundAllocation(totalBytes);
-
-            // allocate a string
-            final StringBuilder buf = new StringBuilder(size);
-            for (final BulkOperation op : operations) {
-                buf.append(op.getOperation());
-            }
-            return buf;
-        }
-
         private void failed(final Throwable t) {
             final IndexerListener listener = config.getListener();
             for (final BulkOperation op : operations) {
@@ -184,6 +172,18 @@ public class BulkIndexer implements Closeable {
                     LOGGER.warn("Unable to queue refresh of index \"{}\"", name, e);
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this) //
+                    .omitNullValues() //
+                    .add("id", id) //
+                    .add("operations", operations.size()) //
+                    .add("totalBytes", totalBytes) //
+                    .add("attempt", attempt) //
+                    .add("reason", reason) //
+                    .toString();
         }
     }
 
@@ -576,75 +576,6 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
-     * Flushes any pending bulk operations to Elastic asynchronously, and returns a future that
-     * corresponds to the batch (or null if no batch operation is required).
-     *
-     * @return returns a future that corresponds to the batch, or null if no batch operation
-     *         required
-     * @throws RejectedExecutionException
-     *             if indexer is closed (and we have pending operations) or background queue is full
-     */
-    public ListenableFuture<BulkResponse> flush() throws RejectedExecutionException {
-        final Batch batch = createBatch(true);
-        if (batch != null) {
-            // we submit to executor outside a lock, since this thread could block if the
-            // batch executor's queue is full
-            return submitBatch(batch);
-        }
-        return null;
-    }
-
-    public final BulkIndexerConfig getConfig() {
-        return config;
-    }
-
-    public RefreshLimiter getRefreshLimiter() {
-        return refreshLimiter;
-    }
-
-    public BulkIndexerStats getStats() {
-        return ImmutableBulkIndexerStats.builder() //
-                .submitted(submitted.get()) //
-                .retries(retries.get()) //
-                .totalBytes(totalBytes.get()) //
-                .successful(successful.get()) //
-                .failed(failed.get()) //
-                .versionConflicts(versionConflicts.get()) //
-                .build();
-    }
-
-    /**
-     * Returns true if indexer has closed
-     *
-     * @return true if indexer has closed
-     */
-    public boolean isClosed() {
-        return closed.get();
-    }
-
-    /**
-     * Returns true if bulk indexer is currently idle
-     *
-     * @return true if bulk indexer is currently idle
-     */
-    public boolean isIdle() {
-        // testing queues is a little faster, so we do that first
-        final boolean idle = batchWorkQueue.isEmpty() //
-                && bulkResponseWorkQueue.isEmpty() //
-                && batchExecutor.getActiveCount() == 0 //
-                && bulkResponseExecutor.getActiveCount() == 0;
-        return idle;
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this) //
-                .omitNullValues() //
-                .add("config", config) //
-                .toString();
-    }
-
-    /**
      * Return a new {@link Batch} from the list of queued bulk operations.
      *
      * If there are no pending operations that need to be flushed, or the batch size thresholds have
@@ -749,6 +680,25 @@ public class BulkIndexer implements Closeable {
     }
 
     /**
+     * Flushes any pending bulk operations to Elastic asynchronously, and returns a future that
+     * corresponds to the batch (or null if no batch operation is required).
+     *
+     * @return returns a future that corresponds to the batch, or null if no batch operation
+     *         required
+     * @throws RejectedExecutionException
+     *             if indexer is closed (and we have pending operations) or background queue is full
+     */
+    public ListenableFuture<BulkResponse> flush() throws RejectedExecutionException {
+        final Batch batch = createBatch(true);
+        if (batch != null) {
+            // we submit to executor outside a lock, since this thread could block if the
+            // batch executor's queue is full
+            return submitBatch(batch);
+        }
+        return null;
+    }
+
+    /**
      * Flushes any pending bulk operations to Elastic asynchronously, and quietly eats any
      * exceptions that may occur.
      */
@@ -759,6 +709,48 @@ public class BulkIndexer implements Closeable {
         } catch (final Exception e) {
             LOGGER.warn("Unable to flush {}", this, e);
         }
+    }
+
+    public final BulkIndexerConfig getConfig() {
+        return config;
+    }
+
+    public RefreshLimiter getRefreshLimiter() {
+        return refreshLimiter;
+    }
+
+    public BulkIndexerStats getStats() {
+        return ImmutableBulkIndexerStats.builder() //
+                .submitted(submitted.get()) //
+                .retries(retries.get()) //
+                .totalBytes(totalBytes.get()) //
+                .successful(successful.get()) //
+                .failed(failed.get()) //
+                .versionConflicts(versionConflicts.get()) //
+                .build();
+    }
+
+    /**
+     * Returns true if indexer has closed
+     *
+     * @return true if indexer has closed
+     */
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    /**
+     * Returns true if bulk indexer is currently idle
+     *
+     * @return true if bulk indexer is currently idle
+     */
+    public boolean isIdle() {
+        // testing queues is a little faster, so we do that first
+        final boolean idle = batchWorkQueue.isEmpty() //
+                && bulkResponseWorkQueue.isEmpty() //
+                && batchExecutor.getActiveCount() == 0 //
+                && bulkResponseExecutor.getActiveCount() == 0;
+        return idle;
     }
 
     /**
@@ -791,5 +783,13 @@ public class BulkIndexer implements Closeable {
         // process responses asynchronously too
         future.addListener(new BatchListener(future, batch, queued), listeningBulkResponseExecutor);
         return future;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this) //
+                .omitNullValues() //
+                .add("config", config) //
+                .toString();
     }
 }

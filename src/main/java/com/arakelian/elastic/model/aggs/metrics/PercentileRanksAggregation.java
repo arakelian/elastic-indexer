@@ -47,6 +47,20 @@ public interface PercentileRanksAggregation extends MetricAggregation, ValuesSou
         TDIGEST, HDR;
     }
 
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterPercentileRanks(this)) {
+                visitor.leavePercentileRanks(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Check
     public default void checkMethod() {
         if (getCompression() != null) {
@@ -96,18 +110,4 @@ public interface PercentileRanksAggregation extends MetricAggregation, ValuesSou
 
     @Nullable
     public Boolean isKeyed();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterPercentileRanks(this)) {
-                visitor.leavePercentileRanks(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

@@ -31,8 +31,10 @@ public interface DocumentId {
     @JsonProperty("_index")
     public String getIndex();
 
-    @JsonProperty("_type")
-    public String getType();
+    @Nullable
+    @JsonProperty("_primary_term")
+    @JsonView(Version6.class)
+    public Integer getPrimaryTerm();
 
     @Nullable
     @JsonProperty("_seq_no")
@@ -40,11 +42,9 @@ public interface DocumentId {
     public Long getSeqNo();
 
     @Nullable
-    @JsonProperty("_primary_term")
-    @JsonView(Version6.class)
-    public Integer getPrimaryTerm();
-
-    @Nullable
     @JsonProperty("_shards")
     public Shards getShards();
+
+    @JsonProperty("_type")
+    public String getType();
 }

@@ -250,6 +250,29 @@ public class OkHttpElasticClient implements ElasticClient {
         });
     }
 
+    protected <T> T execute(final Callable<DelegatingCall<T>> request) throws ElasticException {
+        try {
+            final DelegatingCall<T> call = request.call();
+            final Response<T> response = call.execute();
+            if (response.isSuccessful()) {
+                final T body = response.body();
+                return body;
+            }
+            return call.failure(response);
+        } catch (final ElasticException e) {
+            // pass through
+            throw e;
+        } catch (final Exception e) {
+            // wrap exception
+            throw new ElasticException(e.getMessage(), e);
+        }
+    }
+
+    protected OkHttpElasticApi getApi() {
+        final String url = nextElasticUrl();
+        return elasticApiFactory.create(url, mapper);
+    }
+
     @Override
     public Document getDocument(
             final String name,
@@ -277,6 +300,27 @@ public class OkHttpElasticClient implements ElasticClient {
                 this.version = about().getVersion().getComponents();
             }
             return version;
+        } finally {
+            versionLock.unlock();
+        }
+    }
+
+    protected OkHttpElasticApi getVersionedApi() {
+        try {
+            final String url = nextElasticUrl();
+            return versionedApi.get(url);
+        } catch (final CompletionException e) {
+            throw new ElasticException("Unable to fetch API for: " + elasticUrl, e.getCause());
+        }
+    }
+
+    private ObjectMapper getVersionedObjectMapper() {
+        versionLock.lock();
+        try {
+            versionMapper = mapper.copy();
+            ElasticClientUtils.configure(versionMapper, getVersion());
+            ElasticClientUtils.configureIndexSerialization(versionMapper);
+            return versionMapper;
         } finally {
             versionLock.unlock();
         }
@@ -318,6 +362,10 @@ public class OkHttpElasticClient implements ElasticClient {
             // Elastic returns 404 if index not found
             return false;
         }
+    }
+
+    protected String nextElasticUrl() {
+        return elasticUrl;
     }
 
     @Override
@@ -363,53 +411,5 @@ public class OkHttpElasticClient implements ElasticClient {
 
         response.getHits().setObjectMapper(mapper);
         return response;
-    }
-
-    private ObjectMapper getVersionedObjectMapper() {
-        versionLock.lock();
-        try {
-            versionMapper = mapper.copy();
-            ElasticClientUtils.configure(versionMapper, getVersion());
-            ElasticClientUtils.configureIndexSerialization(versionMapper);
-            return versionMapper;
-        } finally {
-            versionLock.unlock();
-        }
-    }
-
-    protected <T> T execute(final Callable<DelegatingCall<T>> request) throws ElasticException {
-        try {
-            final DelegatingCall<T> call = request.call();
-            final Response<T> response = call.execute();
-            if (response.isSuccessful()) {
-                final T body = response.body();
-                return body;
-            }
-            return call.failure(response);
-        } catch (final ElasticException e) {
-            // pass through
-            throw e;
-        } catch (final Exception e) {
-            // wrap exception
-            throw new ElasticException(e.getMessage(), e);
-        }
-    }
-
-    protected OkHttpElasticApi getApi() {
-        final String url = nextElasticUrl();
-        return elasticApiFactory.create(url, mapper);
-    }
-
-    protected OkHttpElasticApi getVersionedApi() {
-        try {
-            final String url = nextElasticUrl();
-            return versionedApi.get(url);
-        } catch (final CompletionException e) {
-            throw new ElasticException("Unable to fetch API for: " + elasticUrl, e.getCause());
-        }
-    }
-
-    protected String nextElasticUrl() {
-        return elasticUrl;
     }
 }

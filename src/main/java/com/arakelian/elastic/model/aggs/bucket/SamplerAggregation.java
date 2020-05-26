@@ -40,17 +40,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableSamplerAggregation.Builder.class)
 @JsonTypeName(Aggregation.SAMPLER_AGGREGATION)
 public interface SamplerAggregation extends BucketAggregation, ValuesSourceAggregation {
-    /**
-     * Returns how many terms the coordinating node will request from each shard. Once all the
-     * shards responded, the coordinating node will then reduce them to a final result which will be
-     * based on the size parameter - this way, one can increase the accuracy of the returned terms
-     * and avoid the overhead of streaming a big list of buckets back to the client.
-     *
-     * @return the number of terms the coordinating node will request from each shard.
-     */
-    @Nullable
-    public Long getShardSize();
-
     @Override
     default void accept(final AggregationVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -64,4 +53,15 @@ public interface SamplerAggregation extends BucketAggregation, ValuesSourceAggre
             visitor.leave(this);
         }
     }
+
+    /**
+     * Returns how many terms the coordinating node will request from each shard. Once all the
+     * shards responded, the coordinating node will then reduce them to a final result which will be
+     * based on the size parameter - this way, one can increase the accuracy of the returned terms
+     * and avoid the overhead of streaming a big list of buckets back to the client.
+     *
+     * @return the number of terms the coordinating node will request from each shard.
+     */
+    @Nullable
+    public Long getShardSize();
 }

@@ -39,14 +39,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(builder = ImmutableWildcardQuery.Builder.class)
 @JsonTypeName(Query.WILDCARD_QUERY)
 public interface WildcardQuery extends StandardQuery {
-    @JsonProperty("field")
-    public String getFieldName();
-
-    @Nullable
-    public Rewrite getRewrite();
-
-    public String getValue();
-
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -60,6 +52,14 @@ public interface WildcardQuery extends StandardQuery {
             visitor.leave(this);
         }
     }
+
+    @JsonProperty("field")
+    public String getFieldName();
+
+    @Nullable
+    public Rewrite getRewrite();
+
+    public String getValue();
 
     @Override
     default boolean isEmpty() {

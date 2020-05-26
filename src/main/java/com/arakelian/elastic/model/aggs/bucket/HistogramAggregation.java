@@ -68,6 +68,20 @@ import com.google.common.collect.ImmutableList;
 @JsonDeserialize(builder = ImmutableHistogramAggregation.Builder.class)
 @JsonTypeName(Aggregation.HISTOGRAM_AGGREGATION)
 public interface HistogramAggregation extends BucketAggregation, ValuesSourceAggregation {
+    @Override
+    default void accept(final AggregationVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterHistogram(this)) {
+                visitor.leaveHistogram(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Nullable
     public Double getInterval();
 
@@ -103,18 +117,4 @@ public interface HistogramAggregation extends BucketAggregation, ValuesSourceAgg
 
     @Nullable
     public Boolean isKeyed();
-
-    @Override
-    default void accept(final AggregationVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterHistogram(this)) {
-                visitor.leaveHistogram(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 }

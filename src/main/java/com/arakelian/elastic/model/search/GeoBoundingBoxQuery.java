@@ -43,6 +43,20 @@ public interface GeoBoundingBoxQuery extends StandardQuery {
         INDEXED, MEMORY
     };
 
+    @Override
+    default void accept(final QueryVisitor visitor) {
+        if (!visitor.enter(this)) {
+            return;
+        }
+        try {
+            if (visitor.enterGeoBoundingBoxQuery(this)) {
+                visitor.leaveGeoBoundingBoxQuery(this);
+            }
+        } finally {
+            visitor.leave(this);
+        }
+    }
+
     @Value.Check
     public default void checkPoints() {
         final boolean tlbr = getTopLeft() != null && //
@@ -86,20 +100,6 @@ public interface GeoBoundingBoxQuery extends StandardQuery {
     @Nullable
     @JsonProperty("validation_method")
     public ValidationMethod getValidationMethod();
-
-    @Override
-    default void accept(final QueryVisitor visitor) {
-        if (!visitor.enter(this)) {
-            return;
-        }
-        try {
-            if (visitor.enterGeoBoundingBoxQuery(this)) {
-                visitor.leaveGeoBoundingBoxQuery(this);
-            }
-        } finally {
-            visitor.leave(this);
-        }
-    }
 
     @Override
     default boolean isEmpty() {

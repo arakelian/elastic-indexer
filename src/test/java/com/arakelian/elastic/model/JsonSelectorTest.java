@@ -71,6 +71,19 @@ public class JsonSelectorTest {
             "    \"expensive\": 10\n" + //
             "}";
 
+    private String read(final String selector) {
+        final JsonNode json;
+        try {
+            // won't fail
+            json = JacksonUtils.readValue(JSON, JsonNode.class);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        final JsonNode value = JsonSelector.of(selector).read(json);
+        return value.isMissingNode() ? "" : value.toString();
+    }
+
     @Test
     public void testArgumentPaths() {
         final Map<String, List<String>> args = JsonSelector.of("@func a/A, b/B, c/C").getArguments();
@@ -219,18 +232,5 @@ public class JsonSelectorTest {
 
         // cannot find .price without .book
         Assert.assertEquals("", read("store/price"));
-    }
-
-    private String read(String selector) {
-        final JsonNode json;
-        try {
-            // won't fail
-            json = JacksonUtils.readValue(JSON, JsonNode.class);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-        final JsonNode value = JsonSelector.of(selector).read(json);
-        return value.isMissingNode() ? "" : value.toString();
     }
 }

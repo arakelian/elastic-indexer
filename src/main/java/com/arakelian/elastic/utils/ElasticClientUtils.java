@@ -157,6 +157,60 @@ public class ElasticClientUtils {
                 .build();
     }
 
+    private static Class<?> getJsonView(final VersionComponents version) {
+        switch (version.getMajor()) {
+        case 5:
+            switch (version.getMinor()) {
+            case 2:
+                return Version52.class;
+            case 3:
+                return Version53.class;
+            case 4:
+                return Version54.class;
+            case 5:
+                return Version55.class;
+            case 6:
+                return Version56.class;
+            default:
+                return Version5.class;
+            }
+        case 6:
+            switch (version.getMinor()) {
+            case 1:
+                return Version61.class;
+            case 2:
+                return Version62.class;
+            case 3:
+                return Version63.class;
+            case 4:
+                return Version64.class;
+            case 5:
+                return Version65.class;
+            case 6:
+                return Version66.class;
+            case 7:
+                return Version67.class;
+            case 8:
+                return Version68.class;
+            default:
+                return Version6.class;
+            }
+        case 7:
+            switch (version.getMinor()) {
+            case 1:
+                return Version71.class;
+            case 2:
+                return Version72.class;
+            case 3:
+                return Version73.class;
+            default:
+                return Version7.class;
+            }
+        default:
+            throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);
+        }
+    }
+
     /**
      * Returns true if call to Elastic should be retried.
      *
@@ -210,60 +264,6 @@ public class ElasticClientUtils {
         } catch (final RetryException e) {
             LOGGER.warn("Unable to retrieve Elastic information after {} {}", timeout, unit, e);
             return null;
-        }
-    }
-
-    private static Class<?> getJsonView(final VersionComponents version) {
-        switch (version.getMajor()) {
-        case 5:
-            switch (version.getMinor()) {
-            case 2:
-                return Version52.class;
-            case 3:
-                return Version53.class;
-            case 4:
-                return Version54.class;
-            case 5:
-                return Version55.class;
-            case 6:
-                return Version56.class;
-            default:
-                return Version5.class;
-            }
-        case 6:
-            switch (version.getMinor()) {
-            case 1:
-                return Version61.class;
-            case 2:
-                return Version62.class;
-            case 3:
-                return Version63.class;
-            case 4:
-                return Version64.class;
-            case 5:
-                return Version65.class;
-            case 6:
-                return Version66.class;
-            case 7:
-                return Version67.class;
-            case 8:
-                return Version68.class;
-            default:
-                return Version6.class;
-            }
-        case 7:
-            switch (version.getMinor()) {
-            case 1:
-                return Version71.class;
-            case 2:
-                return Version72.class;
-            case 3:
-                return Version73.class;
-            default:
-                return Version7.class;
-            }
-        default:
-            throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);
         }
     }
 

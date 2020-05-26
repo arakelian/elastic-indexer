@@ -32,18 +32,6 @@ import com.google.common.collect.ImmutableSortedSet;
 @JsonDeserialize(builder = ImmutableIdsQuery.Builder.class)
 @JsonTypeName(Query.IDS_QUERY)
 public interface IdsQuery extends StandardQuery {
-    @Value.Default
-    @Value.NaturalOrder
-    public default SortedSet<String> getTypes() {
-        return ImmutableSortedSet.of();
-    }
-
-    @Value.Default
-    @Value.NaturalOrder
-    public default SortedSet<String> getValues() {
-        return ImmutableSortedSet.of();
-    }
-
     @Override
     default void accept(final QueryVisitor visitor) {
         if (!visitor.enter(this)) {
@@ -56,6 +44,18 @@ public interface IdsQuery extends StandardQuery {
         } finally {
             visitor.leave(this);
         }
+    }
+
+    @Value.Default
+    @Value.NaturalOrder
+    public default SortedSet<String> getTypes() {
+        return ImmutableSortedSet.of();
+    }
+
+    @Value.Default
+    @Value.NaturalOrder
+    public default SortedSet<String> getValues() {
+        return ImmutableSortedSet.of();
     }
 
     @Override

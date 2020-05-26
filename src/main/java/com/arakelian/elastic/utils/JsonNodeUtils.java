@@ -74,9 +74,9 @@ public class JsonNodeUtils {
             }
         }
 
-        public String getValue() {
-            final String digest = BaseEncoding.base64().omitPadding().encode(digester.digest());
-            return digest;
+        @Override
+        protected void collect(final JsonNode node) {
+            digest(node);
         }
 
         private void digest(final BigDecimal val) {
@@ -116,25 +116,6 @@ public class JsonNodeUtils {
                 digester.update((byte) (val & 0xFF));
                 val >>= 8;
             }
-        }
-
-        private void digest(long val) {
-            for (int i = 0; i < 8; i++) {
-                digester.update((byte) (val & 0xFF));
-                val >>= 8;
-            }
-        }
-
-        private void digest(short val) {
-            for (int i = 0; i < 2; i++) {
-                digester.update((byte) (val & 0xFF));
-                val >>= 8;
-            }
-        }
-
-        @Override
-        protected void collect(final JsonNode node) {
-            digest(node);
         }
 
         protected void digest(final JsonNode node) {
@@ -194,6 +175,25 @@ public class JsonNodeUtils {
             }
         }
 
+        private void digest(long val) {
+            for (int i = 0; i < 8; i++) {
+                digester.update((byte) (val & 0xFF));
+                val >>= 8;
+            }
+        }
+
+        private void digest(short val) {
+            for (int i = 0; i < 2; i++) {
+                digester.update((byte) (val & 0xFF));
+                val >>= 8;
+            }
+        }
+
+        public String getValue() {
+            final String digest = BaseEncoding.base64().omitPadding().encode(digester.digest());
+            return digest;
+        }
+
         @Override
         protected void unwrapArray(final JsonNode node) {
             // hash the length of the array
@@ -219,13 +219,13 @@ public class JsonNodeUtils {
     public static class HashCodeCollector extends AbstractValueCollector {
         private long hashCode;
 
-        public long getValue() {
-            return hashCode;
-        }
-
         @Override
         protected void collect(final JsonNode node) {
             hashCode = 31 * hashCode + hashCode(node);
+        }
+
+        public long getValue() {
+            return hashCode;
         }
 
         protected long hashCode(final JsonNode node) {
@@ -274,10 +274,6 @@ public class JsonNodeUtils {
     public static class ReadCollector extends AbstractValueCollector {
         private JsonNode value;
 
-        public JsonNode getValue() {
-            return value == null ? MissingNode.getInstance() : value;
-        }
-
         @Override
         protected void collect(final JsonNode node) {
             if (value == null) {
@@ -294,6 +290,10 @@ public class JsonNodeUtils {
             // add value
             final ArrayNode array = (ArrayNode) value;
             array.add(node);
+        }
+
+        public JsonNode getValue() {
+            return value == null ? MissingNode.getInstance() : value;
         }
     }
 
