@@ -158,8 +158,8 @@ public class DefaultValueProducerTest {
                 field,
                 ImmutableList.of(
                         // numbers are not valid
-                        "0",
-                        "1", //
+                        "2",
+                        "-1", //
                         "\"offff\""));
     }
 
