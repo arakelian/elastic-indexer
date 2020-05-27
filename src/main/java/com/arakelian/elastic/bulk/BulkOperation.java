@@ -93,26 +93,37 @@ public abstract class BulkOperation {
         }
     }
 
+    private final static char[] DIGIT_TO_CHAR = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
+            'C', 'D', 'E', 'F' };
+
     private void addActionAndMetadata(final StringBuilder buf) {
         final Action action = getAction();
         final boolean version7 = getElasticVersion().atLeast(7, 0, 0);
 
         buf.append('{');
-        buf.append("\"").append(action.toString()).append("\"").append(':');
+        buf.append("\"");
+        appendEscaped(buf, action.name());
+        buf.append("\"").append(':');
         buf.append('{');
 
         buf.append("\"_index\"").append(':');
-        buf.append('"').append(getIndex().getName()).append('"');
+        buf.append('"');
+        appendEscaped(buf, getIndex().getName());
+        buf.append('"');
         buf.append(',');
 
         if (!version7) {
             buf.append("\"_type\"").append(':');
-            buf.append('"').append(getType()).append('"');
+            buf.append('"');
+            appendEscaped(buf, getType());
+            buf.append('"');
             buf.append(',');
         }
 
         buf.append("\"_id\"").append(':');
-        buf.append('"').append(getId()).append('"');
+        buf.append('"');
+        appendEscaped(buf, getId());
+        buf.append('"');
 
         if (getVersion() != null) {
             buf.append(',');
@@ -127,13 +138,79 @@ public abstract class BulkOperation {
             if (getVersionType() != null) {
                 buf.append(',');
                 buf.append("\"version_type\"").append(':');
-                buf.append('"').append(getVersionType()).append('"');
+                buf.append('"');
+                appendEscaped(buf, getVersionType().name());
+                buf.append('"');
             }
         }
 
         buf.append('}');
         buf.append('}');
         buf.append('\n');
+    }
+
+    private final void appendEscaped(final StringBuilder buf, final CharSequence csq) {
+        for (int i = 0, length = csq.length(); i < length; i++) {
+            final char ch = csq.charAt(i);
+            appendEscapedChar(buf, ch);
+        }
+    }
+
+    private final void appendEscapedChar(final StringBuilder buf, final char ch) {
+        // http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
+        // note: we are not required to escape forward slash (e.g. solidus)
+        switch (ch) {
+        case '"':
+            buf.append("\\\"");
+            break;
+        case '\\':
+            buf.append("\\\\");
+            break;
+        case '\b':
+            buf.append("\\b");
+            break;
+        case '\f':
+            buf.append("\\f");
+            break;
+        case '\n':
+            buf.append("\\n");
+            break;
+        case '\r':
+            buf.append("\\r");
+            break;
+        case '\t':
+            buf.append("\\t");
+            break;
+        default:
+            // Reference: http://www.unicode.org/versions/Unicode5.1.0/
+            if (ch <= '\u001F' || ch >= '\u007F') {
+                buf.append("\\u");
+                appendHex(buf, ch, 4);
+            } else {
+                buf.append(ch);
+            }
+        }
+    }
+
+    private final int appendHex(final StringBuilder buf, final int val, int minLength) {
+        if (val >= 16) {
+            final int l2 = val / 16;
+            minLength = appendHex(buf, l2, minLength - 1);
+            while (minLength > 1) {
+                buf.append('0');
+                minLength--;
+            }
+            buf.append(DIGIT_TO_CHAR[val - l2 * 16]);
+            minLength--;
+        } else {
+            while (minLength > 1) {
+                buf.append('0');
+                minLength--;
+            }
+            buf.append(DIGIT_TO_CHAR[val]);
+            minLength--;
+        }
+        return minLength;
     }
 
     @Value.Check
@@ -160,6 +237,7 @@ public abstract class BulkOperation {
     public CharSequence getCompactSource() {
         final CharSequence source = getSource();
         if (source != null && StringUtils.indexOf(source, '\n') != -1) {
+            // never returns JSON that has newline in it
             return JsonFilter.compactQuietly(source);
         }
         return source;
