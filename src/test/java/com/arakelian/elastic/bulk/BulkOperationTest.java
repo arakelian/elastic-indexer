@@ -18,7 +18,7 @@ public class BulkOperationTest {
                 .index(IndexTest.MINIMAL) //
                 .build();
         Assert.assertEquals(
-                "{\"CREATE\":{\"_index\":\"index_name\",\"_id\":\"id\"}}\n"
+                "{\"create\":{\"_index\":\"index_name\",\"_id\":\"id\"}}\n"
                         + "{\"name\":\"Greg\\tArakelian\",\"gender\":\"male\"}\n",
                 op.getOperation().toString());
     }
@@ -33,7 +33,7 @@ public class BulkOperationTest {
                 .index(IndexTest.MINIMAL) //
                 .build();
         Assert.assertEquals(
-                "{\"CREATE\":{\"_index\":\"index_name\",\"_id\":\"id\\nline\\\\2\\nline\\\\3\"}}\n"
+                "{\"create\":{\"_index\":\"index_name\",\"_id\":\"id\\nline\\\\2\\nline\\\\3\"}}\n"
                         + "{\"name\":\"Greg\\tArakelian\",\"gender\":\"male\"}\n",
                 op.getOperation().toString());
     }
