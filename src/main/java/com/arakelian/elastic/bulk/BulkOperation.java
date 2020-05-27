@@ -102,7 +102,7 @@ public abstract class BulkOperation {
 
         buf.append('{');
         buf.append("\"");
-        appendEscaped(buf, action.name());
+        appendEscaped(buf, action.toString());
         buf.append("\"").append(':');
         buf.append('{');
 
