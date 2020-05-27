@@ -139,7 +139,7 @@ public abstract class BulkOperation {
                 buf.append(',');
                 buf.append("\"version_type\"").append(':');
                 buf.append('"');
-                appendEscaped(buf, getVersionType().name());
+                appendEscaped(buf, getVersionType().toString());
                 buf.append('"');
             }
         }
