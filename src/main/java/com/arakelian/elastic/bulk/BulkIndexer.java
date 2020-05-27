@@ -719,6 +719,14 @@ public class BulkIndexer implements Closeable {
         return refreshLimiter;
     }
 
+    public int getResponseQueueActiveThreads() {
+        return bulkResponseExecutor.getActiveCount();
+    }
+
+    public int getResponseQueueSize() {
+        return bulkResponseWorkQueue.size();
+    }
+
     public BulkIndexerStats getStats() {
         return ImmutableBulkIndexerStats.builder() //
                 .submitted(submitted.get()) //
@@ -728,6 +736,14 @@ public class BulkIndexer implements Closeable {
                 .failed(failed.get()) //
                 .versionConflicts(versionConflicts.get()) //
                 .build();
+    }
+
+    public int getWorkQueueActiveThreads() {
+        return batchExecutor.getActiveCount();
+    }
+
+    public int getWorkQueueSize() {
+        return batchWorkQueue.size();
     }
 
     /**
@@ -748,8 +764,8 @@ public class BulkIndexer implements Closeable {
         // testing queues is a little faster, so we do that first
         final boolean idle = batchWorkQueue.isEmpty() //
                 && bulkResponseWorkQueue.isEmpty() //
-                && batchExecutor.getActiveCount() == 0 //
-                && bulkResponseExecutor.getActiveCount() == 0;
+                && getWorkQueueActiveThreads() == 0 //
+                && getResponseQueueActiveThreads() == 0;
         return idle;
     }
 

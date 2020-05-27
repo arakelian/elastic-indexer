@@ -162,7 +162,7 @@ dependencies {
     testCompile 'net.javacrumbs.json-unit:json-unit:2.17.0'
     testCompile 'com.arakelian:more-commons:2.5.0:tests'
     testCompile 'com.arakelian:jackson-utils:3.3.0:tests'
-    testCompile 'com.arakelian:docker-junit-rule:4.0.7'
+    testCompile 'com.arakelian:docker-junit-rule:4.1.0'
     testCompile 'com.arakelian:faker:3.7.0'
     testCompile 'com.squareup.retrofit2:retrofit-mock:2.6.2'
     testCompile 'javax.activation:activation:1.1.1'
