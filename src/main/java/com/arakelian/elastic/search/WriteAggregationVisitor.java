@@ -32,6 +32,7 @@ import com.arakelian.elastic.model.aggs.bucket.GeoHashGridAggregation;
 import com.arakelian.elastic.model.aggs.bucket.HistogramAggregation;
 import com.arakelian.elastic.model.aggs.bucket.IpRangeAggregation;
 import com.arakelian.elastic.model.aggs.bucket.MissingAggregation;
+import com.arakelian.elastic.model.aggs.bucket.Range;
 import com.arakelian.elastic.model.aggs.bucket.RangeAggregation;
 import com.arakelian.elastic.model.aggs.bucket.SamplerAggregation;
 import com.arakelian.elastic.model.aggs.bucket.TermsAggregation;
@@ -105,6 +106,21 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writer.writeFieldName("date_range");
             writer.writeStartObject();
             writeValueSource(agg);
+
+            final List<Range> ranges = agg.getRanges();
+            if (ranges.size() != 0) {
+                writer.writeFieldName("ranges");
+                writer.writeStartArray();
+                for (final Range range : ranges) {
+                    writer.writeStartObject();
+                    writeFieldValue("key", range.getKey());
+                    writeFieldValue("from", range.getFrom());
+                    writeFieldValue("to", range.getTo());
+                    writer.writeEndObject();
+                }
+                writer.writeEndArray();
+            }
+
             writer.writeEndObject(); // date_range
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
