@@ -22,8 +22,8 @@ import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -87,24 +87,24 @@ public class JsonSelectorTest {
     @Test
     public void testArgumentPaths() {
         final Map<String, List<String>> args = JsonSelector.of("@func a/A, b/B, c/C").getArguments();
-        Assert.assertEquals(ImmutableSet.of("a/A", "b/B", "c/C"), args.keySet());
-        Assert.assertEquals(ImmutableList.of("a", "A"), args.get("a/A"));
-        Assert.assertEquals(ImmutableList.of("b", "B"), args.get("b/B"));
-        Assert.assertEquals(ImmutableList.of("c", "C"), args.get("c/C"));
+        Assertions.assertEquals(ImmutableSet.of("a/A", "b/B", "c/C"), args.keySet());
+        Assertions.assertEquals(ImmutableList.of("a", "A"), args.get("a/A"));
+        Assertions.assertEquals(ImmutableList.of("b", "B"), args.get("b/B"));
+        Assertions.assertEquals(ImmutableList.of("c", "C"), args.get("c/C"));
     }
 
     @Test
     public void testConcatArguments() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("+a,b,c").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("+ a, b, c").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a/A", "b/B", "c/C"),
                 JsonSelector.of("+ a/A, b/B, c/C").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("+   a , b , c  ").getArguments().keySet());
     }
@@ -122,7 +122,7 @@ public class JsonSelectorTest {
                 "@_function",
                 "@__function",
                 "@__")) {
-            Assert.assertTrue("Failed to match " + input, JsonSelector.FUNCTION.matcher(input).matches());
+            Assertions.assertTrue(JsonSelector.FUNCTION.matcher(input).matches(), "Failed to match " + input);
         }
 
         // invalid function name
@@ -138,45 +138,52 @@ public class JsonSelectorTest {
                 "@_ function",
                 "@__function:",
                 " @__")) {
-            Assert.assertFalse("Should not match " + input, JsonSelector.FUNCTION.matcher(input).matches());
+            Assertions
+                    .assertFalse(JsonSelector.FUNCTION.matcher(input).matches(), "Should not match " + input);
         }
     }
 
     @Test
     public void testFunctionArguments() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("@func a,b,c").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("@func a, b, c").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a/A", "b/B", "c/C"),
                 JsonSelector.of("@func a/A, b/B, c/C").getArguments().keySet());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.of("a", "b", "c"),
                 JsonSelector.of("@func_name   a  , b  , c  ").getArguments().keySet());
     }
 
     @Test
     public void testFunctionName() {
-        Assert.assertEquals("functionName", JsonSelector.of("@functionName").getFunctionName());
-        Assert.assertEquals("function_name", JsonSelector.of("@function_name").getFunctionName());
+        Assertions.assertEquals("functionName", JsonSelector.of("@functionName").getFunctionName());
+        Assertions.assertEquals("function_name", JsonSelector.of("@function_name").getFunctionName());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testInvalidPathDollarDot() {
-        Assert.assertEquals("", read("$."));
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            Assertions.assertEquals("", read("$."));
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testInvalidPathDotDot() {
-        Assert.assertEquals("", read(".."));
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            Assertions.assertEquals("", read(".."));
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testInvalidPathEmpty() {
-        Assert.assertEquals("", read(""));
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            Assertions.assertEquals("", read(""));
+        });
     }
 
     @Test
@@ -186,19 +193,19 @@ public class JsonSelectorTest {
 
     @Test
     public void testNormalizeSelector() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "store/bicycle/color",
                 JsonSelector.of("///store///bicycle///color").getSelector());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "store/bicycle/color", //
                 JsonSelector.of("    store..bicycle...color   ").getSelector());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "$['store']['book']..['price']", //
                 JsonSelector.of("$.store.book..price").getSelector());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "+ a, b, c", //
                 JsonSelector.of("+a,b,c").getSelector());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "+ a/A, b/B, c/C", //
                 JsonSelector.of("+a///A,b...B,c././C").getSelector());
     }
@@ -211,26 +218,26 @@ public class JsonSelectorTest {
     @Test
     public void testSimplePath() {
         // price is not available at root
-        Assert.assertEquals("", read("price"));
+        Assertions.assertEquals("", read("price"));
 
         // simple path traversal
-        Assert.assertEquals("\"red\"", read("store/bicycle/color"));
+        Assertions.assertEquals("\"red\"", read("store/bicycle/color"));
 
         // dots are same thing as slashes
-        Assert.assertEquals("\"red\"", read("store.bicycle.color"));
+        Assertions.assertEquals("\"red\"", read("store.bicycle.color"));
 
         // collapse multiple dots and slashes
-        Assert.assertEquals("\"red\"", read("///store///bicycle///color"));
+        Assertions.assertEquals("\"red\"", read("///store///bicycle///color"));
 
         // book[*] is implied
-        Assert.assertEquals("[8.95,12.99,8.99,22.99]", read("store/book/price"));
+        Assertions.assertEquals("[8.95,12.99,8.99,22.99]", read("store/book/price"));
 
         // book[*] is implied
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "[\"reference\",\"fiction\",\"fiction\",\"fiction\"]",
                 read("store/book/category"));
 
         // cannot find .price without .book
-        Assert.assertEquals("", read("store/price"));
+        Assertions.assertEquals("", read("store/price"));
     }
 }

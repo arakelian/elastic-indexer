@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -48,18 +48,18 @@ public class PatternCaptureTest {
     @Test
     public void testDigits() {
         final ImmutableList<String> expected = ImmutableList.of("703", "555", "1212");
-        Assert.assertEquals(expected, DIGITS.accept("(703) 555-1212", new TokenCollector()).get());
-        Assert.assertEquals(expected, DIGITS.accept("703/555-1212", new TokenCollector()).get());
-        Assert.assertEquals(expected, DIGITS.accept("703.555.1212", new TokenCollector()).get());
+        Assertions.assertEquals(expected, DIGITS.accept("(703) 555-1212", new TokenCollector()).get());
+        Assertions.assertEquals(expected, DIGITS.accept("703/555-1212", new TokenCollector()).get());
+        Assertions.assertEquals(expected, DIGITS.accept("703.555.1212", new TokenCollector()).get());
     }
 
     @Test
     public void testFirstLetters() {
         final ImmutableList<String> expected = ImmutableList.of("a", "b", "c");
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 FIRST_LETTERS.accept("aardvard babboon camel", new TokenCollector()).get());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 FIRST_LETTERS.accept("american broadcasting company", new TokenCollector()).get());
     }

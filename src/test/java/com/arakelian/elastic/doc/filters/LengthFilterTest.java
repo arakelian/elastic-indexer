@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -46,23 +46,23 @@ public class LengthFilterTest {
 
     @Test
     public void testEmpty() {
-        Assert.assertEquals(ImmutableList.of(), LEN_2.accept(null, new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), LEN_2.accept("", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept(null, new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("", new TokenCollector()).get());
     }
 
     @Test
     public void testIso2() {
-        Assert.assertEquals(ImmutableList.of(), LEN_2.accept("u", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), LEN_2.accept("usa", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), LEN_2.accept("united states", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of("us"), LEN_2.accept("us", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("u", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("usa", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("united states", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of("us"), LEN_2.accept("us", new TokenCollector()).get());
     }
 
     @Test
     public void testIso3() {
-        Assert.assertEquals(ImmutableList.of(), LEN_3.accept("us", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), LEN_3.accept("usaa", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of("usa"), LEN_3.accept("usa", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_3.accept("us", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), LEN_3.accept("usaa", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of("usa"), LEN_3.accept("usa", new TokenCollector()).get());
     }
 
     @Test
@@ -74,11 +74,11 @@ public class LengthFilterTest {
 
     @Test
     public void testMinimum2() {
-        Assert.assertEquals(ImmutableList.of(), MIN_2.accept(null, new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), MIN_2.accept("", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of(), MIN_2.accept("h", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of("hel"), MIN_2.accept("hel", new TokenCollector()).get());
-        Assert.assertEquals(ImmutableList.of("hello"), MIN_2.accept("hello", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), MIN_2.accept(null, new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), MIN_2.accept("", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of(), MIN_2.accept("h", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of("hel"), MIN_2.accept("hel", new TokenCollector()).get());
+        Assertions.assertEquals(ImmutableList.of("hello"), MIN_2.accept("hello", new TokenCollector()).get());
     }
 
     @Test

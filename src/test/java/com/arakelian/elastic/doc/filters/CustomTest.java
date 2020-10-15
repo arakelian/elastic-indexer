@@ -17,14 +17,14 @@
 
 package com.arakelian.elastic.doc.filters;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -73,12 +73,16 @@ public class CustomTest {
 
     @Test
     public void testComplexTokenFilter() {
-        Assert.assertEquals(ImmutableList.of("wlcm"), COMPLEX.accept("welcome", new TokenCollector()).get());
+        Assertions.assertEquals(
+                ImmutableList.of("wlcm"),
+                COMPLEX.accept("welcome", new TokenCollector()).get());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testFailure() {
-        INVALID.apply("LOWERCASE");
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            INVALID.apply("LOWERCASE");
+        });
     }
 
     @Test
@@ -102,7 +106,7 @@ public class CustomTest {
 
     @Test
     public void testSimpleTokenFilter() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("lowercase"),
                 SIMPLE.accept("LOWERCASE", new TokenCollector()).get());
     }

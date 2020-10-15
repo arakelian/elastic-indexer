@@ -18,15 +18,13 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
@@ -45,41 +43,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
-@RunWith(Parameterized.class)
 public class FieldTypeTest extends AbstractElasticDockerTest {
-
-    /**
-     * Returns the cross-product of all Elastic versions and field types
-     *
-     * @return cross-product of all Elastic versions and field types
-     */
-    @Parameters(name = "elastic-{0} / {1}")
-    public static Object[][] data() {
-        final Object[] versions = AbstractElasticDockerTest.data();
-        final Type[] types = Type.values();
-        final int vlen = versions.length;
-        final int tlen = types.length;
-
-        final Object[][] data = new Object[vlen * tlen][];
-        for (int i = 0; i < vlen; i++) {
-            for (int j = 0; j < tlen; j++) {
-                final int k = i * tlen + j;
-                data[k] = new Object[2];
-                data[k][0] = versions[i];
-                data[k][1] = types[j];
-            }
-        }
-        return data;
-    }
-
-    private final Type type;
-
-    public FieldTypeTest(final String version, final Type type) throws Exception {
-        super(version);
-        this.type = type;
-    }
-
-    private Object getTestValue() {
+    private Object getTestValue(Type type) {
         switch (type) {
         case BINARY:
             return "hello".getBytes(Charsets.UTF_8);
@@ -130,11 +95,14 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
     /**
      * Creates index mapping for field type.
      *
+     * @param type
+     *            data type
      * @throws IOException
      *             if index cannot be created
      */
-    @Test
-    public void testType() throws IOException {
+    @ParameterizedTest
+    @EnumSource(Type.class)
+    public void testType(Type type) throws IOException {
         final ImmutableMapping mapping = ImmutableMapping.builder() //
                 .dynamic(STRICT) //
                 .addField(
@@ -148,7 +116,7 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
             final String id = MoreStringUtils.shortUuid();
 
             final Map<String, Object> doc = Maps.newLinkedHashMap();
-            doc.put("value", getTestValue());
+            doc.put("value", getTestValue(type));
 
             final IndexedDocument response = assertSuccessful( //
                     elasticClient.indexDocument(

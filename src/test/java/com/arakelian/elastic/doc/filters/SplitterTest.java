@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -43,13 +43,13 @@ public class SplitterTest {
     public void testWhitespace() {
         final ImmutableList<String> expected = ImmutableList.of("one", "two", "three", "four", "five");
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 WHITESPACE.accept("one two three four five", new TokenCollector()).get());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 WHITESPACE.accept("    one    two   three    four five", new TokenCollector()).get());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 WHITESPACE.accept("       one\t\ttwo     three four    five      ", new TokenCollector())
                         .get());

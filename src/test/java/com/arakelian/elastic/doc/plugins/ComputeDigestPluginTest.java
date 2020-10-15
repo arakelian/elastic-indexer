@@ -22,9 +22,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.io.input.CharSequenceReader;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class ComputeDigestPluginTest {
 
     private ComputeDigestPlugin plugin;
 
-    @Before
+    @BeforeEach
     public void createBuilder() {
         plugin = new ComputeDigestPlugin(ImmutableComputeDigestConfig.builder() //
                 .algorithm("MD5") //
@@ -107,7 +107,7 @@ public class ComputeDigestPluginTest {
     private void verifyDigest(final String expected, final ElasticDocBuilder builder) throws IOException {
         // try with fields arranged one way in source
         final ObjectMapper mapper = JacksonUtils.getObjectMapper();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 mapper //
                         .readTree(new CharSequenceReader(builder.build("{\n" + //
@@ -120,7 +120,7 @@ public class ComputeDigestPluginTest {
                         .asText());
 
         // digest should be the same if fields rearranged another way
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 mapper //
                         .readTree(new CharSequenceReader(builder.build("{\n" + //

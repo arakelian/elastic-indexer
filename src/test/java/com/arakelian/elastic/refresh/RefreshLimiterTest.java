@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class RefreshLimiterTest {
 
     private BehaviorDelegate<OkHttpElasticApi> delegate;
 
-    @Before
+    @BeforeEach
     public void initializeRetrofit() {
         final Retrofit retrofit = new Retrofit.Builder() //
                 .baseUrl("http://localhost") //
@@ -157,23 +157,23 @@ public class RefreshLimiterTest {
                     Math.round(actualPermitsPerSecond * 100.0) / 100.0);
             final int expected = (int) (permitsPerSecond * duration / 1000.0);
             if (networkFailures) {
-                Assert.assertTrue(
-                        "Expected more than " + refreshes.get() + " refreshes due to network failures",
-                        expected < refreshes.get());
-                Assert.assertEquals(0, successful.get());
-                Assert.assertTrue(
-                        "Expected more than " + refreshCount.get() + " refreshes due to network failures",
-                        expected < refreshCount.get());
+                Assertions.assertTrue(
+                        expected < refreshes.get(),
+                        "Expected more than " + refreshes.get() + " refreshes due to network failures");
+                Assertions.assertEquals(0, successful.get());
+                Assertions.assertTrue(
+                        expected < refreshCount.get(),
+                        "Expected more than " + refreshCount.get() + " refreshes due to network failures");
             } else {
-                Assert.assertTrue(
-                        "Expected " + expected + " but was " + refreshes.get(),
-                        Math.abs(expected - refreshes.get()) <= 1);
-                Assert.assertTrue(
-                        "Expected " + expected + " but was " + successful.get(),
-                        Math.abs(expected - successful.get()) <= 1);
-                Assert.assertTrue(
-                        "Expected " + expected + " but was " + refreshCount.get(),
-                        Math.abs(expected - refreshCount.get()) <= 1);
+                Assertions.assertTrue(
+                        Math.abs(expected - refreshes.get()) <= 1,
+                        "Expected " + expected + " but was " + refreshes.get());
+                Assertions.assertTrue(
+                        Math.abs(expected - successful.get()) <= 1,
+                        "Expected " + expected + " but was " + successful.get());
+                Assertions.assertTrue(
+                        Math.abs(expected - refreshCount.get()) <= 1,
+                        "Expected " + expected + " but was " + refreshCount.get());
             }
         }
     }
@@ -210,13 +210,13 @@ public class RefreshLimiterTest {
             final RefreshStats stats = refreshLimiter.getStats(index);
             LOGGER.info("Testing completed: {}", stats);
             final int expected = (int) (config.getDefaultPermitsPerSecond() * duration / 1000.0);
-            Assert.assertEquals(successful, stats.getAttempts().get());
-            Assert.assertEquals(successful, stats.getSuccessful().get());
-            Assert.assertEquals(attempts, stats.getAcquires().get());
-            Assert.assertEquals(successful, mockApi.refreshCount.get());
-            Assert.assertTrue(
-                    "Expected " + expected + " but was " + mockApi.refreshCount.get(),
-                    Math.abs(expected - mockApi.refreshCount.get()) <= 1);
+            Assertions.assertEquals(successful, stats.getAttempts().get());
+            Assertions.assertEquals(successful, stats.getSuccessful().get());
+            Assertions.assertEquals(attempts, stats.getAcquires().get());
+            Assertions.assertEquals(successful, mockApi.refreshCount.get());
+            Assertions.assertTrue(
+                    Math.abs(expected - mockApi.refreshCount.get()) <= 1,
+                    "Expected " + expected + " but was " + mockApi.refreshCount.get());
         }
     }
 }

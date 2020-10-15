@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -35,11 +35,11 @@ public class ReverseTest {
 
     @Test
     public void testReverse() {
-        Assert.assertEquals(null, FILTER.apply(null));
-        Assert.assertEquals("", FILTER.apply(""));
-        Assert.assertEquals(" ", FILTER.apply(" "));
-        Assert.assertEquals("hello", FILTER.apply("olleh"));
-        Assert.assertEquals("HELLO", FILTER.apply("OLLEH"));
+        Assertions.assertEquals(null, FILTER.apply(null));
+        Assertions.assertEquals("", FILTER.apply(""));
+        Assertions.assertEquals(" ", FILTER.apply(" "));
+        Assertions.assertEquals("hello", FILTER.apply("olleh"));
+        Assertions.assertEquals("HELLO", FILTER.apply("OLLEH"));
     }
 
     @Test

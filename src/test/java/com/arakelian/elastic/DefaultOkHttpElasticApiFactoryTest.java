@@ -19,8 +19,8 @@ package com.arakelian.elastic;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.enums.SearchType;
@@ -71,6 +71,6 @@ public class DefaultOkHttpElasticApiFactoryTest {
                 ImmutableSearch.builder() //
                         .searchType(SearchType.QUERY_THEN_FETCH) //
                         .build());
-        Assert.assertEquals(false, response.hasError());
+        Assertions.assertEquals(false, response.hasError());
     }
 }

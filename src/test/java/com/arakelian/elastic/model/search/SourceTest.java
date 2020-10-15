@@ -17,12 +17,13 @@
 
 package com.arakelian.elastic.model.search;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.model.GeoPoint;
@@ -36,9 +37,11 @@ public class SourceTest {
             .putProperty("geopoint", "drm3btev3e86") //
             .build();
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInvalidPath() {
-        assertNull(SAMPLE.getObject("geopoint/property"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            assertNull(SAMPLE.getObject("geopoint/property"));
+        });
     }
 
     @Test

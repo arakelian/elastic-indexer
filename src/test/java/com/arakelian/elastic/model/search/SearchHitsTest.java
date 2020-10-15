@@ -17,9 +17,12 @@
 
 package com.arakelian.elastic.model.search;
 
+import static org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER;
+
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.model.AbstractElasticModelTest;
@@ -57,17 +60,17 @@ public class SearchHitsTest extends AbstractElasticModelTest {
                             .build()) //
             .build();
 
-    public SearchHitsTest(final String number) {
-        super(number);
-    }
-
-    @Test
-    public void testJackson() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testJackson(String version) throws IOException {
+        configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, SAMPLE, SearchHits.class);
     }
 
-    @Test
-    public void testSerializable() {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testSerializable(String version) {
+        configure(version);
         SerializableTestUtils.testSerializable(SAMPLE, SearchHits.class);
     }
 }

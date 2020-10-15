@@ -20,8 +20,8 @@ package com.arakelian.elastic.model.search;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -62,23 +62,23 @@ public class SearchHitTest {
                 "  \"DOUBLE_FIELD\" : 3.14\n" + //
                 "}\n";
         final SearchHit hit = JacksonUtils.readValue(json, SearchHit.class);
-        Assert.assertNotNull(hit);
-        Assert.assertTrue(hit.getMatchedQueries().contains("ids_query"));
-        Assert.assertEquals("random-id", hit.getId());
-        Assert.assertEquals(3, hit.getProperties().size());
+        Assertions.assertNotNull(hit);
+        Assertions.assertTrue(hit.getMatchedQueries().contains("ids_query"));
+        Assertions.assertEquals("random-id", hit.getId());
+        Assertions.assertEquals(3, hit.getProperties().size());
 
         // test simple Strings
-        Assert.assertEquals("Extra!", hit.getProperties().get("STRING_FIELD"));
-        Assert.assertEquals("Extra!", hit.get("STRING_FIELD", String.class));
+        Assertions.assertEquals("Extra!", hit.getProperties().get("STRING_FIELD"));
+        Assertions.assertEquals("Extra!", hit.get("STRING_FIELD", String.class));
 
         // test type conversion
-        Assert.assertEquals(Integer.valueOf(3), hit.get("DOUBLE_FIELD", Integer.class));
-        Assert.assertEquals(Double.valueOf(3.14d), hit.get("DOUBLE_FIELD", Double.class));
-        Assert.assertEquals(ImmutableList.of("a", "b", "c"), hit.get("ARRAY_FIELD", List.class));
+        Assertions.assertEquals(Integer.valueOf(3), hit.get("DOUBLE_FIELD", Integer.class));
+        Assertions.assertEquals(Double.valueOf(3.14d), hit.get("DOUBLE_FIELD", Double.class));
+        Assertions.assertEquals(ImmutableList.of("a", "b", "c"), hit.get("ARRAY_FIELD", List.class));
 
         // test "first"
-        Assert.assertEquals("Extra!", hit.first("STRING_FIELD", String.class));
-        Assert.assertEquals("a", hit.first("ARRAY_FIELD", String.class));
+        Assertions.assertEquals("Extra!", hit.first("STRING_FIELD", String.class));
+        Assertions.assertEquals("a", hit.first("ARRAY_FIELD", String.class));
     }
 
     @Test

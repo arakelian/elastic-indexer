@@ -17,18 +17,19 @@
 
 package com.arakelian.elastic.model;
 
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.arakelian.elastic.AbstractElasticDockerTest;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@RunWith(Parameterized.class)
 public abstract class AbstractElasticModelTest {
-    @Parameters(name = "version-{0}")
+    /** Logger **/
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticDockerTest.class);
+
     public static Object[] data() {
         return new Object[] { //
                 "5", //
@@ -52,12 +53,13 @@ public abstract class AbstractElasticModelTest {
                 "7.3" };
     }
 
-    protected final ObjectMapper objectMapper;
-    protected final VersionComponents version;
+    protected ObjectMapper objectMapper;
+    protected VersionComponents version;
 
-    public AbstractElasticModelTest(final String number) {
+    protected void configure(final String number) {
+        LOGGER.info("Configuring for Elastic version {}", number);
         version = VersionComponents.of(number);
-        Assert.assertTrue(version.getMajor() >= 5);
+        Assertions.assertTrue(version.getMajor() >= 5);
 
         final ObjectMapper objectMapper = JacksonUtils.getObjectMapper();
         this.objectMapper = objectMapper;

@@ -18,29 +18,27 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.arakelian.core.utils.DateUtils;
-import com.arakelian.docker.junit.Container;
-import com.arakelian.docker.junit.Container.SimpleBinding;
-import com.arakelian.docker.junit.DockerRule;
-import com.arakelian.docker.junit.model.DockerConfig;
-import com.arakelian.docker.junit.model.ImmutableDockerConfig;
 import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkIngester;
 import com.arakelian.elastic.bulk.ImmutableSimpleBulkOperationFactory;
@@ -61,6 +59,9 @@ import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchHits;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.model.search.Source;
+import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
+import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
+import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
@@ -70,17 +71,15 @@ import com.arakelian.json.JsonFilter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
-import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.ExposedPort;
-import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.PortBinding;
-import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.Ports.Binding;
-import repackaged.com.arakelian.docker.junit.com.github.dockerjava.api.model.Ulimit;
 
-@RunWith(Parameterized.class)
+@Testcontainers
 public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @FunctionalInterface
     public interface WithPeopleCallback {
         public void accept(Index index, List<Person> people) throws IOException;
     }
+
+    private static final int ELASTICSEARCH_DEFAULT_PORT = 9200;
 
     /**
      * Field in Elastic index that should not contain any value so that we can test the 'empty'
@@ -91,12 +90,24 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     /** Logger **/
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticDockerTest.class);
 
-    @ClassRule
-    public static final DockerRule elastic = new DockerRule();
+    public static GenericContainer elastic;
+
+    static {
+        elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.3.1") //
+                .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
+                .withEnv("http.host", "0.0.0.0") //
+                .withEnv("discovery.type", "single-node") //
+                .withEnv("transport.host", "127.0.0.1") //
+                .withEnv("xpack.security.enabled", "false") //
+                .withEnv("xpack.monitoring.enabled", "false") //
+                .withEnv("xpack.graph.enabled", "false") //
+                .withEnv("xpack.watcher.enabled", "false") //
+                .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m") //
+                .withReuse(true);
+        elastic.start();
+    }
 
     public static final String _DOC = Mapping._DOC;
-
-    public static final ExposedPort ELASTIC_PORT = ExposedPort.tcp(9200);
 
     /**
      * Returns list of Elastic versions that we want to test
@@ -104,7 +115,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
      * @return list of Elastic versions that we want to test
      * @see <a href="https://www.docker.elastic.co">Docker Images</a>
      */
-    @Parameters(name = "elastic-{0}")
     public static Object[] data() {
         return new Object[] { //
                 // "5.2.1", //
@@ -128,82 +138,18 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         };
     }
 
-    protected final DockerConfig config;
-    protected final String elasticUrl;
-    protected final ElasticClient elasticClient;
-    protected final ElasticClientWithRetry elasticClientWithRetry;
+    protected String elasticUrl;
+    protected ElasticClient elasticClient;
+    protected ElasticClientWithRetry elasticClientWithRetry;
 
-    protected final Container container;
+    private DefaultRefreshLimiter refreshLimiter;
 
-    public AbstractElasticDockerTest(final String imageVersion) throws Exception {
-        final String image = "docker.elastic.co/elasticsearch/elasticsearch:" + imageVersion;
-
-        config = ImmutableDockerConfig.builder() //
-                .image(image) //
-                .addCreateContainerConfigurer(create -> {
-                    create.withExposedPorts(ELASTIC_PORT);
-                    create.withEnv(
-                            "http.host=0.0.0.0", //
-                            "transport.host=127.0.0.1", //
-                            "xpack.security.enabled=false", //
-                            "xpack.monitoring.enabled=false", //
-                            "xpack.graph.enabled=false", //
-                            "xpack.watcher.enabled=false", //
-                            "ES_JAVA_OPTS=-Xms512m -Xmx512m");
-                }) //
-                .addHostConfigConfigurer(hostConfig -> {
-                    hostConfig.withAutoRemove(true);
-                    hostConfig.withPortBindings(new PortBinding(Binding.empty(), ELASTIC_PORT));
-                    hostConfig.withUlimits(new Ulimit[] { new Ulimit("nofile", 65536L, 65536L) });
-                }) //
-                .build();
-
-        // stop containers which are currently running (we don't want to consume too much memory);
-        // note that on Docker for Mac, if we run too many containers at the same time old
-        // containers will stop with exit code 137.
-        final boolean stopOthers = true;
-
-        container = DockerRule.start(config, stopOthers);
-        container.addRef();
-
-        boolean success = false;
-        try {
-            // there is nothing in the log that we can wait for to indicate that Elastic
-            // is really available; even after the logs indicate that it has started, it
-            // may not respond to requests for a few seconds. We use /_cluster/health API as
-            // a means of more reliably determining availability.
-            final SimpleBinding binding = container.getSimpleBinding(ELASTIC_PORT);
-            elasticUrl = "http://" + binding.getHost() + ":" + binding.getPort();
-            LOGGER.info("Elastic host: {}", elasticUrl);
-
-            final HttpLoggingInterceptor logger = new HttpLoggingInterceptor(message -> {
-                if (!StringUtils.isEmpty(message)) {
-                    final CharSequence pretty = JsonFilter.prettyifyQuietly(message);
-                    LOGGER.info("{}", pretty);
-                }
-            });
-            logger.level(Level.BODY);
-
-            // configure OkHttp3
-            final OkHttpClient client = new OkHttpClient.Builder() //
-                    .addInterceptor(logger) //
-                    .addInterceptor(new GzipRequestInterceptor()) //
-                    .build();
-
-            // create API-specific elastic client
-            final VersionComponents version = waitForElasticReady(client);
-            elasticClient = ElasticClientUtils.createElasticClient(
-                    elasticUrl, //
-                    client, //
-                    JacksonUtils.getObjectMapper(), //
-                    version);
-            elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
-            success = true;
-        } finally {
-            if (!success) {
-                container.releaseRef();
-            }
-        }
+    public AbstractElasticDockerTest() {
+        elastic.setWaitStrategy(
+                new HttpWaitStrategy().forPort(ELASTICSEARCH_DEFAULT_PORT)
+                        .forStatusCodeMatching(
+                                response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+                        .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
     public void assertGetDocument(
@@ -260,8 +206,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         } else {
             final long leastExpected = -expectedTotal;
             assertTrue(
-                    "Expected at least " + Long.toString(leastExpected) + " but found " + total,
-                    total >= leastExpected);
+                    total >= leastExpected,
+                    "Expected at least " + Long.toString(leastExpected) + " but found " + total);
         }
         return response;
     }
@@ -422,6 +368,11 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return mapping;
     }
 
+    @AfterEach
+    public final void destroyRefreshLimiter() {
+        refreshLimiter.close();
+    }
+
     @Override
     protected ElasticClient getElasticClient() {
         return elasticClient;
@@ -437,9 +388,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return elasticUrl;
     }
 
-    @After
-    public void releaseRef() {
-        container.releaseRef();
+    protected final RefreshLimiter getRefreshLimiter() {
+        return refreshLimiter;
     }
 
     protected SearchResponse search(final Index index, final Search search) {
@@ -449,6 +399,47 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         // perform search
         final SearchResponse result = assertSuccessful(elasticClient.search(index.getName(), search));
         return result;
+    }
+
+    @BeforeEach
+    public void setupElastic() {
+        // there is nothing in the log that we can wait for to indicate that Elastic
+        // is really available; even after the logs indicate that it has started, it
+        // may not respond to requests for a few seconds. We use /_cluster/health API as
+        // a means of more reliably determining availability.
+        elasticUrl = "http://" + elastic.getHost() + ":" + elastic.getMappedPort(9200);
+        LOGGER.info("Elastic host: {}", elasticUrl);
+
+        final HttpLoggingInterceptor logger = new HttpLoggingInterceptor(message -> {
+            if (!StringUtils.isEmpty(message)) {
+                final CharSequence pretty = JsonFilter.prettyifyQuietly(message);
+                LOGGER.info("{}", pretty);
+            }
+        });
+        logger.level(Level.BODY);
+
+        // configure OkHttp3
+        final OkHttpClient client = new OkHttpClient.Builder() //
+                .addInterceptor(logger) //
+                .addInterceptor(new GzipRequestInterceptor()) //
+                .build();
+
+        // create API-specific elastic client
+        final VersionComponents version = waitForElasticReady(client);
+        elasticClient = ElasticClientUtils.createElasticClient(
+                elasticUrl, //
+                client, //
+                JacksonUtils.getObjectMapper(), //
+                version);
+        elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
+
+        // create refresh limiter
+        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
+                .coreThreads(1) //
+                .maximumThreads(1) //
+                .defaultPermitsPerSecond(1.0) //
+                .build(), //
+                getElasticClient());
     }
 
     protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)

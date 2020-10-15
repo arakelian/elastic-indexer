@@ -17,22 +17,19 @@
 
 package com.arakelian.elastic.bulk;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import com.arakelian.elastic.AbstractElasticDockerTest;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
 
-public class BulkIndexerTest extends AbstractBulkIndexerTest {
-    public BulkIndexerTest(final String version) throws Exception {
-        super(version);
-    }
-
+public class BulkIndexerTest extends AbstractElasticDockerTest {
     @Test
     public void testAddBatch() throws IOException {
         withPersonIndex(index -> {

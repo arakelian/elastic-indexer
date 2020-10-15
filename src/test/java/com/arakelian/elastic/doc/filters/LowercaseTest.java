@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -35,12 +35,12 @@ public class LowercaseTest {
 
     @Test
     public void testLowercase() {
-        Assert.assertEquals(null, FILTER.apply(null));
-        Assert.assertEquals("", FILTER.apply(""));
-        Assert.assertEquals(" ", FILTER.apply(" "));
-        Assert.assertEquals("hello", FILTER.apply("hello"));
-        Assert.assertEquals("hello", FILTER.apply("heLLo"));
-        Assert.assertEquals("hello", FILTER.apply("HEllO"));
+        Assertions.assertEquals(null, FILTER.apply(null));
+        Assertions.assertEquals("", FILTER.apply(""));
+        Assertions.assertEquals(" ", FILTER.apply(" "));
+        Assertions.assertEquals("hello", FILTER.apply("hello"));
+        Assertions.assertEquals("hello", FILTER.apply("heLLo"));
+        Assertions.assertEquals("hello", FILTER.apply("HEllO"));
     }
 
     @Test

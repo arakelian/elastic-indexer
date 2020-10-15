@@ -18,10 +18,12 @@
 package com.arakelian.elastic.model;
 
 import static net.javacrumbs.jsonunit.JsonAssert.assertJsonEquals;
+import static org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.utils.ElasticClientUtils;
@@ -156,22 +158,25 @@ public class IndexTest extends AbstractElasticModelTest {
             .putMapping(Mapping._DOC, MappingTest.CONTACT) //
             .build();
 
-    public IndexTest(final String number) {
-        super(number);
-    }
-
-    @Test
-    public void testJackson() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testJackson(String version) throws IOException {
+        configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Index.class);
     }
 
-    @Test
-    public void testSerializable() {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testSerializable(String version) {
+        configure(version);
         SerializableTestUtils.testSerializable(MINIMAL, Index.class);
     }
 
-    @Test
-    public void testWithoutNameSerializer() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testWithoutNameSerializer(String number) throws IOException {
+        configure(number);
+
         final ObjectMapper newMapper = JacksonUtils.getObjectMapper().copy();
         ElasticClientUtils.configureIndexSerialization(newMapper);
 

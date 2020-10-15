@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -40,9 +40,9 @@ public class ReplaceControlCharactersTest {
 
     @Test
     public void testUpper() {
-        Assert.assertEquals(null, FILTER.apply(null));
-        Assert.assertEquals("", FILTER.apply(""));
-        Assert.assertEquals(" ", FILTER.apply(" "));
-        Assert.assertEquals("one two", FILTER.apply("one\u0000two"));
+        Assertions.assertEquals(null, FILTER.apply(null));
+        Assertions.assertEquals("", FILTER.apply(""));
+        Assertions.assertEquals(" ", FILTER.apply(" "));
+        Assertions.assertEquals("one two", FILTER.apply("one\u0000two"));
     }
 }

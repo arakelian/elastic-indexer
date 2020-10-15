@@ -19,7 +19,7 @@ package com.arakelian.elastic.model;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.doc.filters.ImmutableLowercase;

@@ -17,9 +17,12 @@
 
 package com.arakelian.elastic.model;
 
+import static org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER;
+
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.jackson.utils.JacksonTestUtils;
 
@@ -29,12 +32,10 @@ public class ElasticDocConfigTest extends AbstractElasticModelTest {
             .addIdentityFields("name", "street", "city", "state", "zip") //
             .build();
 
-    public ElasticDocConfigTest(final String number) {
-        super(number);
-    }
-
-    @Test
-    public void testJackson() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testJackson(String version) throws IOException {
+        configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, ElasticDocConfig.class);
     }
 }

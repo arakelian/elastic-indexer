@@ -19,19 +19,19 @@ package com.arakelian.elastic.bulk.event;
 
 import static com.arakelian.elastic.bulk.BulkOperation.Action.INDEX;
 import static com.arakelian.elastic.bulk.event.IndexerEvent.Status.SUCCEEDED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.DateUtils;
-import com.arakelian.elastic.bulk.AbstractBulkIndexerTest;
+import com.arakelian.elastic.AbstractElasticDockerTest;
 import com.arakelian.elastic.bulk.BulkIndexer;
 import com.arakelian.elastic.bulk.BulkIngester;
 import com.arakelian.elastic.bulk.BulkOperation.VersionType;
@@ -39,7 +39,7 @@ import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
 import com.google.common.collect.Maps;
 
-public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
+public class IndexerEventHandlerTest extends AbstractElasticDockerTest {
     private static class CaptureIndexerEventHandler extends AbstractIndexerEventHandler {
         public final List<IndexerEvent> events = new ArrayList<>();
         public final Map<String, IndexerEvent> eventsById = Maps.newLinkedHashMap();
@@ -59,10 +59,6 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
             events.add(copy);
             eventsById.put(id, copy);
         }
-    }
-
-    public IndexerEventHandlerTest(final String version) throws Exception {
-        super(version);
     }
 
     @Test
@@ -87,7 +83,7 @@ public class IndexerEventHandlerTest extends AbstractBulkIndexerTest {
                 listener.close();
 
                 // verify that we received the events we expected
-                Assert.assertEquals(people.size(), handler.events.size());
+                Assertions.assertEquals(people.size(), handler.events.size());
                 for (final Person person : people) {
                     final IndexerEvent event = handler.eventsById.get(person.getId());
                     assertNotNull(event);

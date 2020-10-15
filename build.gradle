@@ -8,22 +8,22 @@ plugins {
     id 'idea'
     
     // keep dependencies up-to-date!
-    id 'com.github.ben-manes.versions' version '0.28.0'
+    id 'com.github.ben-manes.versions' version '0.33.0'
 
     // useful for creating immutable java beans
     id 'org.inferred.processors' version '3.3.0'
 
     // to ensure clean code
-    id "net.ltgt.errorprone" version "0.7.1"
+    id "net.ltgt.errorprone" version "1.2.1"
 
     // for deployment to Maven Central
-    id "io.codearte.nexus-staging" version "0.21.2"
+    id "io.codearte.nexus-staging" version "0.22.0"
 
     // for building fat jar
     id "com.github.johnrengelman.shadow" version "5.2.0"
 
     // useful utilities
-    id "com.arakelian.multitool" version "2.4.0"
+    id "com.arakelian.multitool" version "3.0.3"
     
     // for antlr tasks
     id 'antlr'
@@ -32,7 +32,7 @@ plugins {
 group   = 'com.arakelian'
 
 wrapper {
-    gradleVersion = '6.2.2'
+    gradleVersion = '6.6.1'
 }
 
 sourceSets {
@@ -113,37 +113,37 @@ dependencies {
     // configure errorprone version
     errorprone 'com.google.errorprone:error_prone_core:2.3.4'
     
-    compile 'com.arakelian:more-commons:2.5.0'
-    compile 'com.arakelian:jackson-utils:3.3.0'
-    compile 'com.arakelian:json-filter:3.5.0'
-    compile 'com.arakelian:key-value-store:2.6.0'
-    compile 'com.arakelian:retry:3.8.0'
+    compile 'com.arakelian:more-commons:3.0.0'
+    compile 'com.arakelian:jackson-utils:3.4.0'
+    compile 'com.arakelian:json-filter:3.6.0'
+    compile 'com.arakelian:key-value-store:2.7.0'
+    compile 'com.arakelian:retry:3.9.0'
     
     // caching
-    compile 'com.github.ben-manes.caffeine:caffeine:2.8.0'
+    compile 'com.github.ben-manes.caffeine:caffeine:2.8.6'
 
     // shadow Guava due to frequent downstream incompatibility issues
     shadow  'com.google.guava:guava:29.0-jre'
 
     // we use Multimap in ElasticDocConfig; we shadow jackson's guava library
     // so we don't add downstream guava dependency
-    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.10.1') {
+    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.11.3') {
         exclude module: 'jackson-databind'
         exclude module: 'jackson-core'
     }
 
     // shadow stuff we use very little of, to reduce dependencies
-    shadow  'org.apache.commons:commons-lang3:3.10'
-    shadow  'commons-io:commons-io:2.6'
+    shadow  'org.apache.commons:commons-lang3:3.11'
+    shadow  'commons-io:commons-io:2.8.0'
     shadow  ('com.jayway.jsonpath:json-path:2.4.0') { exclude module: 'slf4j-api' }
 
     // third party
-    compile 'com.squareup.retrofit2:retrofit:2.6.2'
-    compile 'com.squareup.retrofit2:converter-scalars:2.6.2'
-    compile 'com.squareup.retrofit2:converter-jackson:2.6.2'
-    compile 'com.squareup.retrofit2:adapter-java8:2.6.2'
-    compile 'com.squareup.okhttp3:okhttp:4.2.2'
-    compile 'com.squareup.okhttp3:logging-interceptor:4.2.2'
+    compile 'com.squareup.retrofit2:retrofit:2.8.1'
+    compile 'com.squareup.retrofit2:converter-scalars:2.8.1'
+    compile 'com.squareup.retrofit2:converter-jackson:2.8.1'
+    compile 'com.squareup.retrofit2:adapter-java8:2.8.1'
+    compile 'com.squareup.okhttp3:okhttp:4.7.2'
+    compile 'com.squareup.okhttp3:logging-interceptor:4.7.2'
     compile 'com.lmax:disruptor:3.4.2'
 
     antlr   'org.antlr:antlr4:4.7.2'
@@ -158,12 +158,13 @@ dependencies {
     compile     'org.slf4j:slf4j-api:1.7.30'
 
     // for unit testing
-    testCompile 'junit:junit:4.13'
-    testCompile 'net.javacrumbs.json-unit:json-unit:2.17.0'
-    testCompile 'com.arakelian:more-commons:2.5.0:tests'
-    testCompile 'com.arakelian:jackson-utils:3.3.0:tests'
-    testCompile 'com.arakelian:docker-junit-rule:4.1.0'
-    testCompile 'com.arakelian:faker:3.7.0'
-    testCompile 'com.squareup.retrofit2:retrofit-mock:2.6.2'
+    testCompile 'org.junit.jupiter:junit-jupiter:5.7.0'
+    testCompile 'net.javacrumbs.json-unit:json-unit:2.19.0'
+    testCompile 'com.arakelian:more-commons:3.0.0:tests'
+    testCompile 'com.arakelian:jackson-utils:3.4.0:tests'
+    testCompile 'org.testcontainers:testcontainers:1.14.3'
+    testCompile 'org.testcontainers:junit-jupiter:1.14.3'
+    testCompile 'com.arakelian:faker:3.8.0'
+    testCompile 'com.squareup.retrofit2:retrofit-mock:2.8.1'
     testCompile 'javax.activation:activation:1.1.1'
 }

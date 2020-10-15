@@ -17,18 +17,18 @@
 
 package com.arakelian.elastic.doc.filters;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableList;
 
 public class TokenChainTest {
     @Test
     public void testEmpty() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("pass through"),
                 TokenChain.link(ImmutableList.of()).accept("pass through", new TokenCollector()).get());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("pass through"),
                 TokenChain.link(null).accept("pass through", new TokenCollector()).get());
     }
@@ -42,7 +42,7 @@ public class TokenChainTest {
                         LengthFilterTest.LEN_3,
                         PatternCaptureTest.DIGITS));
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("23", "12", "123", "45"),
                 filter.accept("one two three four f23 g12 123 45X", new TokenCollector()).get());
     }
@@ -50,7 +50,7 @@ public class TokenChainTest {
     @Test
     public void testOneLink() {
         final TokenFilter filter = TokenChain.link(ImmutableList.of(LowercaseTest.FILTER));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("one two three four five six"),
                 filter.accept("ONE TWO THREE FOUR FIVE SIX", new TokenCollector()).get());
     }
@@ -59,7 +59,7 @@ public class TokenChainTest {
     public void testTwoLinks() {
         final TokenFilter filter = TokenChain
                 .link(ImmutableList.of(SplitterTest.WHITESPACE, UppercaseTest.FILTER));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableList.of("ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"),
                 filter.accept("one two three four five six", new TokenCollector()).get());
     }

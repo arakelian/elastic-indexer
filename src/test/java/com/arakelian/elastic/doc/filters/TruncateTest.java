@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.filters;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -42,9 +42,9 @@ public class TruncateTest {
 
     @Test
     public void testWords() {
-        Assert.assertEquals(null, SAMPLE.apply(null));
-        Assert.assertEquals("", SAMPLE.apply(""));
-        Assert.assertEquals("one", SAMPLE.apply("one"));
-        Assert.assertEquals("onetwothre", SAMPLE.apply("onetwothreefour"));
+        Assertions.assertEquals(null, SAMPLE.apply(null));
+        Assertions.assertEquals("", SAMPLE.apply(""));
+        Assertions.assertEquals("one", SAMPLE.apply("one"));
+        Assertions.assertEquals("onetwothre", SAMPLE.apply("onetwothreefour"));
     }
 }

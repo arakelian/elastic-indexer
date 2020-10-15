@@ -17,14 +17,14 @@
 
 package com.arakelian.elastic.model.enums;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class DateFormatTest {
     @Test
     public void test() {
-        Assert.assertNotNull(DateFormat.of("strict_date_optional_time"));
-        Assert.assertNotNull(DateFormat.of("date_optional_time"));
-        Assert.assertNotNull(DateFormat.of("dateOptionalTime"));
+        Assertions.assertNotNull(DateFormat.of("strict_date_optional_time"));
+        Assertions.assertNotNull(DateFormat.of("date_optional_time"));
+        Assertions.assertNotNull(DateFormat.of("dateOptionalTime"));
     }
 }

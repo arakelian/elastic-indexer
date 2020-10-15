@@ -1,7 +1,7 @@
 package com.arakelian.elastic.bulk;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.elastic.bulk.BulkOperation.Action;
 import com.arakelian.elastic.model.IndexTest;
@@ -17,7 +17,7 @@ public class BulkOperationTest {
                 .source("{\n\t\"name\":\"Greg\tArakelian\",\n\t\"gender\":\"male\"\n}") //
                 .index(IndexTest.MINIMAL) //
                 .build();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "{\"create\":{\"_index\":\"index_name\",\"_id\":\"id\"}}\n"
                         + "{\"name\":\"Greg\\tArakelian\",\"gender\":\"male\"}\n",
                 op.getOperation().toString());
@@ -32,7 +32,7 @@ public class BulkOperationTest {
                 .source("{\n\t\"name\":\"Greg\tArakelian\",\n\t\"gender\":\"male\"\n}") //
                 .index(IndexTest.MINIMAL) //
                 .build();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "{\"create\":{\"_index\":\"index_name\",\"_id\":\"id\\nline\\\\2\\nline\\\\3\"}}\n"
                         + "{\"name\":\"Greg\\tArakelian\",\"gender\":\"male\"}\n",
                 op.getOperation().toString());

@@ -19,8 +19,8 @@ package com.arakelian.elastic.model;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -49,9 +49,9 @@ public class VersionComponentsTest {
 
     public void testParse(final String number, final int major, final int minor, final int build) {
         final VersionComponents version = VersionComponents.of(number);
-        Assert.assertEquals(major, version.getMajor());
-        Assert.assertEquals(minor, version.getMinor());
-        Assert.assertEquals(build, version.getBuild());
+        Assertions.assertEquals(major, version.getMajor());
+        Assertions.assertEquals(minor, version.getMinor());
+        Assertions.assertEquals(build, version.getBuild());
     }
 
     @Test

@@ -17,10 +17,13 @@
 
 package com.arakelian.elastic.model;
 
+import static org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER;
+
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.elastic.model.Field.Type;
@@ -45,19 +48,20 @@ public class MappingTest extends AbstractElasticModelTest {
             .addField(ImmutableField.builder().name("zip").build()) //
             .build();
 
-    public MappingTest(final String number) {
-        super(number);
-    }
-
-    @Test
-    public void testJackson() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testJackson(String version) throws IOException {
+        configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, CONTACT, Mapping.class);
     }
 
-    @Test
-    public void testNormalization() {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testNormalization(String version) {
+        configure(version);
+
         // getFields() and getProperties() should refer to same list of fields
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.copyOf(CONTACT.getFields()),
                 ImmutableSet.copyOf(CONTACT.getProperties().values()));
 
@@ -68,13 +72,15 @@ public class MappingTest extends AbstractElasticModelTest {
                 .build();
 
         // the new field should appear in getProperties()
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 ImmutableSet.copyOf(newMapping.getFields()),
                 ImmutableSet.copyOf(newMapping.getProperties().values()));
     }
 
-    @Test
-    public void testSerializable() {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testSerializable(String version) {
+        configure(version);
         SerializableTestUtils.testSerializable(CONTACT, Mapping.class);
     }
 }

@@ -19,8 +19,8 @@ package com.arakelian.elastic.doc.plugins;
 
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class HasLengthPluginTest {
                         .toString());
     }
 
-    @Before
+    @BeforeEach
     public void createBuilder() {
         plugin = new HasLengthPlugin( //
                 ImmutableHasLengthConfig.builder() //

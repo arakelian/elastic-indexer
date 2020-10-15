@@ -17,9 +17,9 @@
 
 package com.arakelian.elastic.doc;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.doc.filters.ImmutablePatternReplace;
@@ -42,10 +42,10 @@ public class ElasticDocBuilderTest {
     private String sampleJson;
 
     private void assertEquals(final String expected, final CharSequence filter) {
-        Assert.assertEquals(expected, filter != null ? filter.toString() : null);
+        Assertions.assertEquals(expected, filter != null ? filter.toString() : null);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // source: https://cdn.rawgit.com/Marak/faker.js/master/examples/browser/index.html
         sampleJson = "{\n" + //
@@ -174,7 +174,7 @@ public class ElasticDocBuilderTest {
                 .build();
 
         final TokenFilter tokenFilter = mapping.getFieldTokenFilter("reversePhone");
-        Assert.assertEquals(ImmutableList.of("2121555307"), tokenFilter.execute("(703) 555-1212"));
+        Assertions.assertEquals(ImmutableList.of("2121555307"), tokenFilter.execute("(703) 555-1212"));
 
         final ElasticDocConfig config = ImmutableElasticDocConfig.builder() //
                 .mapping(mapping) //

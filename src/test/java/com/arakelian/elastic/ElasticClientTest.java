@@ -18,16 +18,16 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +51,6 @@ import com.arakelian.jackson.utils.JacksonUtils;
 
 public class ElasticClientTest extends AbstractElasticDockerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientTest.class);
-
-    public ElasticClientTest(final String version) throws Exception {
-        super(version);
-    }
 
     private long assertDeleteWithExternalVersion(final Index index, final String id) {
         // delete document with external version
@@ -124,7 +120,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
                     // verify can delete non-existant record
                     try {
                         elasticClient.deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
-                        Assert.fail("Delete of non-existant document should have thrown 404");
+                        Assertions.fail("Delete of non-existant document should have thrown 404");
                     } catch (final ElasticNotFoundException e) {
                         // successful
                     }

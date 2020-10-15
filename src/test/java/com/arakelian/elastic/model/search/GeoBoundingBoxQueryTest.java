@@ -19,8 +19,8 @@ package com.arakelian.elastic.model.search;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.model.GeoPointTest;
@@ -33,24 +33,28 @@ public class GeoBoundingBoxQueryTest {
             .bottomRight(GeoPointTest.POINT) //
             .build();
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testIllegal1() {
-        Assert.assertNull(
-                ImmutableGeoBoundingBoxQuery.builder() //
-                        .fieldName("field") //
-                        .topLeft(GeoPointTest.POINT) //
-                        .bottomLeft(GeoPointTest.POINT) //
-                        .build());
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            Assertions.assertNull(
+                    ImmutableGeoBoundingBoxQuery.builder() //
+                            .fieldName("field") //
+                            .topLeft(GeoPointTest.POINT) //
+                            .bottomLeft(GeoPointTest.POINT) //
+                            .build());
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testIllegal2() {
-        Assert.assertNull(
-                ImmutableGeoBoundingBoxQuery.builder() //
-                        .fieldName("field") //
-                        .topRight(GeoPointTest.POINT) //
-                        .bottomRight(GeoPointTest.POINT) //
-                        .build());
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            Assertions.assertNull(
+                    ImmutableGeoBoundingBoxQuery.builder() //
+                            .fieldName("field") //
+                            .topRight(GeoPointTest.POINT) //
+                            .bottomRight(GeoPointTest.POINT) //
+                            .build());
+        });
     }
 
     @Test

@@ -24,8 +24,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +50,14 @@ public class DefaultValueProducerTest {
 
     private void assertEquals(final List<?> expected, final List<?> actual) {
         final int size = expected.size();
-        Assert.assertEquals(size, actual.size());
+        Assertions.assertEquals(size, actual.size());
         for (int i = 0; i < size; i++) {
             final Object lhs = expected.get(i);
             final Object rhs = actual.get(i);
             if (lhs instanceof byte[] && rhs instanceof byte[]) {
-                Assert.assertArrayEquals((byte[]) lhs, (byte[]) rhs);
+                Assertions.assertArrayEquals((byte[]) lhs, (byte[]) rhs);
             } else {
-                Assert.assertEquals(lhs, rhs);
+                Assertions.assertEquals(lhs, rhs);
             }
         }
     }
@@ -81,7 +81,7 @@ public class DefaultValueProducerTest {
         final JsonNode node = mapper.readTree(input);
         try {
             producer.traverse(field, node, result);
-            Assert.fail("Should not have been able to deserialize \"" + input + "\" to " + result);
+            Assertions.fail("Should not have been able to deserialize \"" + input + "\" to " + result);
         } catch (final ValueException ve) {
             // expected
         }
@@ -218,7 +218,7 @@ public class DefaultValueProducerTest {
                         value = Long.parseLong(text);
                         date = DateUtils.toZonedDateTimeUtc((Long) value);
                     }
-                    Assert.assertNotNull(value + " is not a valid date", date);
+                    Assertions.assertNotNull(date, value + " is not a valid date");
                     LOGGER.info("{} converted to {}", value, date);
                     return date;
                 }) //

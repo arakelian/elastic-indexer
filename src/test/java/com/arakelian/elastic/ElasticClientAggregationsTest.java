@@ -18,16 +18,16 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.ImmutableField;
@@ -58,10 +58,6 @@ import com.arakelian.jackson.MapPath;
 import com.arakelian.jackson.model.GeoPoint;
 
 public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
-    public ElasticClientAggregationsTest(final String version) throws Exception {
-        super(version);
-    }
-
     protected void assertIndexDocuments(final Index index, final String type, final String... rows) {
         int id = 0;
         for (final String row : rows) {
@@ -341,7 +337,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
         final MapPath agg = response.getAggregations().get("age");
         for (final Double val : values) {
             final String key = "values." + val.toString();
-            assertTrue("Cannot find property: " + key, agg.hasProperty(key));
+            assertTrue(agg.hasProperty(key), "Cannot find property: " + key);
         }
     }
 

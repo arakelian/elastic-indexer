@@ -20,8 +20,8 @@ package com.arakelian.elastic.doc.filters;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -60,23 +60,23 @@ public class NormalizeValuesTest {
 
     @Test
     public void testCodes() {
-        Assert.assertEquals(ImmutableList.of(), test(GENDER, null));
-        Assert.assertEquals(ImmutableList.of(), test(GENDER, ""));
-        Assert.assertEquals(ImmutableList.of("MALE"), test(GENDER, "M"));
-        Assert.assertEquals(ImmutableList.of("MALE"), test(GENDER, "MALE"));
-        Assert.assertEquals(ImmutableList.of("FEMALE"), test(GENDER, "F"));
-        Assert.assertEquals(ImmutableList.of("FEMALE"), test(GENDER, "feMALE"));
-        Assert.assertEquals(ImmutableList.of("OTHER"), test(GENDER, "OTHER"));
-        Assert.assertEquals(ImmutableList.of(" "), test(GENDER, " "));
+        Assertions.assertEquals(ImmutableList.of(), test(GENDER, null));
+        Assertions.assertEquals(ImmutableList.of(), test(GENDER, ""));
+        Assertions.assertEquals(ImmutableList.of("MALE"), test(GENDER, "M"));
+        Assertions.assertEquals(ImmutableList.of("MALE"), test(GENDER, "MALE"));
+        Assertions.assertEquals(ImmutableList.of("FEMALE"), test(GENDER, "F"));
+        Assertions.assertEquals(ImmutableList.of("FEMALE"), test(GENDER, "feMALE"));
+        Assertions.assertEquals(ImmutableList.of("OTHER"), test(GENDER, "OTHER"));
+        Assertions.assertEquals(ImmutableList.of(" "), test(GENDER, " "));
     }
 
     @Test
     public void testFactory() {
-        Assert.assertEquals(ImmutableList.of(), test(ENUM, null));
-        Assert.assertEquals(ImmutableList.of(), test(ENUM, ""));
-        Assert.assertEquals(ImmutableList.of(" "), test(ENUM, " "));
-        Assert.assertEquals(ImmutableList.of("ONE"), test(ENUM, "1"));
-        Assert.assertEquals(ImmutableList.of("TWO"), test(ENUM, "2"));
+        Assertions.assertEquals(ImmutableList.of(), test(ENUM, null));
+        Assertions.assertEquals(ImmutableList.of(), test(ENUM, ""));
+        Assertions.assertEquals(ImmutableList.of(" "), test(ENUM, " "));
+        Assertions.assertEquals(ImmutableList.of("ONE"), test(ENUM, "1"));
+        Assertions.assertEquals(ImmutableList.of("TWO"), test(ENUM, "2"));
     }
 
     @Test

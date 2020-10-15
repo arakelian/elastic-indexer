@@ -17,9 +17,12 @@
 
 package com.arakelian.elastic.model;
 
+import static org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER;
+
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -46,17 +49,17 @@ public class NodesTest extends AbstractElasticModelTest {
                             .build())
             .build();
 
-    public NodesTest(final String number) {
-        super(number);
-    }
-
-    @Test
-    public void testJackson() throws IOException {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testJackson(String version) throws IOException {
+        configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, SAMPLE, Nodes.class);
     }
 
-    @Test
-    public void testSerializable() {
+    @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
+    @MethodSource("data")
+    public void testSerializable(String version) {
+        configure(version);
         SerializableTestUtils.testSerializable(SAMPLE, Nodes.class);
     }
 }

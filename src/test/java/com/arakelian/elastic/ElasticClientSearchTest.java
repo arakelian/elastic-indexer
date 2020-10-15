@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.elastic.model.enums.DistanceType;
 import com.arakelian.elastic.model.enums.GeoShapeType;
@@ -63,10 +63,6 @@ import com.arakelian.jackson.model.Coordinate;
 import com.arakelian.jackson.model.GeoPoint;
 
 public class ElasticClientSearchTest extends AbstractElasticDockerTest {
-    public ElasticClientSearchTest(final String version) throws Exception {
-        super(version);
-    }
-
     @Test
     public void testBoolQuery() throws IOException {
         withPeople(10, (index, people) -> {

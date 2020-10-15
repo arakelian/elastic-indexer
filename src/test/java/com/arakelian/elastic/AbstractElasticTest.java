@@ -18,18 +18,16 @@
 package com.arakelian.elastic;
 
 import static com.arakelian.elastic.utils.ElasticClientUtils.DEFAULT_TIMEOUT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +42,6 @@ import com.arakelian.elastic.model.IndexDeleted;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
-import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
-import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
-import com.arakelian.elastic.refresh.RefreshLimiter;
 import com.arakelian.elastic.utils.ElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 
@@ -56,11 +51,6 @@ public abstract class AbstractElasticTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractElasticTest.class);
 
     public static final String DEFAULT_TYPE = "test";
-
-    private DefaultRefreshLimiter refreshLimiter;
-
-    @Rule
-    public TestName testName = new TestName();
 
     protected final void assertCreateIndex(final Index index) {
         // verify it does not already exist
@@ -84,12 +74,12 @@ public abstract class AbstractElasticTest {
 
     protected final void assertIndexExists(final Index index) throws ElasticException {
         final boolean exists = getElasticClientWithRetry().indexExists(index.getName());
-        Assert.assertTrue("Index " + index.getName() + " does not exist", exists);
+        Assertions.assertTrue(exists, "Index " + index.getName() + " does not exist");
     }
 
     protected final void assertIndexNotExists(final Index index) throws ElasticException {
         final boolean exists = getElasticClientWithRetry().indexExists(index.getName());
-        Assert.assertFalse("Index " + index.getName() + " exists", exists);
+        Assertions.assertFalse(exists, "Index " + index.getName() + " exists");
     }
 
     protected final void assertRefreshIndex(final Index index) {
@@ -102,30 +92,11 @@ public abstract class AbstractElasticTest {
         return response;
     }
 
-    @Before
-    public final void createRefreshLimiter() {
-        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
-                .coreThreads(1) //
-                .maximumThreads(1) //
-                .defaultPermitsPerSecond(1.0) //
-                .build(), //
-                getElasticClient());
-    }
-
-    @After
-    public final void destroyRefreshLimiter() {
-        refreshLimiter.close();
-    }
-
     protected abstract ElasticClient getElasticClient();
 
     protected abstract ElasticClientWithRetry getElasticClientWithRetry();
 
     protected abstract String getElasticUrl();
-
-    protected final RefreshLimiter getRefreshLimiter() {
-        return refreshLimiter;
-    }
 
     protected final Index newIndex(final String name, final Mapping mapping) {
         final Index index = ImmutableIndex.builder() //
@@ -135,9 +106,9 @@ public abstract class AbstractElasticTest {
         return index;
     }
 
-    @Before
-    public final void startTest() {
-        LOGGER.info("Starting test: {}", testName.getMethodName());
+    @BeforeEach
+    public final void startTest(final TestInfo testInfo) {
+        LOGGER.info("Starting test: {}", testInfo.getDisplayName());
     }
 
     protected final VersionComponents waitForElasticReady(final OkHttpClient client) {
@@ -147,12 +118,12 @@ public abstract class AbstractElasticTest {
 
         // wait for connection
         final About about = ElasticClientUtils.waitForElasticReady(elasticClient, 2, TimeUnit.MINUTES);
-        Assert.assertNotNull("Could not connect to Elasticsearch", about);
+        Assertions.assertNotNull(about, "Could not connect to Elasticsearch");
 
         final VersionComponents version = about.getVersion().getComponents();
-        Assert.assertTrue(
-                "Requires Elastic 5.x+ but was " + about.getVersion().getNumber(),
-                version.getMajor() >= 5);
+        Assertions.assertTrue(
+                version.getMajor() >= 5,
+                "Requires Elastic 5.x+ but was " + about.getVersion().getNumber());
         return version;
     }
 

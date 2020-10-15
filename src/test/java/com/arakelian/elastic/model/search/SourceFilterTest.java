@@ -19,8 +19,8 @@ package com.arakelian.elastic.model.search;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -33,7 +33,7 @@ public class SourceFilterTest {
 
     @Test
     public void testExcludesAll() {
-        Assert.assertTrue(SourceFilter.EXCLUDE_ALL.isExcludeAll());
+        Assertions.assertTrue(SourceFilter.EXCLUDE_ALL.isExcludeAll());
     }
 
     @Test

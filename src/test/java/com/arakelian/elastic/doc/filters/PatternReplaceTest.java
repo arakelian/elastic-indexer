@@ -17,12 +17,12 @@
 
 package com.arakelian.elastic.doc.filters;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.arakelian.core.utils.SerializableTestUtils;
 import com.arakelian.jackson.utils.JacksonTestUtils;
@@ -56,7 +56,7 @@ public class PatternReplaceTest {
     @Test
     public void testTokenFilter() {
         final ImmutableList<String> expected = ImmutableList.of("_one_two_three_");
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 expected,
                 WHITESPACE.accept("    one two     three   ", new TokenCollector()).get());
     }
