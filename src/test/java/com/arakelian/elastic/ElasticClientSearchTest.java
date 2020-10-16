@@ -346,7 +346,7 @@ public class ElasticClientSearchTest extends AbstractElasticDockerTest {
                             .maxDocFrequency(0) //
                             .minWordLength(10) //
                             .maxWordLength(0) //
-                            .maxQueryTerms(0) //
+                            .maxQueryTerms(1) //
                             .minimumShouldMatch("100%") //
                             .build();
 

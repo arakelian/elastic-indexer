@@ -119,8 +119,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "7.0.1", //
                 // "7.1.1", //
                 // "7.2.1", //
-                "7.3.1" //
-        };
+                // "7.3.1" //
+                "7.9.2" };
     }
 
     protected String elasticUrl;
@@ -132,7 +132,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @SuppressWarnings("resource")
     public AbstractElasticDockerTest() {
         if (elastic == null) {
-            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.3.1") //
+            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.9.2") //
                     .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
                     .withEnv("http.host", "0.0.0.0") //
                     .withEnv("discovery.type", "single-node") //
@@ -371,7 +371,9 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     @AfterEach
     public final void destroyRefreshLimiter() {
-        refreshLimiter.close();
+        if (refreshLimiter != null) {
+            refreshLimiter.close();
+        }
     }
 
     @Override
