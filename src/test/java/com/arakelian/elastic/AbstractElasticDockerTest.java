@@ -92,21 +92,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     public static GenericContainer elastic;
 
-    static {
-        elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.3.1") //
-                .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
-                .withEnv("http.host", "0.0.0.0") //
-                .withEnv("discovery.type", "single-node") //
-                .withEnv("transport.host", "127.0.0.1") //
-                .withEnv("xpack.security.enabled", "false") //
-                .withEnv("xpack.monitoring.enabled", "false") //
-                .withEnv("xpack.graph.enabled", "false") //
-                .withEnv("xpack.watcher.enabled", "false") //
-                .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m") //
-                .withReuse(true);
-        elastic.start();
-    }
-
     public static final String _DOC = Mapping._DOC;
 
     /**
@@ -144,12 +129,28 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     private DefaultRefreshLimiter refreshLimiter;
 
+    @SuppressWarnings("resource")
     public AbstractElasticDockerTest() {
-        elastic.setWaitStrategy(
-                new HttpWaitStrategy().forPort(ELASTICSEARCH_DEFAULT_PORT)
-                        .forStatusCodeMatching(
-                                response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
-                        .withStartupTimeout(Duration.ofMinutes(2)));
+        if (elastic == null) {
+            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.3.1") //
+                    .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
+                    .withEnv("http.host", "0.0.0.0") //
+                    .withEnv("discovery.type", "single-node") //
+                    .withEnv("transport.host", "127.0.0.1") //
+                    .withEnv("xpack.security.enabled", "false") //
+                    .withEnv("xpack.monitoring.enabled", "false") //
+                    .withEnv("xpack.graph.enabled", "false") //
+                    .withEnv("xpack.watcher.enabled", "false") //
+                    .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+
+            elastic.setWaitStrategy(
+                    new HttpWaitStrategy().forPort(ELASTICSEARCH_DEFAULT_PORT)
+                            .forStatusCodeMatching(
+                                    response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+                            .withStartupTimeout(Duration.ofMinutes(2)));
+
+            elastic.start();
+        }
     }
 
     public void assertGetDocument(

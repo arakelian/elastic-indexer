@@ -53,6 +53,7 @@ import com.google.common.base.Preconditions;
 
 import okhttp3.Request;
 import okhttp3.ResponseBody;
+import okio.Timeout;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -116,6 +117,11 @@ public class OkHttpElasticClient implements ElasticClient {
         @Override
         public Request request() {
             return delegate.request();
+        }
+
+        @Override
+        public Timeout timeout() {
+            return delegate.timeout();
         }
 
         private T toResponse(final String body) throws IOException {

@@ -104,6 +104,10 @@ multitool {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     processor 'org.immutables:value:2.8.8'
     
