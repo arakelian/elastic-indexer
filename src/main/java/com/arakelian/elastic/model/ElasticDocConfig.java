@@ -234,7 +234,7 @@ public abstract class ElasticDocConfig {
     /**
      * Returns a list of selectors from all fields that copy_to the given target field.
      *
-     * @param target
+     * @param targetField
      *            target field
      * @return a list of selectors from all fields that copy_to the given target field
      */

@@ -29,7 +29,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
 import com.arakelian.elastic.model.Index;
@@ -99,17 +99,17 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
                 .addField(
                         ImmutableField.builder() //
                                 .name("location") //
-                                .type(Type.GEO_POINT) //
+                                .type(Field.Type.GEO_POINT) //
                                 .build()) //
                 .addField(
                         ImmutableField.builder() //
                                 .name("city") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build()) //
                 .addField(
                         ImmutableField.builder() //
                                 .name("name") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build()) //
                 .build();
     }

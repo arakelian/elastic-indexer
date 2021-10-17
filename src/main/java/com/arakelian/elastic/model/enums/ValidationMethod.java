@@ -18,6 +18,8 @@
 package com.arakelian.elastic.model.enums;
 
 /**
+ * Validation method
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-polygon-query.html#_query_options_2">Validation
  *      method</a>

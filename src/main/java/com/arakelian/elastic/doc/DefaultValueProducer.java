@@ -28,7 +28,6 @@ import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.model.DateRange;
 import com.arakelian.elastic.model.DoubleRange;
 import com.arakelian.elastic.model.Field;
-import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.FloatRange;
 import com.arakelian.elastic.model.IntegerRange;
 import com.arakelian.elastic.model.LongRange;
@@ -461,7 +460,7 @@ public class DefaultValueProducer implements ValueProducer {
             return;
         }
 
-        final Type type = field.getType();
+        final Field.Type type = field.getType();
         if (type == null) {
             // generic conversion
             collectObjects(field, node, consumer);

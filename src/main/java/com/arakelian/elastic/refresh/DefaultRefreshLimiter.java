@@ -200,10 +200,11 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
      *
      * IMPORTANT: This method assumes that the rate limiter has been acquired.
      *
-     * @param name
-     *            index name
+     * @param index
+     *            index
      * @return result of call to Elastic client if successful
      * @throws IOException
+     *             if there is a problem refreshing index
      */
     private Refresh doRefresh(final Index index) throws IOException {
         LOGGER.debug("Refreshing index \"{}\"", index.name);
@@ -220,8 +221,8 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
      *
      * IMPORTANT: This method assumes that the rate limiter has been acquired.
      *
-     * @param name
-     *            index name
+     * @param index
+     *            index
      * @return true if index was refreshed successfully
      */
     private boolean doRefreshQuietly(final Index index) {
@@ -246,14 +247,13 @@ public class DefaultRefreshLimiter implements RefreshLimiter {
                         MoreStringUtils.toString(nanosWaited, TimeUnit.NANOSECONDS),
                         index.name);
 
-                return config.getRetryer().wrap(
-                        () -> {
-                            // we are about to perform refresh, so we can clear the requeue flag
-                            index.requeue.set(false);
+                return config.getRetryer().wrap(() -> {
+                    // we are about to perform refresh, so we can clear the requeue flag
+                    index.requeue.set(false);
 
-                            // perform refresh
-                            return doRefresh(index);
-                        }).call();
+                    // perform refresh
+                    return doRefresh(index);
+                }).call();
             });
         } catch (final RejectedExecutionException e) {
             throw new RejectedExecutionException("Unable to enqueue refresh of index " + index.name, e);

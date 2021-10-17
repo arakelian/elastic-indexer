@@ -314,8 +314,8 @@ public class BulkIngester {
      *            document
      * @param action
      *            action to be performed on document
-     * @param forceFlush
-     *            true to force an immediate flush of data to Elastic
+     * @param batches
+     *            operations grouped by index name
      * @throws RejectedExecutionException
      *             if indexer is closed or background queue is full
      * @throws IOException

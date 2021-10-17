@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.enums.SortMode;
@@ -215,7 +214,7 @@ public class WriteSearchVisitor extends AbstractVisitor {
                 writer.writeFieldName(field);
                 final String order = sort.getOrder().name().toLowerCase();
                 final SortMode mode = sort.getMode();
-                final Type type = sort.getUnmappedType();
+                final com.arakelian.elastic.model.Field.Type type = sort.getUnmappedType();
                 if (mode == null && type == null) {
                     // no mode or unmapped_type specified
                     writer.writeString(order);

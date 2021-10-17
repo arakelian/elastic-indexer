@@ -26,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.arakelian.core.utils.SerializableTestUtils;
-import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.jackson.utils.JacksonTestUtils;
 import com.google.common.collect.ImmutableSet;
 
@@ -39,7 +38,7 @@ public class MappingTest extends AbstractElasticModelTest {
                                     "raw",
                                     ImmutableField.builder() //
                                             .name("raw") //
-                                            .type(Type.KEYWORD) //
+                                            .type(Field.Type.KEYWORD) //
                                             .build()) //
                             .build()) //
             .addField(ImmutableField.builder().name("street").build()) //

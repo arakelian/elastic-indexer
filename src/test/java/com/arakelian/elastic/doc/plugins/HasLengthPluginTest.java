@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.doc.ElasticDocBuilder;
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.ImmutableElasticDocConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
@@ -75,7 +75,7 @@ public class HasLengthPluginTest {
                 .addField(
                         ImmutableField.builder() //
                                 .name(INDICATOR_FIELD) //
-                                .type(Type.KEYWORD) //
+                                .type(Field.Type.KEYWORD) //
                                 .sortTokens(true) //
                                 .build()) //
                 .addField(
@@ -85,13 +85,13 @@ public class HasLengthPluginTest {
                                         "raw",
                                         ImmutableField.builder() //
                                                 .name("raw") //
-                                                .type(Type.KEYWORD) //
+                                                .type(Field.Type.KEYWORD) //
                                                 .build()) //
                                 .build()) //
-                .addField(ImmutableField.builder().name("street").type(Type.TEXT).build()) //
-                .addField(ImmutableField.builder().name("city").type(Type.KEYWORD).build()) //
-                .addField(ImmutableField.builder().name("state").type(Type.KEYWORD).build()) //
-                .addField(ImmutableField.builder().name("zip").type(Type.KEYWORD).build()) //
+                .addField(ImmutableField.builder().name("street").type(Field.Type.TEXT).build()) //
+                .addField(ImmutableField.builder().name("city").type(Field.Type.KEYWORD).build()) //
+                .addField(ImmutableField.builder().name("state").type(Field.Type.KEYWORD).build()) //
+                .addField(ImmutableField.builder().name("zip").type(Field.Type.KEYWORD).build()) //
                 .build();
 
         LOGGER.info("Mapping: \n{}", JacksonUtils.toStringSafe(mapping, true));

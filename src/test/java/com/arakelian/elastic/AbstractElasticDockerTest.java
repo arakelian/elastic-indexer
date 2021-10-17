@@ -47,7 +47,7 @@ import com.arakelian.elastic.bulk.event.IndexerListener;
 import com.arakelian.elastic.bulk.event.LoggingIndexerListener;
 import com.arakelian.elastic.model.BulkIndexerConfig;
 import com.arakelian.elastic.model.Document;
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.ImmutableBulkIndexerConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
@@ -129,7 +129,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     private DefaultRefreshLimiter refreshLimiter;
 
-    @SuppressWarnings("resource")
+    @SuppressWarnings({ "resource", "StaticAssignmentInConstructor" })
     public AbstractElasticDockerTest() {
         if (elastic == null) {
             elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.9.2") //
@@ -291,79 +291,79 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 .addField(
                         ImmutableField.builder() //
                                 .name("id") //
-                                .type(Type.KEYWORD) //
+                                .type(Field.Type.KEYWORD) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("firstName") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .putField(
                                         "raw",
                                         ImmutableField.builder() //
                                                 .name("raw") //
-                                                .type(Type.KEYWORD) //
+                                                .type(Field.Type.KEYWORD) //
                                                 .build()) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("lastName") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .putField(
                                         "raw",
                                         ImmutableField.builder() //
                                                 .name("raw") //
-                                                .type(Type.KEYWORD) //
+                                                .type(Field.Type.KEYWORD) //
                                                 .build()) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("title") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("birthdate") //
-                                .type(Type.DATE) //
+                                .type(Field.Type.DATE) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("age") //
-                                .type(Type.INTEGER) //
+                                .type(Field.Type.INTEGER) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("gender") //
-                                .type(Type.KEYWORD) //
+                                .type(Field.Type.KEYWORD) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("comments") //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("location") //
-                                .type(Type.GEO_POINT) //
+                                .type(Field.Type.GEO_POINT) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("shape") //
-                                .type(Type.GEO_SHAPE) //
+                                .type(Field.Type.GEO_SHAPE) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name(ALWAYS_EMPTY_FIELD) //
-                                .type(Type.KEYWORD) //
+                                .type(Field.Type.KEYWORD) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("created") //
-                                .type(Type.DATE) //
+                                .type(Field.Type.DATE) //
                                 .build())
                 .addField(
                         ImmutableField.builder() //
                                 .name("updated") //
-                                .type(Type.DATE) //
+                                .type(Field.Type.DATE) //
                                 .build())
                 .build();
         return mapping;

@@ -30,6 +30,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 
 /**
+ * GeoBoundingBox query
+ * 
  * @see <a href=
  *      "https://github.com/elastic/elasticsearch/blob/99f88f15c5febbca2d13b5b5fda27b844153bf1a/server/src/main/java/org/elasticsearch/index/query/GeoBoundingBoxQueryBuilder.java">GeoBoundingBox
  *      Query</a>

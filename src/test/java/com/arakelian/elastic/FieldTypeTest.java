@@ -30,7 +30,7 @@ import com.arakelian.core.utils.DateUtils;
 import com.arakelian.core.utils.MoreStringUtils;
 import com.arakelian.elastic.model.DateRangeTest;
 import com.arakelian.elastic.model.DoubleRangeTest;
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.FloatRangeTest;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
@@ -44,7 +44,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 public class FieldTypeTest extends AbstractElasticDockerTest {
-    private Object getTestValue(Type type) {
+    private Object getTestValue(Field.Type type) {
         switch (type) {
         case BINARY:
             return "hello".getBytes(Charsets.UTF_8);
@@ -101,8 +101,8 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
      *             if index cannot be created
      */
     @ParameterizedTest
-    @EnumSource(Type.class)
-    public void testType(Type type) throws IOException {
+    @EnumSource(Field.Type.class)
+    public void testType(Field.Type type) throws IOException {
         final ImmutableMapping mapping = ImmutableMapping.builder() //
                 .dynamic(STRICT) //
                 .addField(

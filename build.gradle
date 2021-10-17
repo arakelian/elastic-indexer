@@ -1,38 +1,85 @@
 // elastic-indexer
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.1.0'  // The ProGuard Gradle plugin.
+    }
+}
+
 plugins {
-    id 'java'
-    id 'maven'
+    id 'java-library'
+    id 'maven-publish'
     id 'signing'
     id 'eclipse'
     id 'idea'
     
     // keep dependencies up-to-date!
-    id 'com.github.ben-manes.versions' version '0.33.0'
+    id 'com.github.ben-manes.versions' version '0.39.0'
 
     // useful for creating immutable java beans
-    id 'org.inferred.processors' version '3.3.0'
+    id 'org.inferred.processors' version '3.6.0'
 
     // to ensure clean code
-    id "net.ltgt.errorprone" version "1.2.1"
+    id "net.ltgt.errorprone" version "2.0.2"
 
     // for deployment to Maven Central
-    id "io.codearte.nexus-staging" version "0.22.0"
+    id "io.codearte.nexus-staging" version "0.30.0"
 
     // for building fat jar
-    id "com.github.johnrengelman.shadow" version "5.2.0"
-
-    // useful utilities
-    id "com.arakelian.multitool" version "3.2.0"
+    id "com.github.johnrengelman.shadow" version "7.1.0"
     
     // for antlr tasks
     id 'antlr'
 }
 
 group   = 'com.arakelian'
+version = '7.8.0'
+
+
+apply from: "core.gradle"
 
 wrapper {
-    gradleVersion = '6.6.1'
+    gradleVersion = '7.2'
+}
+
+publishing.publications.mavenJava {
+    pom {
+        name = "Elastic Indexer"
+        description = "High-level Java API for indexing data into Elastic."
+        url = "https://github.com/arakelian/elastic-indexer"
+        
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        
+        developers {
+            developer {
+                id = 'arakelian'
+                name = 'Greg Arakelian'
+                email = 'greg@arakelian.com'
+            }
+        }
+        
+        scm {
+            connection = 'scm:git:https://github.com/arakelian/elastic-indexer.git'
+            developerConnection = 'scm:git:git@github.com:arakelian/elastic-indexer.git'
+            url = 'https://github.com/arakelian/elastic-indexer.git'
+        }
+    }
+	pom.withXml {
+		Node pomNode = asNode()
+		pomNode.dependencies.'*'.findAll() {
+		    it.artifactId.text() in [ 'value-annotations', 'guava', 'commons-io', 'commons-lang3', 'json-path', 'jackson-datatype-guava', 'antlr4', 'antlr-runtime' ]
+		}.each() {
+		    it.parent().remove(it)
+		}
+	}
 }
 
 sourceSets {
@@ -60,115 +107,139 @@ generateLexerGrammarSource {
 
 generateGrammarSource.dependsOn generateLexerGrammarSource
 
-multitool {
-    relocates += [
-        'org.apache.commons'          : 'repackaged.com.arakelian.elastic.${prefix}org.apache.commons',
-        'com.google.common'           : 'repackaged.com.arakelian.elastic.${prefix}com.google.common',
-        'com.google.thirdparty'       : 'repackaged.com.arakelian.elastic.${prefix}com.google.thirdparty',
-        'javax.annotation'            : 'repackaged.com.arakelian.elastic.${prefix}javax.annotation',
+sourcesJar.dependsOn generateGrammarSource
 
-        // antlr
-        'org.stringtemplate'          : 'repackaged.com.arakelian.elastic.${prefix}org.stringtemplate',
-        'org.antlr.v4'                : 'repackaged.com.arakelian.elastic.${prefix}org.antlr.v4',
-        
-        // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)
-        'com.jayway.jsonpath'         : 'repackaged.com.arakelian.elastic.${prefix}com.jayway.jsonpath',
-        'net.minidev.asm'             : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.asm',
-        'net.minidev.json'            : 'repackaged.com.arakelian.elastic.${prefix}net.minidev.json',
-        'org.objectweb.asm'           : 'repackaged.com.arakelian.elastic.${prefix}org.objectweb.asm',
 
-        // guava is problematic downstream
-        'com.fasterxml.jackson.datatype.guava' : 'repackaged.com.arakelian.elastic.${prefix}com.fasterxml.jackson.datatype.guava'
-    ]
-    
-    errorproneCompilerOptions += [
-        "-XepExcludedPaths:.*/com/arakelian/elastic/search/parser/.*"
-    ]
-
-    proguardConfiguration {
-        keep includedescriptorclasses:true, 'class com.arakelian.** { *; }'
-        keep includedescriptorclasses:true, 'class **.fasterxml.jackson.datatype.guava.** { *; }'
-        keep includedescriptorclasses:true, 'class **.com.jayway.** { *; }'
-        keep includedescriptorclasses:true, 'class **.com.google.common.util.concurrent.TimeLimiter { *; }'
-        
-        // referenced by jayway but not used
-        dontwarn 'org.codehaus.jettison.json.**'
-        dontwarn 'com.google.gson.**'
-        dontwarn 'org.json.**'
-        dontwarn 'org.apache.tapestry5.json.**'
-        dontwarn '**.com.jayway.jsonpath.spi.json.JettisonProvider'
-        
-        dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
-        dontnote '**.org.apache.commons.lang3.ObjectUtils'
-        dontnote '**.com.google.common.util.concurrent.TimeLimiter'
-    }
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.excludedPaths = '(.*generated.*)|(.*/com/arakelian/elastic/search/parser/.*)'
 }
 
-test {
-    useJUnitPlatform()
-}
 
 dependencies {
-    processor 'org.immutables:value:2.8.8'
+    processor 'org.immutables:value:2.9.0-rc1'
     
     // annotations
-    compile 'org.immutables:value-annotations:2.8.8'
-
-    // configure errorprone version
-    errorprone 'com.google.errorprone:error_prone_core:2.3.4'
+    api 'org.immutables:value-annotations:2.9.0-rc1'
     
-    compile 'com.arakelian:more-commons:3.0.0'
-    compile 'com.arakelian:jackson-utils:3.4.0'
-    compile 'com.arakelian:json-filter:3.6.0'
-    compile 'com.arakelian:key-value-store:2.7.0'
-    compile 'com.arakelian:retry:3.9.0'
+    // configure errorprone version
+    errorprone 'com.google.errorprone:error_prone_core:2.9.0'
+    
+    api 'com.arakelian:more-commons:3.1.0'
+    api 'com.arakelian:jackson-utils:3.5.0'
+    api 'com.arakelian:json-filter:3.7.0'
+    api 'com.arakelian:retry:5.1.0'
     
     // caching
-    compile 'com.github.ben-manes.caffeine:caffeine:2.8.6'
+    api 'com.github.ben-manes.caffeine:caffeine:2.8.6'
 
     // shadow Guava due to frequent downstream incompatibility issues
-    shadow  'com.google.guava:guava:29.0-jre'
+    shadow  'com.google.guava:guava:31.0.1-jre'
 
     // we use Multimap in ElasticDocConfig; we shadow jackson's guava library
     // so we don't add downstream guava dependency
-    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.11.3') {
+    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.13.0') {
         exclude module: 'jackson-databind'
         exclude module: 'jackson-core'
     }
 
     // shadow stuff we use very little of, to reduce dependencies
-    shadow  'org.apache.commons:commons-lang3:3.11'
-    shadow  'commons-io:commons-io:2.8.0'
-    shadow  ('com.jayway.jsonpath:json-path:2.4.0') { exclude module: 'slf4j-api' }
+    shadow  'org.apache.commons:commons-lang3:3.12.0'
+    shadow  'commons-io:commons-io:2.11.0'
+    shadow  ('com.jayway.jsonpath:json-path:2.6.0') { exclude module: 'slf4j-api' }
 
     // third party
-    compile 'com.squareup.retrofit2:retrofit:2.8.1'
-    compile 'com.squareup.retrofit2:converter-scalars:2.8.1'
-    compile 'com.squareup.retrofit2:converter-jackson:2.8.1'
-    compile 'com.squareup.retrofit2:adapter-java8:2.8.1'
-    compile 'com.squareup.okhttp3:okhttp:4.7.2'
-    compile 'com.squareup.okhttp3:logging-interceptor:4.7.2'
-    compile 'com.lmax:disruptor:3.4.2'
+    api 'com.squareup.retrofit2:retrofit:2.9.0'
+    api 'com.squareup.retrofit2:converter-scalars:2.9.0'
+    api 'com.squareup.retrofit2:converter-jackson:2.9.0'
+    api 'com.squareup.retrofit2:adapter-java8:2.9.0'
+    api 'com.squareup.okhttp3:okhttp:4.7.2'
+    api 'com.squareup.okhttp3:logging-interceptor:4.7.2'
+    api 'com.lmax:disruptor:3.4.4'
 
-    antlr   'org.antlr:antlr4:4.7.2'
-    shadow  'org.antlr:antlr4-runtime:4.7.2'
+    antlr   'org.antlr:antlr4:4.9.2'
+    shadow  'org.antlr:antlr4-runtime:4.9.2'
     
     // logging
-    testCompile 'org.apache.logging.log4j:log4j-api:2.13.3'
-    testCompile 'org.apache.logging.log4j:log4j-core:2.13.3'
-    testCompile 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
-    testCompile 'org.slf4j:jcl-over-slf4j:1.7.30'
-    testCompile 'org.slf4j:jul-to-slf4j:1.7.30'
-    compile     'org.slf4j:slf4j-api:1.7.30'
+    testImplementation 'org.apache.logging.log4j:log4j-api:2.14.1'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+    testImplementation 'org.slf4j:jcl-over-slf4j:1.7.32'
+    testImplementation 'org.slf4j:jul-to-slf4j:1.7.32'
+    api                'org.slf4j:slf4j-api:1.7.32'
 
     // for unit testing
-    testCompile 'org.junit.jupiter:junit-jupiter:5.7.0'
-    testCompile 'net.javacrumbs.json-unit:json-unit:2.19.0'
-    testCompile 'com.arakelian:more-commons:3.0.0:tests'
-    testCompile 'com.arakelian:jackson-utils:3.4.0:tests'
-    testCompile 'org.testcontainers:testcontainers:1.14.3'
-    testCompile 'org.testcontainers:junit-jupiter:1.14.3'
-    testCompile 'com.arakelian:faker:3.8.0'
-    testCompile 'com.squareup.retrofit2:retrofit-mock:2.8.1'
-    testCompile 'javax.activation:activation:1.1.1'
+    testImplementation 'com.arakelian:more-commons:3.1.0:tests'
+    testImplementation 'com.arakelian:jackson-utils:3.5.0:tests'
+    testImplementation 'com.arakelian:faker:3.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'net.javacrumbs.json-unit:json-unit:2.28.0'
+    testImplementation 'org.testcontainers:testcontainers:1.16.0'
+    testImplementation 'org.testcontainers:junit-jupiter:1.16.0'
+    testImplementation 'com.squareup.retrofit2:retrofit-mock:2.9.0'
+    testImplementation 'javax.activation:activation:1.1.1'
+}
+
+shadowJar {
+    //task.mergeServiceFiles()
+
+    // we don't want poms for third-party stuff
+    exclude 'META-INF/maven/**/*'
+    exclude 'META-INF/**/*.SF'
+    exclude 'META-INF/**/*.DSA'
+    exclude 'META-INF/**/*.RSA'
+
+    // we are only shadowing 'shadow' dependencies
+    configurations = [
+        project.configurations.shadow
+    ]
+
+    relocate 'com.google.common',       'repackaged.com.arakelian.faker.com.google.common'
+    relocate 'com.google.thirdparty',   'repackaged.com.arakelian.faker.com.google.thirdparty'
+    relocate 'javax.annotation',        'repackaged.com.arakelian.faker.javax.annotation'
+    relocate 'org.apache.commons',      'repackaged.com.arakelian.faker.org.apache.commons'
+
+    relocate 'org.apache.commons',      'repackaged.com.arakelian.elastic.org.apache.commons'
+    relocate 'com.google.common',       'repackaged.com.arakelian.elastic.com.google.common'
+    relocate 'com.google.thirdparty',   'repackaged.com.arakelian.elastic.com.google.thirdparty'
+    relocate 'javax.annotation',        'repackaged.com.arakelian.elastic.javax.annotation'
+
+    // antlr
+    relocate 'org.stringtemplate',      'repackaged.com.arakelian.elastic.org.stringtemplate'
+    relocate 'org.antlr.v4',            'repackaged.com.arakelian.elastic.org.antlr.v4'
+
+    // jsonpath links in minidev and objectweb (see https://github.com/json-path/JsonPath/issues/274)
+    relocate 'com.jayway.jsonpath',     'repackaged.com.arakelian.elastic.com.jayway.jsonpath'
+    relocate 'net.minidev.asm',         'repackaged.com.arakelian.elastic.net.minidev.asm'
+    relocate 'net.minidev.json',        'repackaged.com.arakelian.elastic.net.minidev.json'
+    relocate 'org.objectweb.asm',       'repackaged.com.arakelian.elastic.org.objectweb.asm'
+
+    // guava is problematic downstream
+    relocate 'com.fasterxml.jackson.datatype.guava', 'repackaged.com.arakelian.elastic.com.fasterxml.jackson.datatype.guava'
+}
+
+minify {
+    // classes in this jar are minified and copied to output jar
+    injars shadowJar.archivePath
+    
+    // output jar
+    outjars project.ext.minifyJarFile
+    
+    // jars required on classpath at runtime, including Java runtime
+    libraryjars project.ext.libraryJars()
+
+    // classes that we need to keep
+    keep includedescriptorclasses:true, 'class com.arakelian.** { *; }'
+    keep includedescriptorclasses:true, 'class **.fasterxml.jackson.datatype.guava.** { *; }'
+    keep includedescriptorclasses:true, 'class **.com.jayway.** { *; }'
+    keep includedescriptorclasses:true, 'class **.com.google.common.util.concurrent.TimeLimiter { *; }'
+    
+    // referenced but not used
+    dontwarn 'org.codehaus.jettison.json.**'
+    dontwarn 'com.google.gson.**'
+    dontwarn 'org.json.**'
+    dontwarn 'org.apache.tapestry5.json.**'
+    dontwarn '**.com.jayway.jsonpath.spi.json.JettisonProvider'
+    dontnote '**.com.fasterxml.jackson.datatype.guava.deser.util.RangeFactory'
+    dontnote '**.org.apache.commons.lang3.ObjectUtils'
+    dontnote '**.com.google.common.util.concurrent.TimeLimiter'
 }

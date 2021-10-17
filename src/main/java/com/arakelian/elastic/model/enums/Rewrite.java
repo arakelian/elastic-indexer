@@ -18,6 +18,8 @@
 package com.arakelian.elastic.model.enums;
 
 /**
+ * Multi-term rewrite types
+ * 
  * @see <a href=
  *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-term-rewrite.html">Multiterm
  *      Rewrite</a>

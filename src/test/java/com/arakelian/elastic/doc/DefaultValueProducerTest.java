@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.DateUtils;
 import com.arakelian.elastic.model.Field;
-import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.jackson.model.GeoPointTest;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -43,6 +42,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 
+@SuppressWarnings("JavaUtilDate")
 public class DefaultValueProducerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultValueProducerTest.class);
 
@@ -99,7 +99,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testBinary() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.BINARY).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.BINARY).build();
 
         final ImmutableList<byte[]> outputs = ImmutableList.of("hello".getBytes(Charsets.UTF_8));
 
@@ -123,7 +123,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testBoolean() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.BOOLEAN).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.BOOLEAN).build();
 
         verifyDeserializer(
                 field,
@@ -165,7 +165,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testByte() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.BYTE).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.BYTE).build();
 
         verifyDeserializer(
                 field,
@@ -190,7 +190,7 @@ public class DefaultValueProducerTest {
     @Test
     @SuppressWarnings("PreferJavaTimeOverload")
     public void testDate() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.DATE).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.DATE).build();
 
         final ImmutableList<String> inputs = ImmutableList.of(
                 // see DateUtilsTest for examples
@@ -237,7 +237,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testDouble() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.DOUBLE).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.DOUBLE).build();
 
         verifyDeserializer(
                 field,
@@ -262,7 +262,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testFloat() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.FLOAT).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.FLOAT).build();
 
         verifyDeserializer(
                 field,
@@ -287,7 +287,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testGeopoint() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.GEO_POINT).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.GEO_POINT).build();
 
         verifyDeserializer(
                 field,
@@ -308,7 +308,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testInteger() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.INTEGER).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.INTEGER).build();
 
         verifyDeserializer(
                 field,
@@ -332,7 +332,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testLong() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.LONG).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.LONG).build();
 
         verifyDeserializer(
                 field,
@@ -356,7 +356,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testShort() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.SHORT).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.SHORT).build();
 
         verifyDeserializer(
                 field,
@@ -380,7 +380,7 @@ public class DefaultValueProducerTest {
 
     @Test
     public void testText() throws IOException {
-        final Field field = ImmutableField.builder().name("field").type(Type.TEXT).build();
+        final Field field = ImmutableField.builder().name("field").type(Field.Type.TEXT).build();
 
         verifyDeserializer(
                 field,

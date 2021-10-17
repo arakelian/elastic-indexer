@@ -33,7 +33,6 @@ import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.doc.plugins.ElasticDocBuilderPlugin;
 import com.arakelian.elastic.model.ElasticDocConfig;
 import com.arakelian.elastic.model.Field;
-import com.arakelian.elastic.model.Field.Type;
 import com.arakelian.elastic.model.JsonSelector;
 import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.utils.JsonNodeUtils;
@@ -322,7 +321,7 @@ public class ElasticDocBuilder {
         // - "1234 MAIN STREET"
         // - "1234 MAIN STREET APT 12345"
         // - "1234 MAIN STREET APT 12345 RESTON VA 20191"
-        if (field.getType() == Type.TEXT && CharSequence.class.isAssignableFrom(comparablesClass)) {
+        if (field.getType() == Field.Type.TEXT && CharSequence.class.isAssignableFrom(comparablesClass)) {
             CharSequence last = null;
             for (int i = 0; i < comparables.size(); i++) {
                 final CharSequence csq = (CharSequence) comparables.get(i);

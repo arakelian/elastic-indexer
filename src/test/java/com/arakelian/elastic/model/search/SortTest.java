@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.core.utils.SerializableTestUtils;
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.enums.SortMode;
 import com.arakelian.elastic.model.enums.SortOrder;
@@ -57,7 +57,7 @@ public class SortTest {
             .fieldName("field") //
             .order(SortOrder.DESC) //
             .mode(SortMode.MAX) //
-            .unmappedType(Type.DATE) //
+            .unmappedType(Field.Type.DATE) //
             .build();
 
     @SuppressWarnings("MutableConstantField")

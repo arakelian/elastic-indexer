@@ -29,7 +29,7 @@ import com.arakelian.elastic.doc.filters.ImmutableUppercase;
 import com.arakelian.elastic.doc.filters.Splitter;
 import com.arakelian.elastic.doc.filters.TokenFilter;
 import com.arakelian.elastic.model.ElasticDocConfig;
-import com.arakelian.elastic.model.Field.Type;
+import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.ImmutableElasticDocConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
@@ -156,7 +156,7 @@ public class ElasticDocBuilderTest {
                                                 .build())
                                 .addAdditionalTarget("reversePhone") //
                                 .ignoreMalformed(false) //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build()) //
                 .addField(
                         ImmutableField.builder() //
@@ -169,7 +169,7 @@ public class ElasticDocBuilderTest {
                                                 .build())
                                 .addTokenFilter(ImmutableReverse.of()) //
                                 .ignoreMalformed(false) //
-                                .type(Type.TEXT) //
+                                .type(Field.Type.TEXT) //
                                 .build()) //
                 .build();
 
@@ -194,7 +194,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("booleans") //
                                 .ignoreMalformed(false) //
-                                .type(Type.BOOLEAN) //
+                                .type(Field.Type.BOOLEAN) //
                                 .build())
                 .build();
 
@@ -215,7 +215,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("booleans") //
                                 .ignoreMalformed(false) //
-                                .type(Type.BOOLEAN) //
+                                .type(Field.Type.BOOLEAN) //
                                 .build()) //
                 .build();
 
@@ -237,7 +237,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("geopoint") //
                                 .ignoreMalformed(true) //
-                                .type(Type.GEO_POINT) //
+                                .type(Field.Type.GEO_POINT) //
                                 .build()) //
                 .build();
 
@@ -258,7 +258,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("base64") //
                                 .ignoreMalformed(true) //
-                                .type(Type.BINARY) //
+                                .type(Field.Type.BINARY) //
                                 .build()) //
                 .build();
 
@@ -279,7 +279,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.BYTE) //
+                                .type(Field.Type.BYTE) //
                                 .build()) //
                 .build();
 
@@ -300,7 +300,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("dates") //
                                 .ignoreMalformed(true) //
-                                .type(Type.DATE) //
+                                .type(Field.Type.DATE) //
                                 .build()) //
                 .build();
         final String date1 = DateUtils.toStringIsoFormat("2016-02-01");
@@ -323,7 +323,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.DOUBLE) //
+                                .type(Field.Type.DOUBLE) //
                                 .build()) //
                 .build();
 
@@ -344,7 +344,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.FLOAT) //
+                                .type(Field.Type.FLOAT) //
                                 .build()) //
                 .build();
 
@@ -366,7 +366,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.INTEGER) //
+                                .type(Field.Type.INTEGER) //
                                 .build()) //
                 .build();
 
@@ -387,7 +387,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.LONG) //
+                                .type(Field.Type.LONG) //
                                 .build()) //
                 .build();
 
@@ -408,7 +408,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("numbers") //
                                 .ignoreMalformed(true) //
-                                .type(Type.SHORT) //
+                                .type(Field.Type.SHORT) //
                                 .build()) //
                 .build();
 
@@ -429,7 +429,7 @@ public class ElasticDocBuilderTest {
                         ImmutableField.builder() //
                                 .name("price") //
                                 .ignoreMalformed(false) //
-                                .type(Type.DOUBLE) //
+                                .type(Field.Type.DOUBLE) //
                                 .build())
                 .build();
 
