@@ -71,6 +71,9 @@ public class SourceTest {
 
         // retrieve GeoPoint
         assertEquals(GeoPoint.of("drm3btev3e86"), SAMPLE.getGeoPoint("geopoint"));
+
+        // retrieve GeoPoint
+        assertEquals(null, SAMPLE.getGeoPoint("non-existant"));
     }
 
     @Test
