@@ -36,13 +36,13 @@ plugins {
 }
 
 group   = 'com.arakelian'
-version = '7.8.1'
+version = '7.9.0'
 
 
 apply from: "core.gradle"
 
 wrapper {
-    gradleVersion = '7.2'
+    gradleVersion = '7.3'
 }
 
 publishing.publications.mavenJava {
@@ -122,7 +122,7 @@ dependencies {
     api 'org.immutables:value-annotations:2.9.0-rc1'
     
     // configure errorprone version
-    errorprone 'com.google.errorprone:error_prone_core:2.9.0'
+    errorprone 'com.google.errorprone:error_prone_core:2.10.0'
     
     api 'com.arakelian:more-commons:3.1.0'
     api 'com.arakelian:jackson-utils:3.6.0'
@@ -180,7 +180,8 @@ dependencies {
 }
 
 shadowJar {
-    //task.mergeServiceFiles()
+    // need to update any META-INF/services to relocated class names
+    mergeServiceFiles()
 
     // we don't want poms for third-party stuff
     exclude 'META-INF/maven/**/*'
@@ -193,10 +194,10 @@ shadowJar {
         project.configurations.shadow
     ]
 
-    relocate 'com.google.common',       'repackaged.com.arakelian.faker.com.google.common'
-    relocate 'com.google.thirdparty',   'repackaged.com.arakelian.faker.com.google.thirdparty'
-    relocate 'javax.annotation',        'repackaged.com.arakelian.faker.javax.annotation'
-    relocate 'org.apache.commons',      'repackaged.com.arakelian.faker.org.apache.commons'
+    relocate 'com.google.common',       'repackaged.com.arakelian.elastic.com.google.common'
+    relocate 'com.google.thirdparty',   'repackaged.com.arakelian.elastic.com.google.thirdparty'
+    relocate 'javax.annotation',        'repackaged.com.arakelian.elastic.javax.annotation'
+    relocate 'org.apache.commons',      'repackaged.com.arakelian.elastic.org.apache.commons'
 
     relocate 'org.apache.commons',      'repackaged.com.arakelian.elastic.org.apache.commons'
     relocate 'com.google.common',       'repackaged.com.arakelian.elastic.com.google.common'

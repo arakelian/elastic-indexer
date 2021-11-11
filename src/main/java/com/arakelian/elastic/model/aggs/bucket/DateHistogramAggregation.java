@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 
 /**
- * A multi-bucket aggregation similar to @{link {@link HistogramAggregation}} except it can only be
+ * A multi-bucket aggregation similar to {@link HistogramAggregation} except it can only be
  * applied on date values.
  *
  * <p>
