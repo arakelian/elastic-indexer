@@ -62,8 +62,8 @@ public class ElasticDocBuilderTest {
                 "    \"city\": \"East Devin\",\n" + //
                 "    \"zipcode\": \"77081-9341\",\n" + //
                 "    \"location\": {\n" + //
-                "      \"lat\": \"-3.1352\",\n" + //
-                "      \"lon\": \"-25.6319\"\n" + //
+                "      \"lat\": -3.1352,\n" + //
+                "      \"lon\": -25.6319\n" + //
                 "    }\n" + //
                 "  },\n" + //
                 "  \"numbers\": {\n" + //

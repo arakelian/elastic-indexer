@@ -197,7 +197,7 @@ public class DefaultValueProducerTest {
                 "1515628964664", //
                 Long.toString(new Date().getTime()), //
                 Long.toString(System.currentTimeMillis()), //
-                Long.toString(DateUtils.nowWithZoneUtc().toEpochSecond()), //
+                Long.toString(DateUtils.nowWithZoneUtc().toInstant().toEpochMilli()), //
                 "\"2/29/2000\"", //
                 "\"2003/02/28\"", //
                 "\"February 28, 2003\"", //

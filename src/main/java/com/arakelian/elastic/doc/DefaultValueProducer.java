@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.BooleanUtils;
 
 import com.arakelian.core.utils.DateUtils;
+import com.arakelian.core.utils.DateUtils.EpochUnits;
 import com.arakelian.elastic.model.DateRange;
 import com.arakelian.elastic.model.DoubleRange;
 import com.arakelian.elastic.model.Field;
@@ -163,11 +164,10 @@ public class DefaultValueProducer implements ValueProducer {
         protected void handleValue(final Field field, final JsonNode node, final Consumer<Object> consumer)
                 throws ValueException {
             if (node.isIntegralNumber() && node.canConvertToLong()) {
-                // our implementation is smart about detecting epoch units (seconds, milliseconds,
-                // and microseconds)
+                // assume milliseconds which is what Java uses for dates (Unix timestamps are seconds)
                 final long val = node.longValue();
                 @SuppressWarnings("PreferJavaTimeOverload")
-                final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(val);
+                final ZonedDateTime value = DateUtils.toZonedDateTimeUtc(val, EpochUnits.MILLISECONDS);
                 if (value == null) {
                     malformed(field, node, null);
                 } else {
