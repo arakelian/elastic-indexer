@@ -119,8 +119,9 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "7.0.1", //
                 // "7.1.1", //
                 // "7.2.1", //
-                // "7.3.1" //
-                "7.9.2" };
+                // "7.3.1", //
+                // "7.9.2", //
+                "7.16.3" };
     }
 
     protected String elasticUrl;

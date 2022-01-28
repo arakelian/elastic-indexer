@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.9.2
+// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.9.3
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class QueryStringParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.9.2", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.9.3", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
