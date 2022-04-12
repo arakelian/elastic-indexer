@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.2.0'  // The ProGuard Gradle plugin.
+        classpath 'com.guardsquare:proguard-gradle:7.2.1'  // The ProGuard Gradle plugin.
     }
 }
 
@@ -17,7 +17,7 @@ plugins {
     id 'idea'
     
     // keep dependencies up-to-date!
-    id 'com.github.ben-manes.versions' version '0.41.0'
+    id 'com.github.ben-manes.versions' version '0.42.0'
 
     // useful for creating immutable java beans
     id 'org.inferred.processors' version '3.6.0'
@@ -36,13 +36,13 @@ plugins {
 }
 
 group   = 'com.arakelian'
-version = '7.9.2'
+version = '7.10.0'
 
 
 apply from: "core.gradle"
 
 wrapper {
-    gradleVersion = '7.3.3'
+    gradleVersion = '7.4.2'
 }
 
 publishing.publications.mavenJava {
@@ -122,22 +122,22 @@ dependencies {
     api 'org.immutables:value-annotations:2.9.0'
     
     // configure errorprone version
-    errorprone 'com.google.errorprone:error_prone_core:2.11.0'
+    errorprone 'com.google.errorprone:error_prone_core:2.12.1'
     
-    api 'com.arakelian:more-commons:3.3.0'
-    api 'com.arakelian:jackson-utils:3.7.1'
-    api 'com.arakelian:json-filter:3.9.1'
-    api 'com.arakelian:retry:5.2.0'
+    api 'com.arakelian:more-commons:3.4.0'
+    api 'com.arakelian:jackson-utils:3.8.0'
+    api 'com.arakelian:json-filter:3.10.0'
+    api 'com.arakelian:retry:5.3.0'
     
     // caching
     api 'com.github.ben-manes.caffeine:caffeine:2.9.3'
 
     // shadow Guava due to frequent downstream incompatibility issues
-    shadow  'com.google.guava:guava:31.0.1-jre'
+    shadow  'com.google.guava:guava:31.1-jre'
 
     // we use Multimap in ElasticDocConfig; we shadow jackson's guava library
     // so we don't add downstream guava dependency
-    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.13.1') {
+    shadow  ('com.fasterxml.jackson.datatype:jackson-datatype-guava:2.13.2') {
         exclude module: 'jackson-databind'
         exclude module: 'jackson-core'
     }
@@ -160,19 +160,19 @@ dependencies {
     shadow  'org.antlr:antlr4-runtime:4.9.3'
     
     // logging
-    testImplementation 'org.apache.logging.log4j:log4j-api:2.17.1'
-    testImplementation 'org.apache.logging.log4j:log4j-core:2.17.1'
-    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+    testImplementation 'org.apache.logging.log4j:log4j-api:2.17.2'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.17.2'
+    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     testImplementation 'org.slf4j:jcl-over-slf4j:1.7.32'
     testImplementation 'org.slf4j:jul-to-slf4j:1.7.32'
     api                'org.slf4j:slf4j-api:1.7.32'
 
     // for unit testing
-    testImplementation 'com.arakelian:more-commons:3.3.0:tests'
-    testImplementation 'com.arakelian:jackson-utils:3.7.1:tests'
-    testImplementation 'com.arakelian:faker:3.9.1'
+    testImplementation 'com.arakelian:more-commons:3.4.0:tests'
+    testImplementation 'com.arakelian:jackson-utils:3.8.0:tests'
+    testImplementation 'com.arakelian:faker:3.10.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-    testImplementation 'net.javacrumbs.json-unit:json-unit:2.28.0'
+    testImplementation 'net.javacrumbs.json-unit:json-unit:2.34.0'
     testImplementation 'org.testcontainers:testcontainers:1.16.3'
     testImplementation 'org.testcontainers:junit-jupiter:1.16.3'
     testImplementation 'com.squareup.retrofit2:retrofit-mock:2.9.0'

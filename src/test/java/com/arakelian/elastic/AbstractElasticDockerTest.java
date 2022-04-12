@@ -133,7 +133,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @SuppressWarnings({ "resource", "StaticAssignmentInConstructor" })
     public AbstractElasticDockerTest() {
         if (elastic == null) {
-            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.9.2") //
+            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.16.3") //
                     .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
                     .withEnv("http.host", "0.0.0.0") //
                     .withEnv("discovery.type", "single-node") //
