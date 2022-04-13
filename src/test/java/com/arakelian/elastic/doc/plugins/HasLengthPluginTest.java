@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.doc.ElasticDocBuilder;
+import com.arakelian.elastic.doc.ElasticDocBuilderImpl;
 import com.arakelian.elastic.model.Field;
 import com.arakelian.elastic.model.ImmutableElasticDocConfig;
 import com.arakelian.elastic.model.ImmutableField;
@@ -96,7 +97,7 @@ public class HasLengthPluginTest {
 
         LOGGER.info("Mapping: \n{}", JacksonUtils.toStringSafe(mapping, true));
 
-        docBuilder = new ElasticDocBuilder( //
+        docBuilder = new ElasticDocBuilderImpl( //
                 ImmutableElasticDocConfig.builder() //
                         .addPlugin(plugin) //
                         .mapping(mapping) //

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.arakelian.elastic.doc.ElasticDocBuilder;
+import com.arakelian.elastic.doc.ElasticDocBuilderImpl;
 import com.arakelian.elastic.model.ImmutableElasticDocConfig;
 import com.arakelian.elastic.model.ImmutableField;
 import com.arakelian.elastic.model.ImmutableMapping;
@@ -85,7 +86,7 @@ public class ComputeDigestPluginTest {
         // only include "name" field in Elastic document
         verifyDigest(
                 md5("Greg Arakelian"),
-                new ElasticDocBuilder(ImmutableElasticDocConfig.builder() //
+                new ElasticDocBuilderImpl(ImmutableElasticDocConfig.builder() //
                         .addPlugin(plugin) //
                         .mapping(mapping) //
                         .addIdentityField("name") //
@@ -97,7 +98,7 @@ public class ComputeDigestPluginTest {
         // only include "name" field in Elastic document
         verifyDigest(
                 md5("Greg Arakelian", "123 Main Street", "20001"),
-                new ElasticDocBuilder(ImmutableElasticDocConfig.builder() //
+                new ElasticDocBuilderImpl(ImmutableElasticDocConfig.builder() //
                         .addPlugin(plugin) //
                         .mapping(mapping) //
                         .addIdentityFields("name", "street", "zip") //
