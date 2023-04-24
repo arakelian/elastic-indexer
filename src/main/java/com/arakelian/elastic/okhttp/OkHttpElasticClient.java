@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic;
+package com.arakelian.elastic.okhttp;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -26,6 +26,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.arakelian.elastic.ElasticClient;
+import com.arakelian.elastic.ElasticException;
+import com.arakelian.elastic.ElasticHttpException;
+import com.arakelian.elastic.ElasticNotFoundException;
 import com.arakelian.elastic.model.About;
 import com.arakelian.elastic.model.BulkResponse;
 import com.arakelian.elastic.model.ClusterHealth;
@@ -89,19 +93,21 @@ public class OkHttpElasticClient implements ElasticClient {
         }
 
         public T failure(final Response response) throws ElasticHttpException {
+            OkHttpElasticResponse resp = new OkHttpElasticResponse(response);
+
             if (response.code() == 404) {
                 try {
                     // retrofit treats 404 like error but they are not as far as Elastic is
                     // concerned; often it will return a body that matches expected type
                     final ResponseBody errorBody = response.errorBody();
                     final T result = toResponse(errorBody != null ? errorBody.string() : null);
-                    throw new ElasticNotFoundException(response, result);
+                    throw new ElasticNotFoundException(resp, result);
                 } catch (final IOException e) {
-                    throw new ElasticNotFoundException(response);
+                    throw new ElasticNotFoundException(resp);
                 }
             }
 
-            throw new ElasticHttpException(response);
+            throw new ElasticHttpException(resp);
         }
 
         @Override

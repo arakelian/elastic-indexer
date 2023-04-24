@@ -26,10 +26,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.arakelian.elastic.DefaultOkHttpElasticApiFactory;
 import com.arakelian.elastic.ElasticClient;
 import com.arakelian.elastic.ElasticHttpException;
-import com.arakelian.elastic.OkHttpElasticClient;
+import com.arakelian.elastic.ElasticResponse;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Elastic.Version5.Version52;
 import com.arakelian.elastic.Views.Elastic.Version5.Version53;
@@ -69,8 +68,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 
-import okhttp3.OkHttpClient;
-import retrofit2.Response;
 
 public class ElasticClientUtils {
     /**
@@ -128,16 +125,6 @@ public class ElasticClientUtils {
         final SimpleModule module = new SimpleModule();
         module.addSerializer(Index.class, new WithoutNameSerializer(delegate));
         mapper.registerModule(module);
-    }
-
-    public static ElasticClient createElasticClient(
-            final String elasticUrl,
-            final OkHttpClient client,
-            final ObjectMapper objectMapper,
-            final VersionComponents version) {
-
-        return new OkHttpElasticClient(elasticUrl, new DefaultOkHttpElasticApiFactory(client), objectMapper,
-                version);
     }
 
     public static <T> Retryer<T> createElasticRetryer() {
@@ -238,7 +225,7 @@ public class ElasticClientUtils {
      *            response from last call to Elastic
      * @return true if call to Elastic should be retried.
      */
-    public static boolean retryIfResponse(final Response<?> response) {
+    public static boolean retryIfResponse(final ElasticResponse response) {
         return response != null ? ElasticClientUtils.retryIfResponse(response.code()) : false;
     }
 

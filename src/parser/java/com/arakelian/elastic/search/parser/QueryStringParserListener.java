@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.9.3
+// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.12.0
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;

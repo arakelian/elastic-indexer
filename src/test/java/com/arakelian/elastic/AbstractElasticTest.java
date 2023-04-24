@@ -43,6 +43,7 @@ import com.arakelian.elastic.model.Mapping;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.utils.ElasticClientUtils;
+import com.arakelian.elastic.utils.OkHttpElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 import okhttp3.OkHttpClient;
@@ -113,7 +114,7 @@ public abstract class AbstractElasticTest {
 
     protected final VersionComponents waitForElasticReady(final OkHttpClient client) {
         // configure Retrofit
-        final ElasticClient elasticClient = ElasticClientUtils
+        final ElasticClient elasticClient = OkHttpElasticClientUtils
                 .createElasticClient(getElasticUrl(), client, JacksonUtils.getObjectMapper(), null);
 
         // wait for connection

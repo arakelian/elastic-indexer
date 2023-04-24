@@ -34,6 +34,11 @@ or search APIs, we strive to maintain backwards compatiblity with old versions o
 deployments of Elastic (like the ones this library operates in) often operate on much longer upgrade cycles than smaller installations
 of Elastic.
 
+## Requirements
+
+* Versions < 8.0.0 require Java 8+
+* Version 8+ require Java 11+
+
 ## Installation
 
 The library is available on [Maven Central](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.arakelian%22%20AND%20a%3A%22elastic-indexer%22).
@@ -59,7 +64,7 @@ Add the following to your `pom.xml`:
 <dependency>
     <groupId>com.arakelian</groupId>
     <artifactId>elastic-indexer</artifactId>
-    <version>7.10.0</version>
+    <version>8.0.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -74,7 +79,7 @@ repositories {
 }
 
 dependencies {
-  testCompile 'com.arakelian:elastic-indexer:7.10.0'
+  testCompile 'com.arakelian:elastic-indexer:8.0.0'
 }
 ```
 

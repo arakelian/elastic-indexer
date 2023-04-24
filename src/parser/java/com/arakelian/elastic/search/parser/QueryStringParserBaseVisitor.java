@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.9.3
+// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.12.0
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;
@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * @param <T> The return type of the visit operation. Use {@link Void} for
  * operations with no return type.
  */
+@SuppressWarnings("CheckReturnValue")
 public class QueryStringParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements QueryStringParserVisitor<T> {
 	/**
 	 * {@inheritDoc}

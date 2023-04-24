@@ -1,4 +1,4 @@
-// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.9.3
+// Generated from com/arakelian/elastic/search/parser/QueryStringParser.g4 by ANTLR 4.12.0
 
 // @formatter:off
 package com.arakelian.elastic.search.parser;
@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
  */
+@SuppressWarnings("CheckReturnValue")
 public class QueryStringParserBaseListener implements QueryStringParserListener {
 	/**
 	 * {@inheritDoc}

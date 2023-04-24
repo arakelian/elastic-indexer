@@ -59,10 +59,11 @@ import com.arakelian.elastic.model.search.Search;
 import com.arakelian.elastic.model.search.SearchHits;
 import com.arakelian.elastic.model.search.SearchResponse;
 import com.arakelian.elastic.model.search.Source;
+import com.arakelian.elastic.okhttp.GzipRequestInterceptor;
 import com.arakelian.elastic.refresh.DefaultRefreshLimiter;
 import com.arakelian.elastic.refresh.ImmutableRefreshLimiterConfig;
 import com.arakelian.elastic.refresh.RefreshLimiter;
-import com.arakelian.elastic.utils.ElasticClientUtils;
+import com.arakelian.elastic.utils.OkHttpElasticClientUtils;
 import com.arakelian.faker.model.Person;
 import com.arakelian.faker.service.RandomPerson;
 import com.arakelian.jackson.utils.JacksonUtils;
@@ -121,7 +122,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "7.2.1", //
                 // "7.3.1", //
                 // "7.9.2", //
-                "7.16.3" };
+                // "7.16.3", //
+                "7.17.9" };
     }
 
     protected String elasticUrl;
@@ -133,7 +135,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @SuppressWarnings({ "resource", "StaticAssignmentInConstructor" })
     public AbstractElasticDockerTest() {
         if (elastic == null) {
-            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.16.3") //
+            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.17.9") //
                     .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
                     .withEnv("http.host", "0.0.0.0") //
                     .withEnv("discovery.type", "single-node") //
@@ -430,7 +432,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
         // create API-specific elastic client
         final VersionComponents version = waitForElasticReady(client);
-        elasticClient = ElasticClientUtils.createElasticClient(
+        elasticClient = OkHttpElasticClientUtils.createElasticClient(
                 elasticUrl, //
                 client, //
                 JacksonUtils.getObjectMapper(), //

@@ -15,18 +15,19 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic;
+package com.arakelian.elastic.okhttp;
 
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.arakelian.elastic.ElasticClient;
 import com.arakelian.elastic.model.VersionComponents;
 import com.arakelian.elastic.model.enums.SearchType;
 import com.arakelian.elastic.model.search.ImmutableSearch;
 import com.arakelian.elastic.model.search.SearchResponse;
-import com.arakelian.elastic.utils.ElasticClientUtils;
+import com.arakelian.elastic.utils.OkHttpElasticClientUtils;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 import okhttp3.MediaType;
@@ -60,7 +61,7 @@ public class DefaultOkHttpElasticApiFactoryTest {
                 }) //
                 .build();
 
-        final ElasticClient elasticClient = ElasticClientUtils.createElasticClient(
+        final ElasticClient elasticClient = OkHttpElasticClientUtils.createElasticClient(
                 "http://localhost:8080",
                 okHttpClient,
                 JacksonUtils.getObjectMapper(),

@@ -25,17 +25,14 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.arakelian.jackson.utils.JacksonUtils;
 
-import retrofit2.Response;
-
 public class ElasticHttpException extends ElasticException {
-    private static String message(final Response response) {
+    private static String message(final ElasticResponse response) {
         final int statusCode = response.code();
         final String statusMessage = response.message();
 
         String error;
         try {
-            final Map map = JacksonUtils.getObjectMapper()
-                    .readValue(response.errorBody().string(), Map.class);
+            final Map map = JacksonUtils.getObjectMapper().readValue(response.errorBody(), Map.class);
             error = Objects.toString(map.get("error"), null);
         } catch (final IOException e) {
             // fall through
@@ -66,16 +63,16 @@ public class ElasticHttpException extends ElasticException {
 
     private final String statusMessage;
 
-    public ElasticHttpException(final Response response) {
+    public ElasticHttpException(final ElasticResponse response) {
         this(response, null);
     }
 
-    public ElasticHttpException(final Response response, final Object body) {
+    public ElasticHttpException(final ElasticResponse response, final Object body) {
         super(message(response));
 
         String errorBody;
         try {
-            errorBody = response.errorBody().string();
+            errorBody = response.errorBody();
         } catch (final IOException e) {
             errorBody = StringUtils.EMPTY;
         }

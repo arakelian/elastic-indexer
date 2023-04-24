@@ -27,13 +27,13 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.arakelian.elastic.MockOkHttpElasticApi;
-import com.arakelian.elastic.OkHttpElasticApi;
-import com.arakelian.elastic.OkHttpElasticClient;
 import com.arakelian.elastic.model.ImmutableRefresh;
 import com.arakelian.elastic.model.ImmutableShards;
 import com.arakelian.elastic.model.Refresh;
 import com.arakelian.elastic.model.VersionComponents;
+import com.arakelian.elastic.okhttp.MockOkHttpElasticApi;
+import com.arakelian.elastic.okhttp.OkHttpElasticApi;
+import com.arakelian.elastic.okhttp.OkHttpElasticClient;
 import com.arakelian.jackson.utils.JacksonUtils;
 
 import retrofit2.Call;

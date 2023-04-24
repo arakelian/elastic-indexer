@@ -17,14 +17,12 @@
 
 package com.arakelian.elastic;
 
-import retrofit2.Response;
-
 public class ElasticNotFoundException extends ElasticHttpException {
-    public ElasticNotFoundException(final Response response) {
+    public ElasticNotFoundException(final ElasticResponse response) {
         super(response);
     }
 
-    public ElasticNotFoundException(final Response response, final Object body) {
+    public ElasticNotFoundException(final ElasticResponse response, final Object body) {
         super(response, body);
     }
 }

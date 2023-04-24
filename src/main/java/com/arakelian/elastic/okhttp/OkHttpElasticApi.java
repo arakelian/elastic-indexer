@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.arakelian.elastic;
+package com.arakelian.elastic.okhttp;
 
 import com.arakelian.elastic.model.About;
 import com.arakelian.elastic.model.BulkResponse;
