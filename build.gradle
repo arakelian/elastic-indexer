@@ -24,7 +24,7 @@ plugins {
 }
 
 group   = 'com.arakelian'
-version = '8.0.0'
+version = '8.0.1'
 
 
 apply from: "core.gradle"
@@ -104,10 +104,10 @@ dependencies {
     // configure errorprone version
     errorprone 'com.google.errorprone:error_prone_core:2.18.0'
     
-    api 'com.arakelian:more-commons:4.0.0'
-    api 'com.arakelian:jackson-utils:4.0.0'
-    api 'com.arakelian:json-filter:4.0.0'
-    api 'com.arakelian:retry:6.0.0'
+    api 'com.arakelian:more-commons:4.0.1'
+    api 'com.arakelian:jackson-utils:4.0.1'
+    api 'com.arakelian:json-filter:4.0.1'
+    api 'com.arakelian:retry:6.0.1'
     
     // caching
     api 'com.github.ben-manes.caffeine:caffeine:3.1.6'
