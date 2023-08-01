@@ -37,14 +37,14 @@ public class ShardsTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testJackson(String version) throws IOException {
+    public void testJackson(final String version) throws IOException {
         configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, Shards.class);
     }
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testSerializable(String version) {
+    public void testSerializable(final String version) {
         configure(version);
         SerializableTestUtils.testSerializable(MINIMAL, Shards.class);
     }

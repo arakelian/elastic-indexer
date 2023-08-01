@@ -14,7 +14,8 @@ ext {
     macros = [
         'all' : [
             'clean',
-            'classpath',
+            'eclipseClasspath',
+            'eclipseFactoryPath',
             'build',
             'minify',
             'generatePomFileForInternalPublication',    // needed to generate internal POM

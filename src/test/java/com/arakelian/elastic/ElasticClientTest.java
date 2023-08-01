@@ -56,7 +56,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         // delete document with external version
         final long deleteMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
         final DeletedDocument deleted = assertSuccessful( //
-                elasticClient.deleteDocument( //
+                getElasticClient().deleteDocument( //
                         index.getName(), //
                         _DOC, //
                         id, //
@@ -76,7 +76,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
         // index document
         final long updateMillis = DateUtils.nowWithZoneUtc().toInstant().toEpochMilli();
         final IndexedDocument response = assertSuccessful( //
-                elasticClient.indexDocument( //
+                getElasticClient().indexDocument( //
                         index.getName(), //
                         _DOC, //
                         person.getId(), //
@@ -96,7 +96,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
     @Test
     public void testClusterHealth() {
         final ClusterHealth health = assertSuccessful(
-                elasticClient.clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT));
+                getElasticClient().clusterHealth(Status.YELLOW, DEFAULT_TIMEOUT));
         LOGGER.info("{}", health);
 
         assertEquals("docker-cluster", health.getClusterName());
@@ -109,22 +109,21 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
     @Test
     public void testDeleteAll() {
-        final IndexDeleted response = assertSuccessful(elasticClient.deleteAllIndexes());
+        final IndexDeleted response = assertSuccessful(getElasticClient().deleteAllIndexes());
         LOGGER.info("deleteAllIndexes: {}", response);
     }
 
     @Test
     public void testDeleteNonExistantDocument() throws IOException {
-        withPersonIndex(
-                index -> {
-                    // verify can delete non-existant record
-                    try {
-                        elasticClient.deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
-                        Assertions.fail("Delete of non-existant document should have thrown 404");
-                    } catch (final ElasticNotFoundException e) {
-                        // successful
-                    }
-                });
+        withPersonIndex(index -> {
+            // verify can delete non-existant record
+            try {
+                getElasticClient().deleteDocument(index.getName(), _DOC, MoreStringUtils.shortUuid());
+                Assertions.fail("Delete of non-existant document should have thrown 404");
+            } catch (final ElasticNotFoundException e) {
+                // successful
+            }
+        });
     }
 
     @Test
@@ -194,7 +193,7 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
             // we should have received response for each record, whether found or not
             final Mget mget = builder.build();
-            final Documents documents = assertSuccessful(elasticClient.getDocuments(mget));
+            final Documents documents = assertSuccessful(getElasticClient().getDocuments(mget));
             assertNotNull(documents);
             assertEquals(mget.getDocs().size(), documents.getDocs().size());
         });
@@ -202,13 +201,13 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
     @Test
     public void testNodes() {
-        final Nodes response = assertSuccessful(elasticClient.nodes());
+        final Nodes response = assertSuccessful(getElasticClient().nodes());
         LOGGER.info("nodes: {}", response);
     }
 
     @Test
     public void testRefreshAll() {
-        final Refresh response = assertSuccessful(elasticClient.refreshAllIndexes());
+        final Refresh response = assertSuccessful(getElasticClient().refreshAllIndexes());
         LOGGER.info("refreshAllIndexes: {}", response);
     }
 }

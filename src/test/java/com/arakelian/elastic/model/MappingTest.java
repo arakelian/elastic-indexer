@@ -49,14 +49,14 @@ public class MappingTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testJackson(String version) throws IOException {
+    public void testJackson(final String version) throws IOException {
         configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, CONTACT, Mapping.class);
     }
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testNormalization(String version) {
+    public void testNormalization(final String version) {
         configure(version);
 
         // getFields() and getProperties() should refer to same list of fields
@@ -78,7 +78,7 @@ public class MappingTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testSerializable(String version) {
+    public void testSerializable(final String version) {
         configure(version);
         SerializableTestUtils.testSerializable(CONTACT, Mapping.class);
     }

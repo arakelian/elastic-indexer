@@ -62,7 +62,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
         int id = 0;
         for (final String row : rows) {
             assertSuccessful( //
-                    elasticClient.indexDocument(
+                    getElasticClient().indexDocument(
                             index.getName(), //
                             type,
                             Integer.toString(++id),
@@ -273,7 +273,7 @@ public class ElasticClientAggregationsTest extends AbstractElasticDockerTest {
             assertEquals(3.966d, agg.getDouble("location/lon"), 0.001d);
 
             // started version 5.5
-            final VersionComponents version = elasticClient.getVersion();
+            final VersionComponents version = getElasticClient().getVersion();
             if (version.atLeast(5, 5, 0)) {
                 assertEquals(6d, agg.getDouble("count"), 0.001d);
             }

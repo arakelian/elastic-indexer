@@ -34,7 +34,7 @@ public class ElasticDocConfigTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testJackson(String version) throws IOException {
+    public void testJackson(final String version) throws IOException {
         configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, ElasticDocConfig.class);
     }

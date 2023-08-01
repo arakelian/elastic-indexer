@@ -200,6 +200,7 @@ public class DefaultValueProducerTest {
                 Long.toString(DateUtils.nowWithZoneUtc().toInstant().toEpochMilli()), //
                 "\"2/29/2000\"", //
                 "\"2003/02/28\"", //
+                "\"1951-07-29\"", //
                 "\"February 28, 2003\"", //
                 "\"2016-12-21T16:46:39.830000000Z\"", //
                 "\"sep 4 2016\"", //

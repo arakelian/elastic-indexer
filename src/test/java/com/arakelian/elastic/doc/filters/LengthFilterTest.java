@@ -54,7 +54,8 @@ public class LengthFilterTest {
     public void testIso2() {
         Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("u", new TokenCollector()).get());
         Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("usa", new TokenCollector()).get());
-        Assertions.assertEquals(ImmutableList.of(), LEN_2.accept("united states", new TokenCollector()).get());
+        Assertions
+                .assertEquals(ImmutableList.of(), LEN_2.accept("united states", new TokenCollector()).get());
         Assertions.assertEquals(ImmutableList.of("us"), LEN_2.accept("us", new TokenCollector()).get());
     }
 

@@ -123,13 +123,13 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                 // "7.3.1", //
                 // "7.9.2", //
                 // "7.16.3", //
-                "7.17.9" };
+                // "7.17.10", //
+                "8.8.1" };
     }
 
-    protected String elasticUrl;
-    protected ElasticClient elasticClient;
-    protected ElasticClientWithRetry elasticClientWithRetry;
-
+    private String elasticUrl;
+    private ElasticClient elasticClient;
+    private ElasticClientWithRetry elasticClientWithRetry;
     private DefaultRefreshLimiter refreshLimiter;
 
     @SuppressWarnings({ "resource", "StaticAssignmentInConstructor" })
@@ -407,14 +407,30 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         return result;
     }
 
+    protected void setElasticClient(final ElasticClient elasticClient) {
+        this.elasticClient = elasticClient;
+    }
+
+    protected void setElasticClientWithRetry(final ElasticClientWithRetry elasticClientWithRetry) {
+        this.elasticClientWithRetry = elasticClientWithRetry;
+    }
+
+    protected void setElasticUrl(final String elasticUrl) {
+        this.elasticUrl = elasticUrl;
+        LOGGER.info("Elastic host: {}", elasticUrl);
+    }
+
+    protected void setRefreshLimiter(final DefaultRefreshLimiter refreshLimiter) {
+        this.refreshLimiter = refreshLimiter;
+    }
+
     @BeforeEach
     public void setupElastic() {
         // there is nothing in the log that we can wait for to indicate that Elastic
         // is really available; even after the logs indicate that it has started, it
         // may not respond to requests for a few seconds. We use /_cluster/health API as
         // a means of more reliably determining availability.
-        elasticUrl = "http://" + elastic.getHost() + ":" + elastic.getMappedPort(9200);
-        LOGGER.info("Elastic host: {}", elasticUrl);
+        setElasticUrl("http://" + elastic.getHost() + ":" + elastic.getMappedPort(9200));
 
         final HttpLoggingInterceptor logger = new HttpLoggingInterceptor(message -> {
             if (!StringUtils.isEmpty(message)) {
@@ -432,20 +448,22 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
         // create API-specific elastic client
         final VersionComponents version = waitForElasticReady(client);
-        elasticClient = OkHttpElasticClientUtils.createElasticClient(
-                elasticUrl, //
-                client, //
-                JacksonUtils.getObjectMapper(), //
-                version);
-        elasticClientWithRetry = new ElasticClientWithRetry(elasticClient);
+        setElasticClient(
+                OkHttpElasticClientUtils.createElasticClient(
+                        elasticUrl, //
+                        client, //
+                        JacksonUtils.getObjectMapper(), //
+                        version));
+        setElasticClientWithRetry(new ElasticClientWithRetry(elasticClient));
 
         // create refresh limiter
-        refreshLimiter = new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
-                .coreThreads(1) //
-                .maximumThreads(1) //
-                .defaultPermitsPerSecond(1.0) //
-                .build(), //
-                getElasticClient());
+        setRefreshLimiter(
+                new DefaultRefreshLimiter(ImmutableRefreshLimiterConfig.builder() //
+                        .coreThreads(1) //
+                        .maximumThreads(1) //
+                        .defaultPermitsPerSecond(1.0) //
+                        .build(), //
+                        getElasticClient()));
     }
 
     protected void withPeople(final int numberOfPeople, final WithPeopleCallback callback)

@@ -37,7 +37,7 @@ public class IndexDeletedTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testJackson(String version) throws IOException {
+    public void testJackson(final String version) throws IOException {
         configure(version);
         JacksonTestUtils.testReadWrite(objectMapper, MINIMAL, IndexDeleted.class);
         JacksonTestUtils.testReadWrite(objectMapper, FULL, IndexDeleted.class);
@@ -45,7 +45,7 @@ public class IndexDeletedTest extends AbstractElasticModelTest {
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("data")
-    public void testSerializable(String version) {
+    public void testSerializable(final String version) {
         configure(version);
         SerializableTestUtils.testSerializable(MINIMAL, IndexDeleted.class);
         SerializableTestUtils.testSerializable(FULL, IndexDeleted.class);
