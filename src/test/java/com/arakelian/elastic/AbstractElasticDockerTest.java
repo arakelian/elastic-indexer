@@ -95,38 +95,6 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
 
     public static final String _DOC = Mapping._DOC;
 
-    /**
-     * Returns list of Elastic versions that we want to test
-     *
-     * @return list of Elastic versions that we want to test
-     * @see <a href="https://www.docker.elastic.co">Docker Images</a>
-     */
-    public static Object[] data() {
-        return new Object[] { //
-                // "5.2.1", //
-                // "5.3.3", //
-                // "5.4.3", //
-                // "5.5.3", //
-                // "5.6.16", //
-                // "6.0.1", //
-                // "6.1.4", //
-                // "6.2.4", //
-                // "6.3.2", //
-                // "6.4.2", //
-                // "6.5.4", //
-                // "6.6.2", //
-                // "6.7.2", //
-                // "6.8.2", //
-                // "7.0.1", //
-                // "7.1.1", //
-                // "7.2.1", //
-                // "7.3.1", //
-                // "7.9.2", //
-                // "7.16.3", //
-                // "7.17.10", //
-                "8.8.1" };
-    }
-
     private String elasticUrl;
     private ElasticClient elasticClient;
     private ElasticClientWithRetry elasticClientWithRetry;
@@ -135,7 +103,7 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     @SuppressWarnings({ "resource", "StaticAssignmentInConstructor" })
     public AbstractElasticDockerTest() {
         if (elastic == null) {
-            elastic = new GenericContainer<>("docker.elastic.co/elasticsearch/elasticsearch:7.17.9") //
+            elastic = new GenericContainer<>(getDockerImageName()) //
                     .withExposedPorts(ELASTICSEARCH_DEFAULT_PORT) //
                     .withEnv("http.host", "0.0.0.0") //
                     .withEnv("discovery.type", "single-node") //
@@ -377,6 +345,10 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
         if (refreshLimiter != null) {
             refreshLimiter.close();
         }
+    }
+
+    protected String getDockerImageName() {
+        return "docker.elastic.co/elasticsearch/elasticsearch:7.17.9";
     }
 
     @Override
