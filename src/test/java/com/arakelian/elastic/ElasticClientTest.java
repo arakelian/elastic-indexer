@@ -62,7 +62,8 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
                         id, //
                         deleteMillis));
         assertEquals(index.getName(), deleted.getIndex());
-        assertEquals(_DOC, deleted.getType());
+        // type removed in Elastic 8+
+        assertTrue(_DOC.equals(deleted.getType()) || deleted.getType() == null);
         assertEquals(id, deleted.getId());
         assertEquals(id, deleted.getId());
         assertEquals("deleted", deleted.getResult());
@@ -85,7 +86,8 @@ public class ElasticClientTest extends AbstractElasticDockerTest {
 
         // verify response
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(_DOC, response.getType());
+        // type removed in Elastic 8+
+        assertTrue(_DOC.equals(response.getType()) || response.getType() == null);
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(updateMillis), response.getVersion());

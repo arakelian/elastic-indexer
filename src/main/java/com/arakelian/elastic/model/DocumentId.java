@@ -19,9 +19,11 @@ package com.arakelian.elastic.model;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic.Version6;
+import com.arakelian.elastic.jackson.OmitObsolete8StringSerializer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonPropertyOrder({ "_index", "_type", "_id", "_shards", "_seq_no", "_primary_term" })
 public interface DocumentId {
@@ -45,6 +47,9 @@ public interface DocumentId {
     @JsonProperty("_shards")
     public Shards getShards();
 
+    // type removed in Elastic 8+
+    @Nullable
     @JsonProperty("_type")
+    @JsonSerialize(using = OmitObsolete8StringSerializer.class)
     public String getType();
 }

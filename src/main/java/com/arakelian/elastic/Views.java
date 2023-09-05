@@ -20,6 +20,7 @@ package com.arakelian.elastic;
 import com.arakelian.elastic.Views.Elastic.Version5;
 import com.arakelian.elastic.Views.Elastic.Version6;
 import com.arakelian.elastic.Views.Elastic.Version7;
+import com.arakelian.elastic.Views.Elastic.Version8;
 import com.arakelian.elastic.model.VersionComponents;
 
 public class Views {
@@ -157,6 +158,13 @@ public class Views {
             }
         }
 
+        public static class Version8 extends Elastic {
+            @Override
+            public VersionComponents getVersion() {
+                return VersionComponents.of(8, 0);
+            }
+        }
+
         @Override
         public abstract VersionComponents getVersion();
     }
@@ -177,4 +185,6 @@ public class Views {
     public static final Version6 VERSION_6 = new Version6();
 
     public static final Version7 VERSION_7 = new Version7();
+
+    public static final Version8 VERSION_8 = new Version8();
 }

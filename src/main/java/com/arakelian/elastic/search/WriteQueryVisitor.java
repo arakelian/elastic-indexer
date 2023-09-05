@@ -132,7 +132,9 @@ public class WriteQueryVisitor extends AbstractVisitor implements QueryVisitor {
             writer.writeEndObject(); // field
 
             writeFieldValue("validation_method", geoBoundingBox.getValidationMethod());
-            writeFieldValue("type", geoBoundingBox.getType());
+            if (!version.atLeast(8, 0, 0)) {
+                writeFieldValue("type", geoBoundingBox.getType());
+            }
 
             writer.writeEndObject(); // geo_bounding_box
         } catch (final IOException e) {

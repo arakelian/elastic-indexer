@@ -86,6 +86,15 @@ public class BulkIndexerTest extends AbstractElasticDockerTest {
                 // corresponds to the update date of the person
                 ingester.index(people);
 
+                // when deleting records, the version number will default to current time;
+                // that version number must be greater than the version number used for insert
+                for (final long start = System.currentTimeMillis();;) {
+                    final long now = System.currentTimeMillis();
+                    if (now > start + 1000) {
+                        break;
+                    }
+                }
+
                 // when deleting the documents, we will use a version timestamp that is equal to the
                 // current time
                 ingester.delete(people);
@@ -103,7 +112,19 @@ public class BulkIndexerTest extends AbstractElasticDockerTest {
             try (final BulkIndexer indexer = tmp = createPersonIndexer()) {
                 final BulkIngester ingester = createPersonIngester(index, indexer);
                 assertTrue(indexer.isIdle());
+
+                // insert a bunch of records
                 ingester.index(RandomPerson.get().listOf(10));
+
+                // when deleting records, the version number will default to current time;
+                // that version number must be greater than the version number used for insert
+                for (final long start = System.currentTimeMillis();;) {
+                    final long now = System.currentTimeMillis();
+                    if (now > start + 1000) {
+                        break;
+                    }
+                }
+
                 while (people.hasNext()) {
                     ingester.delete(people.next());
                 }

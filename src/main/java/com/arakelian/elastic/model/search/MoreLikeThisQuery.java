@@ -23,6 +23,7 @@ import java.util.Set;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.jackson.OmitObsolete8StringSerializer;
 import com.arakelian.elastic.search.QueryVisitor;
 import com.arakelian.jackson.MapPath;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -73,6 +74,7 @@ public interface MoreLikeThisQuery extends StandardQuery {
 
         @Nullable
         @JsonProperty("_type")
+        @JsonSerialize(using = OmitObsolete8StringSerializer.class)
         public String getType();
     }
 

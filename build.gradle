@@ -24,7 +24,7 @@ plugins {
 }
 
 group   = 'com.arakelian'
-version = '8.1.1'
+version = '8.5.0'
 
 
 apply from: "core.gradle"

@@ -264,11 +264,6 @@ public class BulkIndexer implements Closeable {
                         "Response id %s did not match request type %s",
                         response.getId(),
                         op.getId());
-                Preconditions.checkState(
-                        StringUtils.equals(op.getType(), response.getType()),
-                        "Response type %s did not match request type %s",
-                        response.getType(),
-                        op.getType());
 
                 // collect operations that we can retry
                 retries.incrementAndGet();

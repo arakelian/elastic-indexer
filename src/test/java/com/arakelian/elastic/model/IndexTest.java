@@ -52,7 +52,6 @@ public class IndexTest extends AbstractElasticModelTest {
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"include_in_all\" : true,\n" + //
             "          \"fields\" : {\n" + //
             "            \"raw\" : {\n" + //
@@ -68,28 +67,24 @@ public class IndexTest extends AbstractElasticModelTest {
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"include_in_all\" : true\n" + //
             "        },\n" + //
             "        \"city\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"include_in_all\" : true\n" + //
             "        },\n" + //
             "        \"state\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"include_in_all\" : true\n" + //
             "        },\n" + //
             "        \"zip\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"include_in_all\" : true\n" + //
             "        }\n" + //
             "      }\n" + //
@@ -113,7 +108,6 @@ public class IndexTest extends AbstractElasticModelTest {
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
             "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false,\n" + //
             "          \"fields\" : {\n" + //
             "            \"raw\" : {\n" + //
             "              \"type\" : \"keyword\",\n" + //
@@ -127,26 +121,22 @@ public class IndexTest extends AbstractElasticModelTest {
             "        \"street\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
-            "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false\n" + //
+            "          \"index\" : true\n" + //
             "        },\n" + //
             "        \"city\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
-            "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false\n" + //
+            "          \"index\" : true\n" + //
             "        },\n" + //
             "        \"state\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
-            "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false\n" + //
+            "          \"index\" : true\n" + //
             "        },\n" + //
             "        \"zip\" : {\n" + //
             "          \"type\" : \"text\",\n" + //
             "          \"store\" : false,\n" + //
-            "          \"index\" : true,\n" + //
-            "          \"doc_values\" : false\n" + //
+            "          \"index\" : true\n" + //
             "        }\n" + //
             "      }\n" + //
             "    }\n" + //

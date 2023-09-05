@@ -511,8 +511,12 @@ public abstract class Field implements Serializable {
         if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
-        return Boolean.TRUE.equals(isIndex()) && !(type == Type.TEXT || //
-                type == Type.INTEGER_RANGE || //
+        if (type == Type.TEXT) {
+            // Version 8+ needs this
+            return null;
+        }
+        return Boolean.TRUE.equals(isIndex()) && !( //
+        type == Type.INTEGER_RANGE || //
                 type == Type.FLOAT_RANGE || //
                 type == Type.LONG_RANGE || //
                 type == Type.DOUBLE_RANGE || //
@@ -638,7 +642,11 @@ public abstract class Field implements Serializable {
         if (type == null || isMetaField() || type == Type.COMPLETION || type == Type.GEO_SHAPE) {
             return null;
         }
-        return type != Type.BINARY;
+        // Version 8+ needs this
+        if (type == Type.BINARY) {
+            return null;
+        }
+        return true;
     }
 
     @Value.Default

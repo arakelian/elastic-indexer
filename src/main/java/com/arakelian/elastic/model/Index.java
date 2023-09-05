@@ -25,6 +25,7 @@ import java.util.Map;
 import org.immutables.value.Value;
 
 import com.arakelian.elastic.Views.Elastic.Version7;
+import com.arakelian.elastic.Views.Elastic.Version8;
 import com.arakelian.jackson.databind.ExcludeSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,7 +56,7 @@ public interface Index extends Serializable {
         public Map deserialize(final JsonParser p, final DeserializationContext ctxt)
                 throws IOException, JsonProcessingException {
             final Class<?> activeView = ctxt.getActiveView();
-            if (Version7.class.isAssignableFrom(activeView)) {
+            if (Version7.class.isAssignableFrom(activeView) || Version8.class.isAssignableFrom(activeView)) {
                 final HashMap<String, Mapping> mappings = new HashMap<>();
                 final Mapping mapping = ctxt.readValue(p, Mapping.class);
                 mappings.put("_default", mapping);
@@ -80,7 +81,7 @@ public interface Index extends Serializable {
                 final JsonGenerator generator,
                 final SerializerProvider provider) throws IOException, JsonProcessingException {
             final Class<?> activeView = provider.getActiveView();
-            if (Version7.class.isAssignableFrom(activeView)) {
+            if (Version7.class.isAssignableFrom(activeView) || Version8.class.isAssignableFrom(activeView)) {
                 final int size = mappings.size();
                 final String key;
                 if (size == 1) {

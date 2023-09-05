@@ -101,6 +101,11 @@ public interface Nodes extends Serializable {
         @JsonProperty("transport_address")
         public String getTransportAddress();
 
+        // introduced with Version 8
+        @Nullable
+        @JsonProperty("transport_version")
+        public Long getTransportVersion();
+
         public String getVersion();
 
         @Value.Derived

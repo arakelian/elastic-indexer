@@ -109,9 +109,9 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                     .withEnv("discovery.type", "single-node") //
                     .withEnv("transport.host", "127.0.0.1") //
                     .withEnv("xpack.security.enabled", "false") //
-                    .withEnv("xpack.monitoring.enabled", "false") //
                     .withEnv("xpack.graph.enabled", "false") //
                     .withEnv("xpack.watcher.enabled", "false") //
+                    .withEnv("action.destructive_requires_name", "false") // V8+
                     .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
 
             elastic.setWaitStrategy(
@@ -136,7 +136,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                         null));
 
         assertEquals(index.getName(), document.getIndex());
-        assertEquals(_DOC, document.getType());
+        // type removed in Elastic 8+
+        assertTrue(_DOC.equals(document.getType()) || document.getType() == null);
         assertEquals(expectedPerson.getId(), document.getId());
         if (expectedVersion != null) {
             assertEquals(expectedVersion, document.getVersion());
@@ -157,7 +158,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
                         JacksonUtils.toStringSafe(person, false)));
 
         assertEquals(index.getName(), response.getIndex());
-        assertEquals(_DOC, response.getType());
+        // type removed in Elastic 8+
+        assertTrue(_DOC.equals(response.getType()) || response.getType() == null);
         assertEquals(person.getId(), response.getId());
         assertEquals("created", response.getResult());
         assertEquals(Long.valueOf(expectedVersion), response.getVersion());
@@ -348,7 +350,8 @@ public abstract class AbstractElasticDockerTest extends AbstractElasticTest {
     }
 
     protected String getDockerImageName() {
-        return "docker.elastic.co/elasticsearch/elasticsearch:7.17.9";
+        // return "docker.elastic.co/elasticsearch/elasticsearch:7.17.9";
+        return "docker.elastic.co/elasticsearch/elasticsearch:8.9.1";
     }
 
     @Override

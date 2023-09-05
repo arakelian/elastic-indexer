@@ -20,6 +20,7 @@ package com.arakelian.elastic.model.search;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.jackson.OmitObsolete8EnumSerializer;
 import com.arakelian.elastic.model.enums.ValidationMethod;
 import com.arakelian.elastic.search.QueryVisitor;
 import com.arakelian.jackson.model.GeoPoint;
@@ -97,6 +98,7 @@ public interface GeoBoundingBoxQuery extends StandardQuery {
 
     @Nullable
     @JsonProperty("type")
+    @JsonSerialize(using = OmitObsolete8EnumSerializer.class)
     public Type getType();
 
     @Nullable

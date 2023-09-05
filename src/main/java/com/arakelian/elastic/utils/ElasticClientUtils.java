@@ -48,6 +48,7 @@ import com.arakelian.elastic.Views.Elastic.Version7;
 import com.arakelian.elastic.Views.Elastic.Version7.Version71;
 import com.arakelian.elastic.Views.Elastic.Version7.Version72;
 import com.arakelian.elastic.Views.Elastic.Version7.Version73;
+import com.arakelian.elastic.Views.Elastic.Version8;
 import com.arakelian.elastic.model.About;
 import com.arakelian.elastic.model.ImmutableIndex;
 import com.arakelian.elastic.model.Index;
@@ -67,7 +68,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-
 
 public class ElasticClientUtils {
     /**
@@ -192,6 +192,11 @@ public class ElasticClientUtils {
                 return Version73.class;
             default:
                 return Version7.class;
+            }
+        case 8:
+            switch (version.getMinor()) {
+            default:
+                return Version8.class;
             }
         default:
             throw new IllegalStateException("Unsupported version of Elasticsearch: " + version);

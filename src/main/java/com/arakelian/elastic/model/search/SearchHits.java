@@ -25,6 +25,7 @@ import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
 import com.arakelian.elastic.Views.Elastic.Version7;
+import com.arakelian.elastic.Views.Elastic.Version8;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -100,7 +101,7 @@ public abstract class SearchHits implements Serializable {
                 final SerializerProvider provider) throws IOException, JsonProcessingException {
             if (val instanceof Total) {
                 final Class<?> activeView = provider.getActiveView();
-                if (Version7.class.isAssignableFrom(activeView)) {
+                if (Version7.class.isAssignableFrom(activeView) || Version8.class.isAssignableFrom(activeView)) {
                     provider.defaultSerializeValue(val, generator);
                 } else {
                     final Total tt = (Total) val;

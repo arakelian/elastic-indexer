@@ -19,6 +19,7 @@ package com.arakelian.elastic;
 
 import static com.arakelian.elastic.model.Mapping.Dynamic.STRICT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -142,7 +143,8 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
                             JacksonUtils.toString(doc, false)));
 
             assertEquals(index.getName(), response.getIndex());
-            assertEquals(_DOC, response.getType());
+            // type removed in Elastic 8+
+            assertTrue(_DOC.equals(response.getType()) || response.getType() == null);
             assertEquals(id, response.getId());
             assertEquals("created", response.getResult());
             assertEquals(Boolean.TRUE, response.isCreated());
@@ -178,7 +180,8 @@ public class FieldTypeTest extends AbstractElasticDockerTest {
                             JacksonUtils.toString(doc, false)));
 
             assertEquals(index.getName(), response.getIndex());
-            assertEquals(_DOC, response.getType());
+            // type removed in Elastic 8+
+            assertTrue(_DOC.equals(response.getType()) || response.getType() == null);
             assertEquals(id, response.getId());
             assertEquals("created", response.getResult());
             assertEquals(Boolean.TRUE, response.isCreated());

@@ -22,6 +22,7 @@ import java.util.SortedSet;
 import org.immutables.value.Value;
 
 import com.arakelian.core.feature.Nullable;
+import com.arakelian.elastic.jackson.OmitObsolete8StringSerializer;
 import com.arakelian.jackson.AbstractMapPath;
 import com.arakelian.jackson.MapPath;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -74,6 +75,7 @@ public abstract class SearchHit extends AbstractMapPath {
 
     @Nullable
     @JsonProperty("_type")
+    @JsonSerialize(using = OmitObsolete8StringSerializer.class)
     public abstract String getType();
 
     @Override
