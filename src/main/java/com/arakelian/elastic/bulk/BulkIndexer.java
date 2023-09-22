@@ -232,15 +232,8 @@ public class BulkIndexer implements Closeable {
                 final BulkOperationResponse response = items.get(i).get();
 
                 final int status = response.getStatus();
-                if (status >= 200 && status < 300) {
-                    // operation was successful
-                    successful.incrementAndGet();
-                    listener.onSuccess(op, status);
-                    continue;
-                }
-
                 // ignore certain 404 errors
-                if (op.getAction() == DELETE && status == 404) {
+                if ((status >= 200 && status < 300) || (op.getAction() == DELETE && status == 404)) {
                     successful.incrementAndGet();
                     listener.onSuccess(op, status);
                     continue;
@@ -708,6 +701,10 @@ public class BulkIndexer implements Closeable {
 
     public final BulkIndexerConfig getConfig() {
         return config;
+    }
+
+    public ElasticClient getElasticClient() {
+        return elasticClient;
     }
 
     public RefreshLimiter getRefreshLimiter() {
