@@ -84,11 +84,13 @@ public class AbstractVisitor {
         writer.writeObject(value);
     }
 
-    public void writeFieldValue(final String field, final String value) throws IOException {
+    public boolean writeFieldValue(final String field, final String value) throws IOException {
         if (!StringUtils.isEmpty(value)) {
             writer.writeFieldName(field);
             writer.writeString(value);
+            return true;
         }
+        return false;
     }
 
     public void writeFieldWithValues(final String field, final Collection<String> values) throws IOException {

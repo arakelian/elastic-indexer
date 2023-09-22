@@ -26,14 +26,15 @@ import com.arakelian.elastic.model.aggs.Aggregation;
 import com.arakelian.elastic.model.aggs.BucketAggregation;
 import com.arakelian.elastic.model.aggs.ValuesSourceAggregation;
 import com.arakelian.elastic.search.AggregationVisitor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 
 /**
- * A multi-bucket aggregation similar to {@link HistogramAggregation} except it can only be
- * applied on date values.
+ * A multi-bucket aggregation similar to {@link HistogramAggregation} except it can only be applied
+ * on date values.
  *
  * <p>
  * Since dates are represented in Elasticsearch internally as long values, it is possible to use the
@@ -72,12 +73,35 @@ public interface DateHistogramAggregation extends BucketAggregation, ValuesSourc
         }
     }
 
+    /**
+     * Returns a calendar interval suitable for Elastic 8+.
+     *
+     * @return a calendar interval suitable for Elastic 8+.
+     */
+    @Nullable
+    @JsonProperty("calendar_interval")
+    public String getCalendarInterval();
+
     @Nullable
     public Long getExtendedBoundsMax();
 
     @Nullable
     public Long getExtendedBoundsMin();
 
+    /**
+     * Returns a fixed interval suitable for Elastic 8+.
+     *
+     * @return a fixed interval suitable for Elastic 8+.
+     */
+    @Nullable
+    @JsonProperty("fixed_interval")
+    public String getFixedInterval();
+
+    /**
+     * Returns a combined interval value only suitable for Elastic 7 and earlier.
+     *
+     * @return a combined interval value only suitable for Elastic 7 and earlier.
+     */
     @Nullable
     public String getInterval();
 

@@ -20,6 +20,7 @@ package com.arakelian.elastic.search;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -50,8 +51,25 @@ import com.arakelian.elastic.model.aggs.metrics.StatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.SumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ValueCountAggregation;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.google.common.collect.ImmutableSet;
 
 public class WriteAggregationVisitor extends AbstractVisitor implements AggregationVisitor {
+    private static final Set<String> CALENDAR_INTERVALS = ImmutableSet.of(
+            "minute",
+            "1m",
+            "hour",
+            "1h",
+            "day",
+            "1d",
+            "week",
+            "1w",
+            "month",
+            "1M",
+            "quarter",
+            "1q",
+            "year",
+            "1y");
+
     public WriteAggregationVisitor(final JsonGenerator writer, final VersionComponents version) {
         super(writer, version);
     }
@@ -91,7 +109,22 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writeValueSource(agg);
             writeFieldValue("keyed", agg.isKeyed());
             writeFieldValue("offset", agg.getOffset());
-            writeFieldValue("interval", agg.getInterval());
+            if (version.atLeast(8, 0, 0)) {
+                final boolean isCalendar = writeFieldValue("calendar_interval", agg.getCalendarInterval());
+                final boolean isFixed = writeFieldValue("fixed_interval", agg.getFixedInterval());
+                if (!isCalendar && !isFixed) {
+                    final String interval = agg.getInterval();
+                    if (!StringUtils.isEmpty(interval)) {
+                        if (CALENDAR_INTERVALS.contains(interval)) {
+                            writeFieldValue("calendar_interval", interval);
+                        } else {
+                            writeFieldValue("fixed_interval", interval);
+                        }
+                    }
+                }
+            } else {
+                writeFieldValue("interval", agg.getInterval());
+            }
             writeFieldValue("min_doc_count", agg.getMinDocCount());
             writer.writeEndObject(); // date_histogram
         } catch (final IOException e) {
