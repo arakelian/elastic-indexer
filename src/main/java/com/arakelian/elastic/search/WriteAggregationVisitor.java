@@ -50,6 +50,7 @@ import com.arakelian.elastic.model.aggs.metrics.PercentilesAggregation;
 import com.arakelian.elastic.model.aggs.metrics.StatsAggregation;
 import com.arakelian.elastic.model.aggs.metrics.SumAggregation;
 import com.arakelian.elastic.model.aggs.metrics.ValueCountAggregation;
+import com.arakelian.elastic.model.enums.ExecutionHint;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.collect.ImmutableSet;
 
@@ -401,6 +402,11 @@ public class WriteAggregationVisitor extends AbstractVisitor implements Aggregat
             writeFieldValue("show_term_doc_count_error", agg.isShowTermDocCountError());
             writeFieldValue("size", agg.getSize());
             writeFieldValue("shard_size", agg.getShardSize());
+            
+            ExecutionHint executionHint = agg.getExecutionHint();
+            if (executionHint != null) {
+                writeFieldValue("execution_hint", executionHint.name().toLowerCase());
+            }
 
             final String include = agg.getInclude();
             if (include != null) {
